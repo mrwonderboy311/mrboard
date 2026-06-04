@@ -448,4 +448,15 @@ func init() {
 	beego.Router("/mrboard/trace/v1/ServiceOverview", &controllers.TempoTraceController{}, "get:ServiceOverview") //服务概览 | Service overview
 	beego.Router("/mrboard/trace/v1/REDMetrics", &controllers.TempoTraceController{}, "get:REDMetrics")           //RED指标 | RED metrics
 	beego.Router("/mrboard/trace/v1/MetricsQueryRange", &controllers.TempoTraceController{}, "get:MetricsQueryRange") //TraceQL Metrics时序查询 | TraceQL Metrics query range
+
+	//告警管理相关路由 | Alert management routes
+	beego.Router("/mrboard/alert/v1/rules", &controllers.AlertController{}, "get:Rules;post:AddRule")
+	beego.Router("/mrboard/alert/v1/rules/:id", &controllers.AlertController{}, "put:UpdateRule;delete:DelRule")
+	beego.Router("/mrboard/alert/v1/rules/:id/toggle", &controllers.AlertController{}, "post:ToggleRule")
+	beego.Router("/mrboard/alert/v1/active", &controllers.AlertController{}, "get:Active")
+	beego.Router("/mrboard/alert/v1/history", &controllers.AlertController{}, "get:History")
+	beego.Router("/mrboard/alert/v1/webhook", &controllers.AlertController{}, "post:Webhook")
+	beego.Router("/mrboard/alert/v1/channels", &controllers.AlertChannelController{}, "get:List;post:Add")
+	beego.Router("/mrboard/alert/v1/channels/:id", &controllers.AlertChannelController{}, "put:Update;delete:Del")
+	beego.Router("/mrboard/alert/v1/channels/:id/test", &controllers.AlertChannelController{}, "post:Test")
 }
