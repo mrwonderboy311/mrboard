@@ -830,3 +830,173 @@ func detectFieldType(values []DetectedFieldValue) string {
 	return "string"
 }
 
+// LogPattern 日志模式 / Log pattern
+type LogPattern struct {
+	Pattern    string  `json:"pattern"`
+	Count      int     `json:"count"`
+	Percentage float64 `json:"percentage"`
+	Sample     string  `json:"sample"`
+}
+
+// PatternsResult 模式检测结果 / Patterns detection result
+type PatternsResult struct {
+	Patterns []LogPattern `json:"patterns"`
+}
+
+// QueryPatterns 检测日志模式 / Detect log patterns
+func QueryPatterns(clusterId, namespace, servicesStr, levelsStr string, start, end string) (*PatternsResult, error) {
+	lokiUrl, err := GetLokiUrl(clusterId)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := GetLokiConfig(clusterId)
+
+	var services []string
+	if servicesStr != "" {
+		for _, s := range strings.Split(servicesStr, ",") {
+			s = strings.TrimSpace(s)
+			if s != "" {
+				services = append(services, s)
+			}
+		}
+	}
+
+	var levels []string
+	if levelsStr != "" {
+		for _, l := range strings.Split(levelsStr, ",") {
+			l = strings.TrimSpace(l)
+			if l != "" {
+				levels = append(levels, l)
+			}
+		}
+	}
+
+	query := buildLogQLWithConfig(namespace, services, levels, "", "", cfg)
+
+	// Try Loki native pattern API first
+	reqUrl := fmt.Sprintf("%s/loki/api/v1/patterns?query=%s&start=%s&end=%s",
+		lokiUrl, url.QueryEscape(query), start, end)
+
+	body, err := lokiHttpGet(reqUrl)
+	if err == nil {
+		var resp struct {
+			Status string `json:"status"`
+			Data   []struct {
+				Pattern string       `json:"pattern"`
+				Samples [][]string   `json:"samples"`
+			} `json:"data"`
+		}
+		if json.Unmarshal(body, &resp) == nil && resp.Status == "success" && len(resp.Data) > 0 {
+			totalSamples := 0
+			for _, p := range resp.Data {
+				totalSamples += len(p.Samples)
+			}
+			var patterns []LogPattern
+			for _, p := range resp.Data {
+				count := len(p.Samples)
+				pct := 0.0
+				if totalSamples > 0 {
+					pct = float64(count) / float64(totalSamples) * 100
+				}
+				sample := ""
+				if len(p.Samples) > 0 && len(p.Samples[0]) > 0 {
+					sample = p.Samples[0][0]
+				}
+				patterns = append(patterns, LogPattern{
+					Pattern:    p.Pattern,
+					Count:      count,
+					Percentage: pct,
+					Sample:     sample,
+				})
+			}
+			return &PatternsResult{Patterns: patterns}, nil
+		}
+	}
+
+	// Fallback: client-side pattern detection
+	return fallbackPatternDetection(clusterId, namespace, services, levels, start, end, cfg)
+}
+
+// fallbackPatternDetection 客户端模式检测 / Client-side pattern detection
+func fallbackPatternDetection(clusterId, namespace string, services, levels []string, start, end string, cfg *LokiConfig) (*PatternsResult, error) {
+	entries, _, err := QueryLogs(clusterId, namespace, services, levels, "", "", start, end, 5000, "forward")
+	if err != nil {
+		return nil, err
+	}
+
+	type patternInfo struct {
+		count    int
+		sample   string
+		pattern  string
+	}
+	patternMap := make(map[string]*patternInfo)
+
+	for _, entry := range entries {
+		p := extractPattern(entry.Message)
+		if p == "" {
+			continue
+		}
+		if pi, ok := patternMap[p]; ok {
+			pi.count++
+		} else {
+			patternMap[p] = &patternInfo{count: 1, sample: entry.Message, pattern: p}
+		}
+	}
+
+	// Sort by count descending
+	var sorted []*patternInfo
+	for _, pi := range patternMap {
+		sorted = append(sorted, pi)
+	}
+	for i := 1; i < len(sorted); i++ {
+		key := sorted[i]
+		j := i - 1
+		for j >= 0 && sorted[j].count < key.count {
+			sorted[j+1] = sorted[j]
+			j--
+		}
+		sorted[j+1] = key
+	}
+
+	// Take top 20
+	if len(sorted) > 20 {
+		sorted = sorted[:20]
+	}
+
+	total := len(entries)
+	var patterns []LogPattern
+	for _, pi := range sorted {
+		pct := 0.0
+		if total > 0 {
+			pct = float64(pi.count) / float64(total) * 100
+		}
+		patterns = append(patterns, LogPattern{
+			Pattern:    pi.pattern,
+			Count:      pi.count,
+			Percentage: pct,
+			Sample:     pi.sample,
+		})
+	}
+
+	return &PatternsResult{Patterns: patterns}, nil
+}
+
+// extractPattern 从日志行提取模式 / Extract pattern from a log line
+var (
+	uuidRe = regexp.MustCompile(`[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}`)
+	ipRe   = regexp.MustCompile(`\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b`)
+	hexRe  = regexp.MustCompile(`\b[0-9a-fA-F]{8,}\b`)
+	numRe  = regexp.MustCompile(`\b\d{2,}\b`)
+	quotedRe = regexp.MustCompile(`"[^"]{3,}"`)
+)
+
+func extractPattern(line string) string {
+	line = uuidRe.ReplaceAllString(line, "{uuid}")
+	line = ipRe.ReplaceAllString(line, "{ip}")
+	line = hexRe.ReplaceAllString(line, "{hex}")
+	line = numRe.ReplaceAllString(line, "{n}")
+	line = quotedRe.ReplaceAllString(line, `"{s}"`)
+	return line
+}
+
