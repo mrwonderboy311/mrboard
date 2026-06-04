@@ -76,6 +76,7 @@ const CronJobK8sList = lazy(() => import('@/pages/k8s/CronJobList'))
 const CronJobDetail = lazy(() => import('@/pages/k8s/CronJobDetail'))
 const CrdList = lazy(() => import('@/pages/k8s/CrdList'))
 const HpaList = lazy(() => import('@/pages/k8s/HpaList'))
+const HpaDetail = lazy(() => import('@/pages/k8s/HpaDetail'))
 const ServiceK8sList = lazy(() => import('@/pages/k8s/ServiceList'))
 const ServiceDetail = lazy(() => import('@/pages/k8s/ServiceDetail'))
 const IngressList = lazy(() => import('@/pages/k8s/IngressList'))
@@ -411,6 +412,9 @@ function AppRoutes() {
         } />
         <Route path="/k8s/hpa" element={
           <ProtectedRoute><MainLayout><HpaList /></MainLayout></ProtectedRoute>
+        } />
+        <Route path="/k8s/hpa/detail" element={
+          <ProtectedRoute><MainLayout><HpaDetail /></MainLayout></ProtectedRoute>
         } />
         <Route path="/k8s/service" element={
           <ProtectedRoute><MainLayout><ServiceK8sList /></MainLayout></ProtectedRoute>

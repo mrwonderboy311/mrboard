@@ -110,7 +110,7 @@ export default function HpaList() {
   }
 
   const columns: Column<HpaItem>[] = [
-    { key: 'hpaName', header: '名称', className: 'font-medium', render: (d) => d.hpaName },
+    { key: 'hpaName', header: '名称', className: 'font-medium', render: (d) => <Button variant="link" className="p-0 h-auto font-medium" onClick={() => navigate('/k8s/hpa/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&hpaName=' + d.hpaName)}>{d.hpaName}</Button> },
     { key: 'nameSpace', header: '命名空间', render: (d) => d.nameSpace },
     { key: 'targetRef', header: '目标', render: (d) => d.targetRef },
     { key: 'minReplicas', header: '最小', render: (d) => d.minReplicas },
