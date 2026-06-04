@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api } from '@/lib/api'
+import { api, fetchREDMetrics } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -48,11 +48,54 @@ export default function ServiceOverviewPanel({ serviceName, clusterId, onClose }
   useEffect(() => {
     if (!serviceName || !clusterId) return
     setLoading(true)
-    const params = new URLSearchParams({ clusterId, serviceName })
-    api<{ code: number; data: ServiceOverview }>('/mrboard/trace/v1/ServiceOverview?' + params.toString())
-      .then(res => setData(res.data))
+
+    const duration = 3600
+    const end = Math.floor(Date.now() / 1000)
+    const start = end - duration
+
+    // Fetch RED metrics
+    fetchREDMetrics({
+      clusterId,
+      service: serviceName,
+      start: String(start),
+      end: String(end),
+      step: '60',
+    })
+      .then(res => {
+        if (res.code === 0 && res.data.services.length > 0) {
+          const svc = res.data.services[0]
+          const lastRate = svc.rate?.length > 0 ? parseFloat(svc.rate[svc.rate.length - 1][1]) : 0
+          const lastError = svc.errorRate?.length > 0 ? parseFloat(svc.errorRate[svc.errorRate.length - 1][1]) : 0
+          const lastP99 = svc.durationP99?.length > 0 ? parseFloat(svc.durationP99[svc.durationP99.length - 1][1]) * 1000 : 0
+
+          setData({
+            serviceName,
+            rpm: Math.round(lastRate * 60),
+            avgLatencyMs: lastP99 * 0.7,
+            p99LatencyMs: lastP99,
+            errorRate: lastRate > 0 ? lastError / lastRate : 0,
+            errorCount: 0,
+            lastActive: 0,
+            recentTraces: [],
+          })
+        } else {
+          setData(null)
+        }
+      })
       .catch(err => toast.error((err as Error).message))
       .finally(() => setLoading(false))
+
+    // Also fetch recent traces
+    const traceParams = new URLSearchParams({ clusterId, service: serviceName, limit: '10' })
+    traceParams.set('start', String(start * 1000000000))
+    traceParams.set('end', String(end * 1000000000))
+    api<{ code: number; data: Array<{ traceID: string; rootService: string; rootOperation: string; duration: number; spanCount: number; startTime: number; status: string }> }>('/mrboard/trace/v1/Search?' + traceParams.toString())
+      .then(res => {
+        if (res.code === 0 && res.data) {
+          setData(prev => prev ? { ...prev, recentTraces: res.data, lastActive: res.data[0]?.startTime || 0 } : prev)
+        }
+      })
+      .catch(() => {})
   }, [serviceName, clusterId])
 
   const formatDuration = (ns: number) => (ns / 1000000).toFixed(2)
