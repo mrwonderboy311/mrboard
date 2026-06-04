@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/table'
 import { MinusSquare, Search, ChevronsUpDown, Maximize2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 interface TreeNode {
   Id: number
@@ -149,8 +150,7 @@ export default function RoleToNodeList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">角色授权列表</h1>
+      <PageHeader title="目录结构">
         <div className="flex gap-2">
           <Button variant="outline" size="sm" render={<Link to="/rbac/node/list" />}>
             添加授权
@@ -159,7 +159,7 @@ export default function RoleToNodeList() {
             <MinusSquare size={14} className="mr-1" />取消授权
           </Button>
         </div>
-      </div>
+      </PageHeader>
 
       <Card>
         <CardContent className="p-4">

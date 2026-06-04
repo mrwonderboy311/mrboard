@@ -1,14 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import { Trash2, Star } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ApiResponse } from '@/types'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 interface Favorite {
   id: string
@@ -21,6 +19,31 @@ interface Favorite {
 export default function FavoriteList() {
   const [favorites, setFavorites] = useState<Favorite[]>([])
   const [loading, setLoading] = useState(true)
+
+  const columns: Column<Favorite>[] = useMemo(() => [
+    {
+      key: 'name', header: '名称', render: (f) => (
+        <div className="flex items-center gap-1">
+          <Star size={14} className="text-yellow-500" />
+          {f.name}
+        </div>
+      ),
+    },
+    {
+      key: 'url', header: '链接', render: (f) => (
+        <Link to={f.url} className="text-blue-500 hover:underline">{f.url}</Link>
+      ),
+    },
+    { key: 'remarks', header: '备注', render: (f) => f.remarks },
+    { key: 'createtime', header: '创建时间', render: (f) => f.createtime },
+    {
+      key: 'actions', header: '操作', render: (f) => (
+        <Button variant="outline" size="sm" onClick={() => handleDelete(f.id)}>
+          <Trash2 size={14} />
+        </Button>
+      ),
+    },
+  ], [])
 
   const fetchFavorites = async () => {
     setLoading(true)
@@ -49,50 +72,8 @@ export default function FavoriteList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">我的收藏</h1>
-      </div>
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>名称</TableHead>
-                <TableHead>链接</TableHead>
-                <TableHead>备注</TableHead>
-                <TableHead>创建时间</TableHead>
-                <TableHead>操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8">加载中...</TableCell></TableRow>
-              ) : favorites.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">暂无收藏</TableCell></TableRow>
-              ) : favorites.map(f => (
-                <TableRow key={f.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-1">
-                      <Star size={14} className="text-yellow-500" />
-                      {f.name}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Link to={f.url} className="text-blue-500 hover:underline">{f.url}</Link>
-                  </TableCell>
-                  <TableCell>{f.remarks}</TableCell>
-                  <TableCell>{f.createtime}</TableCell>
-                  <TableCell>
-                    <Button variant="outline" size="sm" onClick={() => handleDelete(f.id)}>
-                      <Trash2 size={14} />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <PageHeader title="我的收藏" />
+      <DataTable columns={columns} data={favorites} loading={loading} emptyMessage="暂无收藏" />
     </div>
   )
 }

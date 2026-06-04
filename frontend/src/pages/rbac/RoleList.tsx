@@ -1,21 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
-import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { Plus, Trash2, Users, Shield } from 'lucide-react'
 import { toast } from 'sonner'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 
 interface Role {
   Id: number
@@ -30,6 +29,28 @@ export default function RoleList() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState({ Name: '', Status: '2', Remark: '' })
   const [deleteTarget, setDeleteTarget] = useState<Role | null>(null)
+
+  const columns: Column<Role>[] = useMemo(() => [
+    { key: 'Id', header: 'ID', className: 'w-16', render: (r) => r.Id },
+    { key: 'Name', header: '角色名', render: (r) => <span className="font-medium">{r.Name}</span> },
+    { key: 'Status', header: '状态', className: 'w-20', render: (r) => <StatusBadge status={r.Status === '2' ? 'Active' : 'Inactive'} /> },
+    { key: 'Remark', header: '备注', render: (r) => r.Remark },
+    {
+      key: 'actions', header: '操作', render: (r) => (
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" render={<Link to={`/rbac/role/nodeList/${r.Id}`} />}>
+            <Shield size={14} className="mr-1" />授权列表
+          </Button>
+          <Button variant="outline" size="sm" render={<Link to={`/rbac/role/userList/${r.Id}`} />}>
+            <Users size={14} className="mr-1" />用户列表
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setDeleteTarget(r)}>
+            <Trash2 size={14} />
+          </Button>
+        </div>
+      ),
+    },
+  ], [])
 
   const fetchRoles = async () => {
     setLoading(true)
@@ -83,57 +104,15 @@ export default function RoleList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">角色列表</h1>
+      <PageHeader title="角色列表">
         <Button onClick={() => { setForm({ Name: '', Status: '2', Remark: '' }); setDialogOpen(true) }}>
           <Plus size={16} className="mr-2" />添加
         </Button>
-      </div>
+      </PageHeader>
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-16">ID</TableHead>
-                <TableHead>角色名</TableHead>
-                <TableHead className="w-20">状态</TableHead>
-                <TableHead>备注</TableHead>
-                <TableHead>操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8">加载中...</TableCell></TableRow>
-              ) : roles.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
-              ) : roles.map(r => (
-                <TableRow key={r.Id}>
-                  <TableCell>{r.Id}</TableCell>
-                  <TableCell className="font-medium">{r.Name}</TableCell>
-                  <TableCell>
-                    <Badge variant={r.Status === '2' ? 'default' : 'secondary'}>
-                      {r.Status === '2' ? '启用' : '禁用'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{r.Remark}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" render={<Link to={`/rbac/role/nodeList/${r.Id}`} />}>
-                        <Shield size={14} className="mr-1" />授权列表
-                      </Button>
-                      <Button variant="outline" size="sm" render={<Link to={`/rbac/role/userList/${r.Id}`} />}>
-                        <Users size={14} className="mr-1" />用户列表
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setDeleteTarget(r)}>
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable columns={columns} data={roles} loading={loading} emptyMessage="暂无数据" />
         </CardContent>
       </Card>
 

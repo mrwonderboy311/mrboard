@@ -1,14 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import { Plus, Trash2, Layers } from 'lucide-react'
 import { toast } from 'sonner'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 interface AppName {
   id: string
@@ -21,6 +20,34 @@ export default function AppNameList() {
   const [apps, setApps] = useState<AppName[]>([])
   const [loading, setLoading] = useState(true)
   const [searchName, setSearchName] = useState('')
+
+  const columns: Column<AppName>[] = useMemo(() => [
+    {
+      key: 'appname', header: '名称', render: (a) => (
+        <Link to={`/resource/list?appname=${a.appname}`} className="text-blue-500 hover:underline flex items-center gap-1">
+          <Layers size={14} />{a.appname}
+        </Link>
+      ),
+    },
+    { key: 'createtime', header: '创建时间', render: (a) => a.createtime },
+    {
+      key: 'remarks', header: '备注', render: (a) => (
+        <InlineEdit value={a.remarks} onSave={(val) => handleInlineEdit(a, 'remarks', val)} />
+      ),
+    },
+    {
+      key: 'actions', header: '操作', render: (a) => (
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" render={<Link to={`/resource/list?appname=${a.appname}`} />}>
+            资源集合
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => handleDelete(a)}>
+            <Trash2 size={14} />
+          </Button>
+        </div>
+      ),
+    },
+  ], [])
 
   const fetchApps = async (name?: string) => {
     setLoading(true)
@@ -67,12 +94,11 @@ export default function AppNameList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">应用集</h1>
+      <PageHeader title="应用集">
         <Button render={<Link to="/app/add" />}>
           <Plus size={16} className="mr-2" />添加
         </Button>
-      </div>
+      </PageHeader>
 
       <Card>
         <CardContent className="pt-6">
@@ -93,45 +119,7 @@ export default function AppNameList() {
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>名称</TableHead>
-                <TableHead>创建时间</TableHead>
-                <TableHead>备注</TableHead>
-                <TableHead>操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={4} className="text-center py-8">加载中...</TableCell></TableRow>
-              ) : apps.length === 0 ? (
-                <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">暂无应用</TableCell></TableRow>
-              ) : apps.map(a => (
-                <TableRow key={a.id}>
-                  <TableCell className="font-medium">
-                    <Link to={`/resource/list?appname=${a.appname}`} className="text-blue-500 hover:underline flex items-center gap-1">
-                      <Layers size={14} />{a.appname}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{a.createtime}</TableCell>
-                  <TableCell>
-                    <InlineEdit value={a.remarks} onSave={(val) => handleInlineEdit(a, 'remarks', val)} />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" render={<Link to={`/resource/list?appname=${a.appname}`} />}>
-                        资源集合
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(a)}>
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable columns={columns} data={apps} loading={loading} emptyMessage="暂无应用" />
         </CardContent>
       </Card>
     </div>

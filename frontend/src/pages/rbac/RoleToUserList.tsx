@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/table'
 import { UserPlus, UserMinus } from 'lucide-react'
 import { toast } from 'sonner'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 interface User {
   Id: number
@@ -160,7 +161,7 @@ export default function RoleToUserList() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">角色用户管理 (角色ID: {id})</h1>
+      <PageHeader title="角色授权" description={`角色ID: ${id}`} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>

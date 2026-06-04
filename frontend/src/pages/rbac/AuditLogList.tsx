@@ -1,14 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import { Search } from 'lucide-react'
 import { toast } from 'sonner'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 
 interface AuditLog {
   id: number
@@ -26,6 +25,20 @@ export default function AuditLogList() {
   const [searchUser, setSearchUser] = useState('')
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
+
+  const columns: Column<AuditLog>[] = useMemo(() => [
+    { key: 'id', header: 'ID', className: 'w-16', render: (l) => l.id },
+    { key: 'login_user', header: '帐号', render: (l) => <span className="font-medium">{l.login_user}</span> },
+    { key: 'user_ip', header: '用户IP', render: (l) => l.user_ip },
+    {
+      key: 'status', header: '状态', className: 'w-20', render: (l) => (
+        <StatusBadge status={l.status === 'success' || l.status === '0' ? 'Active' : 'Failed'} />
+      ),
+    },
+    { key: 'action', header: '动作', render: (l) => l.action },
+    { key: 'message', header: '消息', render: (l) => l.message },
+    { key: 'createtime', header: '登录时间', render: (l) => l.createtime },
+  ], [])
 
   const fetchLogs = async (params?: Record<string, string>) => {
     setLoading(true)
@@ -54,7 +67,7 @@ export default function AuditLogList() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">日志审计</h1>
+      <PageHeader title="审计日志" />
 
       <Card>
         <CardContent className="p-4">
@@ -91,40 +104,7 @@ export default function AuditLogList() {
             </Button>
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-16">ID</TableHead>
-                <TableHead>帐号</TableHead>
-                <TableHead>用户IP</TableHead>
-                <TableHead className="w-20">状态</TableHead>
-                <TableHead>动作</TableHead>
-                <TableHead>消息</TableHead>
-                <TableHead>登录时间</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-8">加载中...</TableCell></TableRow>
-              ) : logs.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
-              ) : logs.map(log => (
-                <TableRow key={log.id}>
-                  <TableCell>{log.id}</TableCell>
-                  <TableCell className="font-medium">{log.login_user}</TableCell>
-                  <TableCell>{log.user_ip}</TableCell>
-                  <TableCell>
-                    <Badge variant={log.status === 'success' || log.status === '0' ? 'default' : 'destructive'}>
-                      {log.status === 'success' || log.status === '0' ? '成功' : '失败'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{log.action}</TableCell>
-                  <TableCell>{log.message}</TableCell>
-                  <TableCell>{log.createtime}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable columns={columns} data={logs} loading={loading} emptyMessage="暂无数据" />
         </CardContent>
       </Card>
     </div>

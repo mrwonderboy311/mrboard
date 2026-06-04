@@ -1,21 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
-import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { Plus, Trash2, List } from 'lucide-react'
 import { toast } from 'sonner'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 
 interface Group {
   Id: number
@@ -31,6 +30,26 @@ export default function GroupList() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState({ Name: '', Title: '', Sort: '', Status: '2' })
   const [deleteTarget, setDeleteTarget] = useState<Group | null>(null)
+
+  const columns: Column<Group>[] = useMemo(() => [
+    { key: 'Id', header: 'ID', className: 'w-16', render: (g) => g.Id },
+    { key: 'Name', header: '组名', render: (g) => <span className="font-medium">{g.Name}</span> },
+    { key: 'Title', header: '标题', render: (g) => g.Title },
+    { key: 'Sort', header: '排序', render: (g) => g.Sort },
+    { key: 'Status', header: '状态', className: 'w-20', render: (g) => <StatusBadge status={g.Status === '2' ? 'Active' : 'Inactive'} /> },
+    {
+      key: 'actions', header: '操作', render: (g) => (
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" render={<Link to={`/rbac/node/listByGroup/${g.Id}`} />}>
+            <List size={14} className="mr-1" />URL列表
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setDeleteTarget(g)}>
+            <Trash2 size={14} />
+          </Button>
+        </div>
+      ),
+    },
+  ], [])
 
   const fetchGroups = async () => {
     setLoading(true)
@@ -92,56 +111,15 @@ export default function GroupList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">目录分组</h1>
+      <PageHeader title="目录分组">
         <Button onClick={() => { setForm({ Name: '', Title: '', Sort: '', Status: '2' }); setDialogOpen(true) }}>
           <Plus size={16} className="mr-2" />添加
         </Button>
-      </div>
+      </PageHeader>
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-16">ID</TableHead>
-                <TableHead>组名</TableHead>
-                <TableHead>标题</TableHead>
-                <TableHead>排序</TableHead>
-                <TableHead className="w-20">状态</TableHead>
-                <TableHead>操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-8">加载中...</TableCell></TableRow>
-              ) : groups.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
-              ) : groups.map(g => (
-                <TableRow key={g.Id}>
-                  <TableCell>{g.Id}</TableCell>
-                  <TableCell className="font-medium">{g.Name}</TableCell>
-                  <TableCell>{g.Title}</TableCell>
-                  <TableCell>{g.Sort}</TableCell>
-                  <TableCell>
-                    <Badge variant={g.Status === '2' ? 'default' : 'secondary'}>
-                      {g.Status === '2' ? '启用' : '禁用'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" render={<Link to={`/rbac/node/listByGroup/${g.Id}`} />}>
-                        <List size={14} className="mr-1" />URL列表
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setDeleteTarget(g)}>
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable columns={columns} data={groups} loading={loading} emptyMessage="暂无数据" />
         </CardContent>
       </Card>
 

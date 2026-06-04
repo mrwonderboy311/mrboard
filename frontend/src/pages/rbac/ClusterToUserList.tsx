@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -6,13 +6,12 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
-import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 interface ClusterUser {
   id: number
@@ -38,6 +37,20 @@ export default function ClusterToUserList() {
   const [form, setForm] = useState({ username: '', clusterId: '' })
   const [searchUser, setSearchUser] = useState('')
   const [searchCluster, setSearchCluster] = useState('')
+
+  const columns: Column<ClusterUser>[] = useMemo(() => [
+    { key: 'id', header: 'ID', className: 'w-16', render: (item) => item.id },
+    { key: 'clusterId', header: '集群', render: (item) => <span className="font-medium">{item.clusterId}</span> },
+    { key: 'username', header: '用户', render: (item) => item.username },
+    { key: 'createtime', header: '创建时间', render: (item) => item.createtime },
+    {
+      key: 'actions', header: '操作', render: (item) => (
+        <Button variant="outline" size="sm" onClick={() => handleDelete(item)}>
+          <Trash2 size={14} className="mr-1" />取消授权
+        </Button>
+      ),
+    },
+  ], [])
 
   const fetchItems = async () => {
     setLoading(true)
@@ -116,12 +129,11 @@ export default function ClusterToUserList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">集群授权</h1>
+      <PageHeader title="集群授权">
         <Button onClick={() => { setForm({ username: '', clusterId: '' }); setDialogOpen(true) }}>
           <Plus size={16} className="mr-2" />添加
         </Button>
-      </div>
+      </PageHeader>
 
       <Card>
         <CardContent className="p-4">
@@ -154,36 +166,7 @@ export default function ClusterToUserList() {
             <Button onClick={handleSearch}>搜索</Button>
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-16">ID</TableHead>
-                <TableHead>集群</TableHead>
-                <TableHead>用户</TableHead>
-                <TableHead>创建时间</TableHead>
-                <TableHead>操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8">加载中...</TableCell></TableRow>
-              ) : items.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
-              ) : items.map(item => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.id}</TableCell>
-                  <TableCell className="font-medium">{item.clusterId}</TableCell>
-                  <TableCell>{item.username}</TableCell>
-                  <TableCell>{item.createtime}</TableCell>
-                  <TableCell>
-                    <Button variant="outline" size="sm" onClick={() => handleDelete(item)}>
-                      <Trash2 size={14} className="mr-1" />取消授权
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable columns={columns} data={items} loading={loading} emptyMessage="暂无数据" />
         </CardContent>
       </Card>
 

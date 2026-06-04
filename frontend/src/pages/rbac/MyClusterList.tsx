@@ -1,13 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import { Star } from 'lucide-react'
 import { toast } from 'sonner'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 interface MyCluster {
   cluster_id: string
@@ -20,6 +19,26 @@ export default function MyClusterList() {
   const [items, setItems] = useState<MyCluster[]>([])
   const [loading, setLoading] = useState(true)
   const currentClusterId = localStorage.getItem('clusterId') || ''
+
+  const columns: Column<MyCluster>[] = useMemo(() => [
+    { key: 'cluster_id', header: '集群ID', render: (c) => <span className="font-mono text-sm">{c.cluster_id}</span> },
+    { key: 'cluster_name', header: '名称', render: (c) => <span className="font-medium">{c.cluster_name}</span> },
+    { key: 'kube_version', header: '版本', render: (c) => c.kube_version },
+    {
+      key: 'default', header: '默认集群', render: (c) => (
+        c.cluster_id === currentClusterId
+          ? <Badge variant="default"><Star size={12} className="mr-1" />当前</Badge>
+          : '-'
+      ),
+    },
+    {
+      key: 'actions', header: '操作', render: (c) => (
+        <Button variant="outline" size="sm" onClick={() => handleSetDefault(c)}>
+          <Star size={14} className="mr-1" />设为常用集群
+        </Button>
+      ),
+    },
+  ], [currentClusterId])
 
   const fetchData = async () => {
     setLoading(true)
@@ -43,48 +62,13 @@ export default function MyClusterList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">我的k8s集群</h1>
-      </div>
+      <PageHeader title="我的集群" />
       <blockquote className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-50 text-sm text-muted-foreground">
         注:需要在权限管理--集群授权,将集群授权到用户以后,这里才会显示。
       </blockquote>
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>集群ID</TableHead>
-                <TableHead>名称</TableHead>
-                <TableHead>版本</TableHead>
-                <TableHead>默认集群</TableHead>
-                <TableHead>操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8">加载中...</TableCell></TableRow>
-              ) : items.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">暂无授权集群</TableCell></TableRow>
-              ) : items.map(c => (
-                <TableRow key={c.cluster_id}>
-                  <TableCell className="font-mono text-sm">{c.cluster_id}</TableCell>
-                  <TableCell className="font-medium">{c.cluster_name}</TableCell>
-                  <TableCell>{c.kube_version}</TableCell>
-                  <TableCell>
-                    {c.cluster_id === currentClusterId ? (
-                      <Badge variant="default"><Star size={12} className="mr-1" />当前</Badge>
-                    ) : '-'}
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="outline" size="sm" onClick={() => handleSetDefault(c)}>
-                      <Star size={14} className="mr-1" />设为常用集群
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable columns={columns} data={items} loading={loading} emptyMessage="暂无授权集群" />
         </CardContent>
       </Card>
     </div>

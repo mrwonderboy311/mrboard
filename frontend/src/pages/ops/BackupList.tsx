@@ -1,13 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import { Plus, Eye, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 interface BackupItem {
   id: number
@@ -23,6 +22,22 @@ interface BackupItem {
 export default function BackupList() {
   const [items, setItems] = useState<BackupItem[]>([])
   const [loading, setLoading] = useState(true)
+
+  const columns: Column<BackupItem>[] = useMemo(() => [
+    { key: 'clusterName', header: '集群', render: (d) => d.clusterName },
+    { key: 'resourceType', header: '资源类型', render: (d) => <Badge variant="outline">{d.resourceType}</Badge> },
+    { key: 'resourceName', header: '资源名称', render: (d) => <span className="font-medium">{d.resourceName}</span> },
+    { key: 'nameSpace', header: '命名空间', render: (d) => d.nameSpace || '-' },
+    { key: 'createTime', header: '备份时间', render: (d) => <span className="text-sm text-muted-foreground whitespace-nowrap">{d.createTime}</span> },
+    {
+      key: 'actions', header: '操作', render: (d) => (
+        <div className="flex gap-1">
+          <Button variant="outline" size="sm" onClick={() => handleView(d)}><Eye size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => handleRecover(d)}><RotateCcw size={14} /></Button>
+        </div>
+      ),
+    },
+  ], [])
 
   const fetchData = async () => {
     setLoading(true)
@@ -62,35 +77,11 @@ export default function BackupList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">备份管理</h1>
+      <PageHeader title="备份管理">
         <Button onClick={handleBackup}><Plus size={16} className="mr-2" />立即备份</Button>
-      </div>
+      </PageHeader>
       <Card><CardContent className="p-0">
-        <Table>
-          <TableHeader><TableRow>
-            <TableHead>集群</TableHead><TableHead>资源类型</TableHead><TableHead>资源名称</TableHead><TableHead>命名空间</TableHead><TableHead>备份时间</TableHead><TableHead>操作</TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
-            {loading ? <TableRow><TableCell colSpan={6} className="text-center py-8">加载中...</TableCell></TableRow>
-            : items.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">暂无备份</TableCell></TableRow>
-            : items.map(d => (
-              <TableRow key={d.id}>
-                <TableCell>{d.clusterName}</TableCell>
-                <TableCell><Badge variant="outline">{d.resourceType}</Badge></TableCell>
-                <TableCell className="font-medium">{d.resourceName}</TableCell>
-                <TableCell>{d.nameSpace || '-'}</TableCell>
-                <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{d.createTime}</TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button variant="outline" size="sm" onClick={() => handleView(d)}><Eye size={14} /></Button>
-                    <Button variant="outline" size="sm" onClick={() => handleRecover(d)}><RotateCcw size={14} /></Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataTable columns={columns} data={items} loading={loading} emptyMessage="暂无备份" />
       </CardContent></Card>
     </div>
   )
