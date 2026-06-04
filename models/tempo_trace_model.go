@@ -373,6 +373,56 @@ type prometheusQueryResponse struct {
 	} `json:"data"`
 }
 
+// traceQLMetricsResponse TraceQL Metrics API响应
+type traceQLMetricsResponse struct {
+	Status string `json:"status"`
+	Data   struct {
+		ResultType string                 `json:"resultType"`
+		Result     []traceQLMetricsResult `json:"result"`
+	} `json:"data"`
+}
+
+type traceQLMetricsResult struct {
+	Metric map[string]string `json:"metric"`
+	Values [][]interface{}   `json:"values"`
+}
+
+// QueryTraceQLMetrics 查询TraceQL Metrics API / Query TraceQL Metrics API
+func QueryTraceQLMetrics(clusterId, query, start, end, step string) ([]traceQLMetricsResult, error) {
+	tempoUrl, err := GetTempoUrl(clusterId)
+	if err != nil {
+		return nil, err
+	}
+
+	params := url.Values{}
+	params.Set("q", query)
+	if start != "" {
+		params.Set("start", start)
+	}
+	if end != "" {
+		params.Set("end", end)
+	}
+	if step != "" {
+		params.Set("step", step)
+	}
+
+	reqUrl := fmt.Sprintf("%s/api/metrics/query_range?%s", strings.TrimRight(tempoUrl, "/"), params.Encode())
+	body, err := tempoHttpGet(reqUrl)
+	if err != nil {
+		return nil, fmt.Errorf("traceql metrics query error: %v", err)
+	}
+
+	var resp traceQLMetricsResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, fmt.Errorf("parse traceql metrics response error: %v", err)
+	}
+	if resp.Status != "success" {
+		return nil, fmt.Errorf("traceql metrics API error: %s", string(body))
+	}
+
+	return resp.Data.Result, nil
+}
+
 // GetDependencies 获取服务依赖 / Get service dependencies (via Prometheus service graph metrics)
 func GetDependencies(clusterId, start, end string) ([]TempoDependency, error) {
 	// Service graph metrics are written to Prometheus by Tempo's metrics-generator
