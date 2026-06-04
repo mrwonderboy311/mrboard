@@ -66,7 +66,7 @@ export default function AdminList() {
           <Button variant="outline" size="sm" render={<Link to={`/rbac/admin/edit/${u.Id}`} />}>
             <Pencil size={14} />
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setDeleteTarget(u)}>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteTarget(u) }}>
             <Trash2 size={14} />
           </Button>
         </div>

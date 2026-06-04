@@ -114,9 +114,9 @@ ${formStorageClass ? '  storageClassName: ' + formStorageClass + '\n' : ''}  res
     {
       key: 'actions', header: '操作', render: (d) => (
         <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/pvc/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&pvcName=' + d.pvcName)}><Eye size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/pvc/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&pvcName=' + d.pvcName)}><FileCode size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={() => handleDelete(d.nameSpace, d.pvcName)}><Trash2 size={14} className="text-destructive" /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/pvc/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&pvcName=' + d.pvcName) }}><Eye size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/pvc/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&pvcName=' + d.pvcName) }}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(d.nameSpace, d.pvcName) }}><Trash2 size={14} className="text-destructive" /></Button>
         </div>
       ),
     },

@@ -44,7 +44,7 @@ export default function RoleList() {
           <Button variant="outline" size="sm" render={<Link to={`/rbac/role/userList/${r.Id}`} />}>
             <Users size={14} className="mr-1" />用户列表
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setDeleteTarget(r)}>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteTarget(r) }}>
             <Trash2 size={14} />
           </Button>
         </div>

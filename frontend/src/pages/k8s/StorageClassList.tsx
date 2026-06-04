@@ -51,8 +51,8 @@ export default function StorageClassList() {
     {
       key: 'actions', header: '操作', render: (d) => (
         <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/storageclass/detail?clusterId=' + clusterId + '&scName=' + d.name)}><Eye size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/storageclass/yaml?clusterId=' + clusterId + '&scName=' + d.name)}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/storageclass/detail?clusterId=' + clusterId + '&scName=' + d.name) }}><Eye size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/storageclass/yaml?clusterId=' + clusterId + '&scName=' + d.name) }}><FileCode size={14} /></Button>
         </div>
       ),
     },

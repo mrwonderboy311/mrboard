@@ -141,10 +141,10 @@ export default function CronJobList() {
     {
       key: 'actions', header: '操作', render: (d) => (
         <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/cronjob/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&cronjobName=' + d.cronjobName)}><Eye size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={() => setRunTarget(d)}><Play size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/cronjob/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&cronjobName=' + d.cronjobName)}><FileCode size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={() => setDeleteTarget(d)}><Trash2 size={14} className="text-destructive" /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/cronjob/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&cronjobName=' + d.cronjobName) }}><Eye size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setRunTarget(d) }}><Play size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/cronjob/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&cronjobName=' + d.cronjobName) }}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteTarget(d) }}><Trash2 size={14} className="text-destructive" /></Button>
         </div>
       ),
     },

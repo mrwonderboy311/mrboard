@@ -51,7 +51,7 @@ export default function WikiList() {
           <Button variant="outline" size="sm" render={<Link to={`/wiki/detail/${a.id}`} />}>
             <Eye size={14} />
           </Button>
-          <Button variant="outline" size="sm" onClick={() => handleDelete(a.id, a.title)}>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(a.id, a.title) }}>
             <Trash2 size={14} />
           </Button>
         </div>

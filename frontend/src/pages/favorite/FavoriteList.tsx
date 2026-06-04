@@ -38,7 +38,7 @@ export default function FavoriteList() {
     { key: 'createtime', header: '创建时间', render: (f) => f.createtime },
     {
       key: 'actions', header: '操作', render: (f) => (
-        <Button variant="outline" size="sm" onClick={() => handleDelete(f.id)}>
+        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(f.id) }}>
           <Trash2 size={14} />
         </Button>
       ),

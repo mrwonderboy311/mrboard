@@ -107,8 +107,8 @@ ${subjectsArr.map(s => `- kind: ${s.kind}\n  name: ${s.name}${s.namespace ? '\n 
     {
       key: 'actions', header: '操作', render: (d) => (
         <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/rolebinding/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&rbName=' + d.rbName)}><FileCode size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={() => handleDelete(d.nameSpace, d.rbName)}><Trash2 size={14} className="text-destructive" /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/rolebinding/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&rbName=' + d.rbName) }}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(d.nameSpace, d.rbName) }}><Trash2 size={14} className="text-destructive" /></Button>
         </div>
       ),
     },

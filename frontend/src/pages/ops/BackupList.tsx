@@ -32,8 +32,8 @@ export default function BackupList() {
     {
       key: 'actions', header: '操作', render: (d) => (
         <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={() => handleView(d)}><Eye size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={() => handleRecover(d)}><RotateCcw size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleView(d) }}><Eye size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleRecover(d) }}><RotateCcw size={14} /></Button>
         </div>
       ),
     },

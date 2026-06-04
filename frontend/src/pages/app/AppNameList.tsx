@@ -41,7 +41,7 @@ export default function AppNameList() {
           <Button variant="outline" size="sm" render={<Link to={`/resource/list?appname=${a.appname}`} />}>
             资源集合
           </Button>
-          <Button variant="outline" size="sm" onClick={() => handleDelete(a)}>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(a) }}>
             <Trash2 size={14} />
           </Button>
         </div>

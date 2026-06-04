@@ -61,8 +61,8 @@ export default function CrdList() {
     {
       key: 'actions', header: '操作', render: (d) => (
         <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/crd/yaml?clusterId=' + clusterId + '&crdName=' + d.cdrName)}><FileCode size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={() => handleDelete(d.cdrName)}><Trash2 size={14} className="text-destructive" /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/crd/yaml?clusterId=' + clusterId + '&crdName=' + d.cdrName) }}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(d.cdrName) }}><Trash2 size={14} className="text-destructive" /></Button>
         </div>
       ),
     },

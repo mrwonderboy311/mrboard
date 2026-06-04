@@ -43,7 +43,7 @@ export default function GroupList() {
           <Button variant="outline" size="sm" render={<Link to={`/rbac/node/listByGroup/${g.Id}`} />}>
             <List size={14} className="mr-1" />URL列表
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setDeleteTarget(g)}>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteTarget(g) }}>
             <Trash2 size={14} />
           </Button>
         </div>

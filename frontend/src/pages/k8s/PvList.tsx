@@ -121,9 +121,9 @@ ${formStorageClass ? '  storageClassName: ' + formStorageClass + '\n' : ''}${sto
     {
       key: 'actions', header: '操作', render: (d) => (
         <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/pv/detail?clusterId=' + clusterId + '&pvName=' + d.pvName)}><Eye size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/pv/yaml?clusterId=' + clusterId + '&pvName=' + d.pvName)}><FileCode size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={() => handleDelete(d.pvName)}><Trash2 size={14} className="text-destructive" /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/pv/detail?clusterId=' + clusterId + '&pvName=' + d.pvName) }}><Eye size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/pv/yaml?clusterId=' + clusterId + '&pvName=' + d.pvName) }}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(d.pvName) }}><Trash2 size={14} className="text-destructive" /></Button>
         </div>
       ),
     },

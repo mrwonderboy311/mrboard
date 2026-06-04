@@ -97,8 +97,8 @@ rules:
     {
       key: 'actions', header: '操作', render: (d) => (
         <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/roles/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&name=' + d.rolesName)}><FileCode size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={() => handleDelete(d.nameSpace, d.rolesName)}><Trash2 size={14} className="text-destructive" /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/roles/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&name=' + d.rolesName) }}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(d.nameSpace, d.rolesName) }}><Trash2 size={14} className="text-destructive" /></Button>
         </div>
       ),
     },

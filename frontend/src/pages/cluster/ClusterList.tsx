@@ -27,7 +27,7 @@ export default function ClusterList() {
           <Button variant="outline" size="sm" render={<Link to={`/cluster/edit/${c.cluster_id}`} />}>
             <Pencil size={14} />
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setDeleteTarget(c)}>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteTarget(c) }}>
             <Trash2 size={14} />
           </Button>
         </div>

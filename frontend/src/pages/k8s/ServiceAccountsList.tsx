@@ -41,7 +41,7 @@ export default function ServiceAccountsList() {
     { key: 'createTime', header: '创建时间', className: 'text-sm text-muted-foreground whitespace-nowrap', render: (d) => d.createTime },
     {
       key: 'actions', header: '操作', render: (d) => (
-        <Button variant="outline" size="sm" onClick={() => navigate('/k8s/serviceaccounts/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&name=' + d.name)}><FileCode size={14} /></Button>
+        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/serviceaccounts/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&name=' + d.name) }}><FileCode size={14} /></Button>
       ),
     },
   ]

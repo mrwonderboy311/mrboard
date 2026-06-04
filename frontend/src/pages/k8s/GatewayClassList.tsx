@@ -45,8 +45,8 @@ export default function GatewayClassList() {
     {
       key: 'actions', header: '操作', render: (d) => (
         <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/gatewayclass/detail?clusterId=' + clusterId + '&gcName=' + d.name)}><Eye size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/gatewayclass/yaml?clusterId=' + clusterId + '&gcName=' + d.name)}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/gatewayclass/detail?clusterId=' + clusterId + '&gcName=' + d.name) }}><Eye size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/gatewayclass/yaml?clusterId=' + clusterId + '&gcName=' + d.name) }}><FileCode size={14} /></Button>
         </div>
       ),
     },

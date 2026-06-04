@@ -110,7 +110,7 @@ export default function HpaList() {
   }
 
   const columns: Column<HpaItem>[] = [
-    { key: 'hpaName', header: '名称', className: 'font-medium', render: (d) => <Button variant="link" className="p-0 h-auto font-medium" onClick={() => navigate('/k8s/hpa/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&hpaName=' + d.hpaName)}>{d.hpaName}</Button> },
+    { key: 'hpaName', header: '名称', className: 'font-medium', render: (d) => <Button variant="link" className="p-0 h-auto font-medium" onClick={(e) => { e.stopPropagation(); navigate('/k8s/hpa/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&hpaName=' + d.hpaName) }}>{d.hpaName}</Button> },
     { key: 'nameSpace', header: '命名空间', render: (d) => d.nameSpace },
     { key: 'targetRef', header: '目标', render: (d) => d.targetRef },
     { key: 'minReplicas', header: '最小', render: (d) => d.minReplicas },
@@ -121,8 +121,8 @@ export default function HpaList() {
     {
       key: 'actions', header: '操作', render: (d) => (
         <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/hpa/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&hpaName=' + d.hpaName)}><FileCode size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={() => handleDelete(d)}><Trash2 size={14} className="text-destructive" /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/hpa/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&hpaName=' + d.hpaName) }}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(d) }}><Trash2 size={14} className="text-destructive" /></Button>
         </div>
       ),
     },
