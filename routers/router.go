@@ -1,9 +1,9 @@
 package routers
 
 import (
-	"xkube/controllers"
-	"xkube/middleware"
-	admin "xkube/xadmin"
+	"mrboard/controllers"
+	"mrboard/middleware"
+	admin "mrboard/xadmin"
 
 	beego "github.com/beego/beego/v2/server/web"
 )

@@ -8,7 +8,7 @@ import (
 	"log"
 
 	//"time"
-	"xkube/common"
+	"mrboard/common"
 
 	//"k8s.io/api"
 	//appsv1 "k8s.io/api/apps/v1"

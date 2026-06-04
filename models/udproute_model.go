@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"xkube/common"
+	"mrboard/common"
 
 	"github.com/tidwall/gjson"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

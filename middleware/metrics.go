@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"xkube/controllers"
+	"mrboard/controllers"
 
 	beego "github.com/beego/beego/v2/server/web"
 	bctx "github.com/beego/beego/v2/server/web/context"

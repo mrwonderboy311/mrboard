@@ -1,9 +1,9 @@
 package main
 
 import (
-	//"xkube/informers"
+	//"mrboard/informers"
 	"fmt"
-	_ "xkube/routers"
+	_ "mrboard/routers"
 
 	beego "github.com/beego/beego/v2/server/web"
 	_ "github.com/beego/beego/v2/server/web/session/redis"

@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"git push mrboard main\",\"description\":\"Push main branch to mrboard remote\"}",
-  "error": "Exit code 1\nTo github.com:mrwonderboy311/mrboard.git\n ! [rejected]        main -> main (fetch first)\nerror: failed to push some refs to 'github.com:mrwonderboy311/mrboard.git'\nhint: Updates were rejected because the remote contains work that you do\nhint: not have locally. This is usually caused by another repository pushing\nhint: to the same ref. You may want to first integrate the remote changes\nhint: (e.g., 'git pull ...') before pushing again.\nhint: See the 'Note about fast-forwards' in 'git ...",
-  "timestamp": "2026-06-04T01:23:45.699Z",
-  "retry_count": 1
-}

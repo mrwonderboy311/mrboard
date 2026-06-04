@@ -7,7 +7,7 @@ import (
 	"log"
 	"strings"
 
-	"xkube/common"
+	"mrboard/common"
 
 	"encoding/json"
 

@@ -3,11 +3,11 @@ package controllers
 import (
 	"encoding/json"
 	"log"
-	m "xkube/models"
+	m "mrboard/models"
 
 	//"fmt"
 	"strings"
-	"xkube/common"
+	"mrboard/common"
 
 	beego "github.com/beego/beego/v2/server/web"
 	"github.com/tidwall/gjson"

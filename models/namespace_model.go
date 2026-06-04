@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"xkube/common"
+	"mrboard/common"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"

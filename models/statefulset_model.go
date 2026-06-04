@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"xkube/common"
+	"mrboard/common"
 
 	"github.com/tidwall/gjson"
 	"k8s.io/apimachinery/pkg/api/resource"

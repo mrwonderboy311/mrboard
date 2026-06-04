@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"strconv"
-	"xkube/models"
+	"mrboard/models"
 
 	beego "github.com/beego/beego/v2/server/web"
 )

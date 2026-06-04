@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	. "xkube/xadmin/src"
-	//admlib "xkube/xadmin/src/lib"
-	m "xkube/xadmin/src/models"
+	. "mrboard/xadmin/src"
+	//admlib "mrboard/xadmin/src/lib"
+	m "mrboard/xadmin/src/models"
 
-	common "xkube/common"
+	common "mrboard/common"
 
 	"github.com/beego/beego/v2/client/cache"
 	//"github.com/beego/beego/v2/client/orm"

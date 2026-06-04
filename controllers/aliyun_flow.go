@@ -10,8 +10,8 @@ import (
 	//"encoding/json"
 	//"net/http"
 	"strconv"
-	"xkube/common"
-	m "xkube/models"
+	"mrboard/common"
+	m "mrboard/models"
 
 	//beego "github.com/beego/beego/v2/server/web"
 	"github.com/tidwall/gjson"

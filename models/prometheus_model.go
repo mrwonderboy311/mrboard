@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -8,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"xkube/common"
+	"mrboard/common"
 
 	"github.com/beego/beego/v2/client/orm"
 )
@@ -85,6 +86,11 @@ func GetPrometheusUrl(clusterId string) (string, error) {
 	return prometheusUrl, nil
 }
 
+// isRawPromQL 判断是否为原始PromQL表达式 / Check if the metric string is raw PromQL
+func isRawPromQL(metric string) bool {
+	return strings.ContainsAny(metric, "{([]")
+}
+
 // PrometheusQueryRange Prometheus范围查询 / Prometheus range query
 func PrometheusQueryRange(clusterId, metric, namespace, pod, node, service string, start, end, step int64) (map[string]interface{}, error) {
 	prometheusUrl, err := GetPrometheusUrl(clusterId)
@@ -92,41 +98,48 @@ func PrometheusQueryRange(clusterId, metric, namespace, pod, node, service strin
 		return nil, err
 	}
 
-	tmpl, ok := prometheusQueryTemplates[metric]
-	if !ok {
-		return nil, fmt.Errorf("unsupported metric: %s", metric)
-	}
+	var query string
 
-	filters := buildPromQLFilters(namespace, pod, node, service)
+	if isRawPromQL(metric) {
+		// 原始PromQL表达式，直接使用 / Raw PromQL expression, use directly
+		query = metric
+	} else {
+		// 模板key，查找模板 / Template key, look up template
+		tmpl, ok := prometheusQueryTemplates[metric]
+		if !ok {
+			return nil, fmt.Errorf("unsupported metric: %s", metric)
+		}
 
-	// 确定by分组字段 / Determine by-grouping field
-	var byGroup string
-	switch metric {
-	case "cpu", "memory":
-		if pod != "" {
-			byGroup = "pod"
-		} else if node != "" {
-			byGroup = "node"
-		} else {
+		filters := buildPromQLFilters(namespace, pod, node, service)
+
+		var byGroup string
+		switch metric {
+		case "cpu", "memory":
+			if pod != "" {
+				byGroup = "pod"
+			} else if node != "" {
+				byGroup = "node"
+			} else {
+				byGroup = "namespace"
+			}
+		case "network_receive", "network_transmit":
+			if pod != "" {
+				byGroup = "pod"
+			} else if node != "" {
+				byGroup = "node"
+			} else {
+				byGroup = "namespace"
+			}
+		case "request_rate":
+			byGroup = "code"
+		case "request_latency_p99":
+			byGroup = "le"
+		default:
 			byGroup = "namespace"
 		}
-	case "network_receive", "network_transmit":
-		if pod != "" {
-			byGroup = "pod"
-		} else if node != "" {
-			byGroup = "node"
-		} else {
-			byGroup = "namespace"
-		}
-	case "request_rate":
-		byGroup = "code"
-	case "request_latency_p99":
-		byGroup = "le"
-	default:
-		byGroup = "namespace"
-	}
 
-	query := fmt.Sprintf(tmpl, filters, byGroup)
+		query = fmt.Sprintf(tmpl, filters, byGroup)
+	}
 
 	reqUrl := fmt.Sprintf("%s/api/v1/query_range?query=%s&start=%d&end=%d&step=%d",
 		strings.TrimRight(prometheusUrl, "/"),
@@ -161,9 +174,17 @@ func PrometheusLabelValues(clusterId, label, match string) ([]string, error) {
 		return nil, fmt.Errorf("prometheus label values error: %v", err)
 	}
 
-	// 解析简单的JSON响应 / Parse simple JSON response
-	bodyStr := string(body)
-	// 直接返回原始响应，由前端解析 / Return raw response, parsed by frontend
-	values := []string{bodyStr}
-	return values, nil
+	// 解析Prometheus API响应 / Parse Prometheus API response
+	// Response format: {"status":"success","data":["value1","value2",...]}
+	var resp struct {
+		Status string   `json:"status"`
+		Data   []string `json:"data"`
+	}
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, fmt.Errorf("parse label values error: %v", err)
+	}
+	if resp.Status != "success" {
+		return nil, fmt.Errorf("prometheus API error: %s", string(body))
+	}
+	return resp.Data, nil
 }

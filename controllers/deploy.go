@@ -11,9 +11,9 @@ import (
 	//"net/http"
 	"strings"
 	"time"
-	"xkube/common"
-	m "xkube/models"
-	adm "xkube/xadmin/src/models"
+	"mrboard/common"
+	m "mrboard/models"
+	adm "mrboard/xadmin/src/models"
 
 	"github.com/tidwall/gjson"
 

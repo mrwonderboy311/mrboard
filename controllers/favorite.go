@@ -6,8 +6,8 @@ import (
 
 	"log"
 	//"time"
-	m "xkube/models"
-	adm "xkube/xadmin/src/models"
+	m "mrboard/models"
+	adm "mrboard/xadmin/src/models"
 
 	beego "github.com/beego/beego/v2/server/web"
 	"github.com/tidwall/gjson"

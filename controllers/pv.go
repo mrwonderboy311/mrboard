@@ -3,8 +3,8 @@ package controllers
 import (
 	//"encoding/json"
 	"log"
-	"xkube/common"
-	m "xkube/models"
+	"mrboard/common"
+	m "mrboard/models"
 
 	beego "github.com/beego/beego/v2/server/web"
 )

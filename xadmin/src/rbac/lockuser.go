@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"xkube/common"
-	m "xkube/xadmin/src/models"
+	"mrboard/common"
+	m "mrboard/xadmin/src/models"
 )
 
 type LockInfo struct {

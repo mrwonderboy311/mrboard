@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"xkube/common"
+	"mrboard/common"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 

@@ -1,4 +1,4 @@
-module xkube
+module mrboard
 
 go 1.25.4
 

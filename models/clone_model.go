@@ -12,10 +12,10 @@ import (
 	//"log"
 	"time"
 
-	//"xkube/common"
+	//"mrboard/common"
 
 	//"github.com/beego/beego/v2/core/validation"
-	//xm "xkube/xadmin/src/models"
+	//xm "mrboard/xadmin/src/models"
 
 	"github.com/beego/beego/v2/client/orm"
 	//"github.com/beego/beego/v2/server/web/context"

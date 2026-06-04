@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	//admlib "xkube/xadmin/src/lib"
+	//admlib "mrboard/xadmin/src/lib"
 
-	m "xkube/xadmin/src/models"
+	m "mrboard/xadmin/src/models"
 )
 
 type UserController struct {

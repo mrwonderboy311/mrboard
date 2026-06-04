@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"xkube/common"
+	"mrboard/common"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"

@@ -11,7 +11,7 @@ import (
 	"reflect"
 	"time"
 
-	"xkube/common"
+	"mrboard/common"
 
 	//"github.com/beego/beego/v2/core/validation"
 

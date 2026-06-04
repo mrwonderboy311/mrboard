@@ -5,8 +5,8 @@ import (
 	"mime"
 	"os"
 
-	. "xkube/xadmin/src/lib"
-	"xkube/xadmin/src/models"
+	. "mrboard/xadmin/src/lib"
+	"mrboard/xadmin/src/models"
 
 	beego "github.com/beego/beego/v2/server/web"
 )

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	m "xkube/xadmin/src/models"
+	m "mrboard/xadmin/src/models"
 
 	"github.com/tidwall/gjson"
 

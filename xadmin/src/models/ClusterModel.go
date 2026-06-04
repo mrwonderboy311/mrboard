@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	//. "xkube/xadmin/src/lib"
+	//. "mrboard/xadmin/src/lib"
 	"fmt"
 
 	"github.com/beego/beego/v2/client/orm"

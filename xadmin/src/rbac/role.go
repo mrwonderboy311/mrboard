@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	m "xkube/xadmin/src/models"
+	m "mrboard/xadmin/src/models"
 
 	"github.com/beego/beego/v2/client/orm"
 )

@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	. "xkube/xadmin/src/lib"
-	m "xkube/xadmin/src/models"
+	. "mrboard/xadmin/src/lib"
+	m "mrboard/xadmin/src/models"
 
 	beego "github.com/beego/beego/v2/server/web"
 	"github.com/beego/beego/v2/server/web/context"

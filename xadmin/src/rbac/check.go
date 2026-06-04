@@ -2,7 +2,7 @@ package rbac
 
 import (
 	"log"
-	"xkube/common"
+	"mrboard/common"
 
 	"github.com/beego/beego/v2/client/orm"
 )

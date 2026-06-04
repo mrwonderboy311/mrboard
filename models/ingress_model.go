@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"xkube/common"
+	"mrboard/common"
 
 	"github.com/tidwall/gjson"
 

@@ -5,7 +5,7 @@ import (
 	//"fmt"
 	"github.com/tidwall/gjson"
 
-	m "xkube/xadmin/src/models"
+	m "mrboard/xadmin/src/models"
 )
 
 type AuditController struct {

@@ -4,12 +4,12 @@ import (
 	//"fmt"
 	"sort"
 
-	. "xkube/xadmin/src"
+	. "mrboard/xadmin/src"
 
 	beego "github.com/beego/beego/v2/server/web"
 
-	l "xkube/xadmin/src/lib"
-	m "xkube/xadmin/src/models"
+	l "mrboard/xadmin/src/lib"
+	m "mrboard/xadmin/src/models"
 )
 
 type CommonController struct {

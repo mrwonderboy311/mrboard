@@ -6,8 +6,8 @@ import (
 	"log"
 	"strconv"
 	"strings"
-	"xkube/common"
-	m "xkube/models"
+	"mrboard/common"
+	m "mrboard/models"
 
 	"github.com/tidwall/gjson"
 

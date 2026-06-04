@@ -12,7 +12,7 @@ import (
 	//"strconv"
 	//"io/ioutil"
 	"log"
-	"xkube/common"
+	"mrboard/common"
 
 	"github.com/tidwall/gjson"
 	"sigs.k8s.io/yaml"

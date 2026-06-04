@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"xkube/xadmin/src/rbac"
+	"mrboard/xadmin/src/rbac"
 
 	beego "github.com/beego/beego/v2/server/web"
 )

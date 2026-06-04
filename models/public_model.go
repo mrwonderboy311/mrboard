@@ -3,7 +3,7 @@ package models
 
 import (
 	"fmt"
-	"xkube/common"
+	"mrboard/common"
 )
 
 func ClearCache(clusterId string) int {

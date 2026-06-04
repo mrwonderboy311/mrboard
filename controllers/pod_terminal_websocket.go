@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"xkube/common"
-	m "xkube/models"
-	adm "xkube/xadmin/src/lib"
+	"mrboard/common"
+	m "mrboard/models"
+	adm "mrboard/xadmin/src/lib"
 
 	beegolog "github.com/beego/beego/v2/core/logs"
 	//beego "github.com/beego/beego/v2/server/web"

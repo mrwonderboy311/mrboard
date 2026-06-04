@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"xkube/common"
+	"mrboard/common"
 
 	"github.com/beego/beego/v2/client/orm"
 )

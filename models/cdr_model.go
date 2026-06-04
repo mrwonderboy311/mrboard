@@ -4,7 +4,7 @@ package models
 import (
 	"context"
 	"log"
-	"xkube/common"
+	"mrboard/common"
 
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 

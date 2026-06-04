@@ -4,7 +4,7 @@ import (
 	//"encoding/json"
 	"log"
 	"strings"
-	m "xkube/models"
+	m "mrboard/models"
 
 	beego "github.com/beego/beego/v2/server/web"
 	//gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"

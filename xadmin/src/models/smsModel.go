@@ -5,8 +5,8 @@ import (
 	"fmt"
 	//"lib"
 	"log"
-	common "xkube/common"
-	lib "xkube/xadmin/src/lib"
+	common "mrboard/common"
+	lib "mrboard/xadmin/src/lib"
 
 	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
 	dysmsapi20170525 "github.com/alibabacloud-go/dysmsapi-20170525/v5/client"

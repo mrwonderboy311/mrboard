@@ -32,7 +32,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "npm run build 2>&1 | tail -10",
+    "buildCommand": "cd /root/mrboard && go build ./... 2>&1",
     "testCommand": null,
     "lintCommand": null,
     "devCommand": null,
@@ -262,14 +262,14 @@
   "hotPaths": [
     {
       "path": "frontend/src/pages/log/LogViewer.tsx",
-      "accessCount": 28,
-      "lastAccessed": 1780532871176,
+      "accessCount": 29,
+      "lastAccessed": 1780537529836,
       "type": "file"
     },
     {
       "path": "frontend/src/pages/monitor/PrometheusMetrics.tsx",
-      "accessCount": 10,
-      "lastAccessed": 1780536318905,
+      "accessCount": 12,
+      "lastAccessed": 1780538117453,
       "type": "file"
     },
     {
@@ -288,6 +288,18 @@
       "path": "frontend/src/pages/k8s/PvList.tsx",
       "accessCount": 4,
       "lastAccessed": 1780466130784,
+      "type": "file"
+    },
+    {
+      "path": "controllers/loki_log.go",
+      "accessCount": 4,
+      "lastAccessed": 1780537502683,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/log/TraceViewer.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1780537531839,
       "type": "file"
     },
     {
@@ -369,21 +381,15 @@
       "type": "file"
     },
     {
-      "path": "frontend/src/pages/log/TraceViewer.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1780479339747,
-      "type": "file"
-    },
-    {
       "path": "tests/observability.spec.ts",
       "accessCount": 3,
       "lastAccessed": 1780493091438,
       "type": "file"
     },
     {
-      "path": "controllers/loki_log.go",
+      "path": "specs/008-prometheus-drilldown-metrics/plan.md",
       "accessCount": 3,
-      "lastAccessed": 1780494351340,
+      "lastAccessed": 1780537279550,
       "type": "file"
     },
     {
@@ -444,6 +450,12 @@
       "path": "frontend/src/types/prometheus.ts",
       "accessCount": 2,
       "lastAccessed": 1780533964176,
+      "type": "file"
+    },
+    {
+      "path": "models/loki_log_model.go",
+      "accessCount": 2,
+      "lastAccessed": 1780537503243,
       "type": "file"
     },
     {
@@ -513,12 +525,6 @@
       "type": "file"
     },
     {
-      "path": "specs/008-prometheus-drilldown-metrics/plan.md",
-      "accessCount": 1,
-      "lastAccessed": 1780494098128,
-      "type": "file"
-    },
-    {
       "path": "frontend/src/lib/promql.ts",
       "accessCount": 1,
       "lastAccessed": 1780494132312,
@@ -552,12 +558,6 @@
       "path": "frontend/src/lib/api.ts",
       "accessCount": 1,
       "lastAccessed": 1780494351397,
-      "type": "file"
-    },
-    {
-      "path": "models/loki_log_model.go",
-      "accessCount": 1,
-      "lastAccessed": 1780494361387,
       "type": "file"
     }
   ],
