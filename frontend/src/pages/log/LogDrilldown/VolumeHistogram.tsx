@@ -1,5 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { HistogramBucket } from '@/types/log'
+import type { HistogramBucket } from '@/types/log'
 
 const LEVEL_COLORS: Record<string, string> = {
   error: 'hsl(var(--destructive))',

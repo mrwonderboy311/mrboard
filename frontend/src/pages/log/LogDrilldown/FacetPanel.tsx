@@ -1,6 +1,6 @@
 import { Filter } from 'lucide-react'
 import { FacetGroup } from './FacetGroup'
-import { LabelWithValues, DetectedField, DetectedFieldValue } from '@/types/log'
+import type { LabelWithValues, DetectedField, DetectedFieldValue } from '@/types/log'
 
 interface FacetPanelProps {
   labels: LabelWithValues[]

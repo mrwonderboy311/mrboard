@@ -169,7 +169,7 @@ const NamespaceResLimit = lazy(() => import('@/pages/k8s/NamespaceResLimit'))
 const BackupList = lazy(() => import('@/pages/ops/BackupList'))
 
 // Log
-const LogViewer = lazy(() => import('@/pages/log/LogViewer'))
+const LogDrilldown = lazy(() => import('@/pages/log/LogDrilldown'))
 const TraceViewer = lazy(() => import('@/pages/log/TraceViewer'))
 const TraceDetail = lazy(() => import('@/pages/log/TraceDetail'))
 
@@ -685,7 +685,7 @@ function AppRoutes() {
 
         {/* Log */}
         <Route path="/log/loki" element={
-          <ProtectedRoute><MainLayout><LogViewer /></MainLayout></ProtectedRoute>
+          <ProtectedRoute><MainLayout><LogDrilldown /></MainLayout></ProtectedRoute>
         } />
         <Route path="/log/trace" element={
           <ProtectedRoute><MainLayout><TraceViewer /></MainLayout></ProtectedRoute>

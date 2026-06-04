@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge'
 import { X } from 'lucide-react'
-import { FilterState } from '@/types/log'
+import type { FilterState } from '@/types/log'
 
 interface FilterTagBarProps {
   filters: FilterState

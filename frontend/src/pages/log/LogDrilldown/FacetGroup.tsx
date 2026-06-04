@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { DetectedFieldValue } from '@/types/log'
+import type { DetectedFieldValue } from '@/types/log'
 
 interface FacetGroupProps {
   title: string

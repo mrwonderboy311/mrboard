@@ -1,5 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { DetectedFieldValue } from '@/types/log'
+import type { DetectedFieldValue } from '@/types/log'
 
 interface FieldBreakdownProps {
   fieldName: string

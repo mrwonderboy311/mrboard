@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, Copy, Check } from 'lucide-react'
-import { LogPattern } from '@/types/log'
+import type { LogPattern } from '@/types/log'
 
 interface PatternListProps {
   patterns: LogPattern[]

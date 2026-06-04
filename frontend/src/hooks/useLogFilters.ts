@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
-import { FilterState, emptyFilterState, parseFilterStateFromURL, filterStateToQueryString } from '@/types/log'
+import type { FilterState } from '@/types/log'
+import { emptyFilterState, parseFilterStateFromURL, filterStateToQueryString } from '@/types/log'
 
 export function useLogFilters() {
   const [filters, setFilters] = useState<FilterState>(() => parseFilterStateFromURL())

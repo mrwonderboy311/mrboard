@@ -7,7 +7,7 @@ import { Clock, RefreshCw, Pause, Play, Search, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { useLogFilters } from '@/hooks/useLogFilters'
-import {
+import type {
   LabelWithValues, DetectedField, LogPattern, LogEntry, HistogramBucket,
 } from '@/types/log'
 import { FacetPanel } from './LogDrilldown/FacetPanel'

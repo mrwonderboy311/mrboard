@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, Copy, Check } from 'lucide-react'
-import { LogEntry } from '@/types/log'
+import type { LogEntry } from '@/types/log'
 
 const LEVEL_STYLES: Record<string, { color: string; bg: string; label: string }> = {
   error:   { color: 'text-destructive', bg: 'bg-destructive/10', label: 'ERROR' },
