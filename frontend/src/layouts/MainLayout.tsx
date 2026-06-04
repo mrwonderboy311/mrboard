@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react'
+import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { api } from '@/lib/api'
@@ -6,6 +6,7 @@ import type { ApiResponse } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -114,6 +115,37 @@ const navItems: NavItem[] = [
   { label: 'AI助手', icon: <Zap size={18} />, path: '/ai/chat' },
 ]
 
+/** Smoothly animated collapsible section */
+function CollapseContent({ open, children }: { open: boolean; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [height, setHeight] = useState<number | undefined>(undefined)
+
+  useEffect(() => {
+    if (!ref.current) return
+    if (open) {
+      const h = ref.current.scrollHeight
+      setHeight(h)
+      // After transition, let content size naturally
+      const timer = setTimeout(() => setHeight(undefined), 200)
+      return () => clearTimeout(timer)
+    } else {
+      // Set explicit height first, then collapse
+      setHeight(ref.current.scrollHeight)
+      requestAnimationFrame(() => setHeight(0))
+    }
+  }, [open])
+
+  return (
+    <div
+      ref={ref}
+      className="overflow-hidden transition-[height] duration-200 ease-in-out"
+      style={{ height: height !== undefined ? height : undefined }}
+    >
+      {children}
+    </div>
+  )
+}
+
 function SidebarNav({ onItemClick }: { onItemClick?: () => void }) {
   const location = useLocation()
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
@@ -127,19 +159,28 @@ function SidebarNav({ onItemClick }: { onItemClick?: () => void }) {
       {navItems.map(item => {
         if (item.path) {
           const active = location.pathname === item.path
+          const isSearch = item.label === '搜索'
           return (
             <Link
               key={item.label}
               to={item.path}
               onClick={onItemClick}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+              className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                 active
                   ? 'bg-blue-600 text-white'
                   : 'text-slate-300 hover:bg-white/10 hover:text-white'
               }`}
             >
+              {active && (
+                <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-blue-400" />
+              )}
               {item.icon}
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {isSearch && (
+                <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-slate-600 text-slate-400 bg-slate-800">
+                  ⌘K
+                </kbd>
+              )}
             </Link>
           )
         }
@@ -152,31 +193,38 @@ function SidebarNav({ onItemClick }: { onItemClick?: () => void }) {
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
             >
               {item.icon}
-              <span className="flex-1 text-left">{item.label}</span>
-              <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+              <span className="flex-1 text-left tracking-wide text-[13px] text-slate-400 font-medium uppercase">
+                {item.label}
+              </span>
+              <ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
-            {isOpen && item.children && (
-              <div className="ml-4 mt-1 space-y-0.5">
-                {item.children.map(child => {
-                  const childActive = location.pathname === child.path
-                  return (
-                    <Link
-                      key={child.label}
-                      to={child.path!}
-                      onClick={onItemClick}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                        childActive
-                          ? 'bg-blue-600 text-white'
-                          : 'text-slate-400 hover:bg-white/10 hover:text-white'
-                      }`}
-                    >
-                      {child.icon}
-                      {child.label}
-                    </Link>
-                  )
-                })}
-              </div>
-            )}
+            <CollapseContent open={!!isOpen}>
+              {item.children && (
+                <div className="ml-4 mt-1 space-y-0.5">
+                  {item.children.map(child => {
+                    const childActive = location.pathname === child.path
+                    return (
+                      <Link
+                        key={child.label}
+                        to={child.path!}
+                        onClick={onItemClick}
+                        className={`relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                          childActive
+                            ? 'bg-blue-600 text-white'
+                            : 'text-slate-400 hover:bg-white/10 hover:text-white'
+                        }`}
+                      >
+                        {childActive && (
+                          <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-blue-400" />
+                        )}
+                        {child.icon}
+                        {child.label}
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </CollapseContent>
           </div>
         )
       })}
@@ -209,6 +257,8 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     navigate('/login')
   }
 
+  const userInitial = (user?.username || 'U').charAt(0).toUpperCase()
+
   return (
     <div className="flex h-screen bg-slate-50">
       {/* Desktop sidebar */}
@@ -222,10 +272,14 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         <div className="p-3">
           <DropdownMenu>
             <DropdownMenuTrigger
-              render={<Button variant="ghost" className="w-full justify-start text-slate-300 hover:text-white hover:bg-white/10" />}
+              render={<Button variant="ghost" className="w-full justify-start gap-2 text-slate-300 hover:text-white hover:bg-white/10" />}
             >
-              <User size={16} className="mr-2" />
-              {user?.username || '用户'}
+              <Avatar className="h-7 w-7">
+                <AvatarFallback className="bg-blue-600 text-white text-xs">
+                  {userInitial}
+                </AvatarFallback>
+              </Avatar>
+              <span className="truncate">{user?.username || '用户'}</span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => navigate('/rbac/myinfo')}>
