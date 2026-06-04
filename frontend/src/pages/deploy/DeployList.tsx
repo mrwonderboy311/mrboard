@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -6,14 +6,13 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
-import {
   Search, Eye, Scale, RotateCcw, Trash2, FileCode, Plus, X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { DataTable, type Column } from '@/components/shared/DataTable'
 import type { DeployListItem, Namespace, ApiResponse } from '@/types'
 
 const defaultYaml = `apiVersion: apps/v1
@@ -47,6 +46,7 @@ export default function DeployList() {
   const [restartTarget, setRestartTarget] = useState<DeployListItem | null>(null)
   const [scaleTarget, setScaleTarget] = useState<DeployListItem | null>(null)
   const [scaleValue, setScaleValue] = useState('')
+  const [page, setPage] = useState(1)
 
   const [clusterId, setClusterId] = useState(localStorage.getItem('clusterId') || '')
 
@@ -100,6 +100,14 @@ export default function DeployList() {
     if (!searchName) { setFiltered(deploys) }
     else { setFiltered(deploys.filter(d => d.deployName.toLowerCase().includes(searchName.toLowerCase()))) }
   }, [deploys, searchName])
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1) }, [searchName, namespace])
+
+  const paged = useMemo(() => {
+    const start = (page - 1) * 20
+    return filtered.slice(start, start + 20)
+  }, [filtered, page])
 
   const handleRestart = async () => {
     if (!restartTarget) return
@@ -225,12 +233,79 @@ ${envYaml ? '        env:\n' + envYaml : ''}`
     } catch (err) { toast.error((err as Error).message) } finally { setSubmitting(false) }
   }
 
+  const columns: Column<DeployListItem>[] = [
+    {
+      key: 'deployName',
+      header: '名称',
+      className: 'font-medium',
+      render: (d) => d.deployName,
+    },
+    {
+      key: 'nameSpace',
+      header: '命名空间',
+      render: (d) => d.nameSpace,
+    },
+    {
+      key: 'podNumber',
+      header: '容器',
+      className: 'w-20',
+      render: (d) => (
+        <Badge variant={d.replicas === d.availableReplicas ? 'default' : 'destructive'}>{d.podNumber}</Badge>
+      ),
+    },
+    {
+      key: 'imageUrl',
+      header: '镜像',
+      className: 'font-mono text-xs max-w-xs truncate',
+      render: (d) => <span title={d.imageUrl}>{d.imageUrl}</span>,
+    },
+    {
+      key: 'labels',
+      header: '标签',
+      render: (d) => (
+        <div className="flex flex-wrap gap-1">
+          {d.labels ? d.labels.split(',').map((label, i) => (
+            <Badge key={i} variant="outline" className="text-xs">{label.trim()}</Badge>
+          )) : '-'}
+        </div>
+      ),
+    },
+    {
+      key: 'createTime',
+      header: '创建时间',
+      className: 'text-sm text-muted-foreground whitespace-nowrap',
+      render: (d) => d.createTime,
+    },
+    {
+      key: 'actions',
+      header: '操作',
+      render: (d) => (
+        <div className="flex gap-1 flex-wrap">
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/deploy/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&deployName=' + d.deployName) }}>
+            <Eye size={14} className="mr-1" />详情
+          </Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setScaleTarget(d); setScaleValue(String(d.replicas)) }}>
+            <Scale size={14} className="mr-1" />伸缩
+          </Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setRestartTarget(d) }}>
+            <RotateCcw size={14} className="mr-1" />重启
+          </Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/deploy/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&deployName=' + d.deployName) }}>
+            <FileCode size={14} className="mr-1" />YAML
+          </Button>
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteTarget(d) }}>
+            <Trash2 size={14} className="text-destructive" />
+          </Button>
+        </div>
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">应用列表</h1>
+      <PageHeader title="应用列表" description="Deployment 管理">
         <Button onClick={() => setCreateOpen(true)}><Plus size={14} className="mr-1" />创建</Button>
-      </div>
+      </PageHeader>
 
       {/* Search & Filter */}
       <Card>
@@ -260,62 +335,14 @@ ${envYaml ? '        env:\n' + envYaml : ''}`
       {/* Table */}
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>名称</TableHead>
-                <TableHead>命名空间</TableHead>
-                <TableHead className="w-20">容器</TableHead>
-                <TableHead>镜像</TableHead>
-                <TableHead>标签</TableHead>
-                <TableHead>创建时间</TableHead>
-                <TableHead>操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-8">加载中...</TableCell></TableRow>
-              ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">暂无应用</TableCell></TableRow>
-              ) : filtered.map(d => (
-                <TableRow key={d.nameSpace + '/' + d.deployName}>
-                  <TableCell className="font-medium">{d.deployName}</TableCell>
-                  <TableCell>{d.nameSpace}</TableCell>
-                  <TableCell>
-                    <Badge variant={d.replicas === d.availableReplicas ? 'default' : 'destructive'}>{d.podNumber}</Badge>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs max-w-xs truncate" title={d.imageUrl}>{d.imageUrl}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {d.labels ? d.labels.split(',').map((label, i) => (
-                        <Badge key={i} variant="outline" className="text-xs">{label.trim()}</Badge>
-                      )) : '-'}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{d.createTime}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1 flex-wrap">
-                      <Button variant="outline" size="sm" onClick={() => navigate('/deploy/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&deployName=' + d.deployName)}>
-                        <Eye size={14} className="mr-1" />详情
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => { setScaleTarget(d); setScaleValue(String(d.replicas)) }}>
-                        <Scale size={14} className="mr-1" />伸缩
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setRestartTarget(d)}>
-                        <RotateCcw size={14} className="mr-1" />重启
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => navigate('/deploy/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&deployName=' + d.deployName)}>
-                        <FileCode size={14} className="mr-1" />YAML
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setDeleteTarget(d)}>
-                        <Trash2 size={14} className="text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={columns as unknown as Column<Record<string, unknown>>[]}
+            data={paged as unknown as Record<string, unknown>[]}
+            loading={loading}
+            pagination={{ page, limit: 20, total: filtered.length }}
+            onPageChange={setPage}
+            emptyMessage="暂无应用"
+          />
         </CardContent>
       </Card>
 
