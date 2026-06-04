@@ -142,3 +142,35 @@ func (this *TempoTraceController) ServiceOverview() {
 	this.Data["json"] = &map[string]interface{}{"code": 0, "msg": "success", "data": overview}
 	this.ServeJSON()
 }
+
+// MetricsQueryRange TraceQL Metrics时序查询代理
+func (this *TempoTraceController) MetricsQueryRange() {
+	clusterId := this.GetString("clusterId")
+	query := this.GetString("query")
+	start := this.GetString("start")
+	end := this.GetString("end")
+	step := this.GetString("step")
+
+	if clusterId == "" || query == "" {
+		this.Data["json"] = &map[string]interface{}{"code": -1, "msg": "缺少必填参数 clusterId 或 query"}
+		this.ServeJSON()
+		return
+	}
+
+	results, err := m.QueryTraceQLMetrics(clusterId, query, start, end, step)
+	if err != nil {
+		this.Data["json"] = &map[string]interface{}{"code": -1, "msg": err.Error()}
+		this.ServeJSON()
+		return
+	}
+
+	this.Data["json"] = &map[string]interface{}{
+		"code": 0,
+		"msg":  "success",
+		"data": map[string]interface{}{
+			"resultType": "matrix",
+			"result":     results,
+		},
+	}
+	this.ServeJSON()
+}
