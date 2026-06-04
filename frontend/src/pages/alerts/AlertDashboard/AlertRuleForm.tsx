@@ -3,7 +3,7 @@ import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { AlertRule } from '@/types/alert'
+import type { AlertRule } from '@/types/alert'
 
 interface Props {
   clusterId: string

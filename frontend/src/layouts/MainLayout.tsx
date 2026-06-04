@@ -98,6 +98,7 @@ const navItems: NavItem[] = [
     { label: '服务健康', icon: <ChevronRight size={14} />, path: '/monitor/service-health' },
     { label: '日志查询', icon: <ChevronRight size={14} />, path: '/log/loki' },
     { label: '链路追踪', icon: <ChevronRight size={14} />, path: '/log/trace' },
+    { label: '告警管理', icon: <ChevronRight size={14} />, path: '/alerts' },
   ]},
   { label: '权限管理', icon: <Shield size={18} />, children: [
     { label: '管理员', icon: <ChevronRight size={14} />, path: '/rbac/adminList' },

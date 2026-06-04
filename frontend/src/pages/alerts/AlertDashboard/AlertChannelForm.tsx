@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { AlertChannel } from '@/types/alert'
+import type { AlertChannel } from '@/types/alert'
 
 interface Props {
   channel?: AlertChannel | null

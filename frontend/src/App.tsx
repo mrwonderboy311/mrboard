@@ -173,6 +173,9 @@ const LogDrilldown = lazy(() => import('@/pages/log/LogDrilldown'))
 const TraceViewer = lazy(() => import('@/pages/log/TraceViewer'))
 const TraceDetail = lazy(() => import('@/pages/log/TraceDetail'))
 
+// Alert
+const AlertDashboard = lazy(() => import('@/pages/alerts/AlertDashboard'))
+
 function Loading() {
   return (
     <div className="flex items-center justify-center h-64">
@@ -681,6 +684,11 @@ function AppRoutes() {
         } />
         <Route path="/ops/backup" element={
           <ProtectedRoute><MainLayout><BackupList /></MainLayout></ProtectedRoute>
+        } />
+
+        {/* Alert */}
+        <Route path="/alerts" element={
+          <ProtectedRoute><MainLayout><AlertDashboard /></MainLayout></ProtectedRoute>
         } />
 
         {/* Log */}

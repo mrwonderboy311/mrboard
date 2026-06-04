@@ -3,7 +3,7 @@ import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Trash2, Edit, Send } from 'lucide-react'
-import { AlertChannel } from '@/types/alert'
+import type { AlertChannel } from '@/types/alert'
 import { toast } from 'sonner'
 
 interface Props {

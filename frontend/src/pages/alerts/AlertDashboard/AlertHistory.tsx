@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { api } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { AlertHistoryItem, SEVERITY_CONFIG } from '@/types/alert'
+import type { AlertHistoryItem } from '@/types/alert'
+import { SEVERITY_CONFIG } from '@/types/alert'
 
 interface Props {
   clusterId: string
@@ -35,7 +36,7 @@ export function AlertHistory({ clusterId }: Props) {
   return (
     <div>
       <div className="flex gap-2 mb-3">
-        <Select value={severity} onValueChange={setSeverity}>
+        <Select value={severity} onValueChange={v => setSeverity(v ?? '')}>
           <SelectTrigger className="w-[120px] h-7 text-xs"><SelectValue placeholder="全部级别" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="" className="text-xs">全部级别</SelectItem>
@@ -44,7 +45,7 @@ export function AlertHistory({ clusterId }: Props) {
             <SelectItem value="info" className="text-xs">Info</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={status} onValueChange={setStatus}>
+        <Select value={status} onValueChange={v => setStatus(v ?? '')}>
           <SelectTrigger className="w-[120px] h-7 text-xs"><SelectValue placeholder="全部状态" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="" className="text-xs">全部状态</SelectItem>

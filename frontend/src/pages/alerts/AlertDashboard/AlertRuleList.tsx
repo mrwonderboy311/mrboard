@@ -3,7 +3,8 @@ import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Trash2, Edit } from 'lucide-react'
-import { AlertRule, SEVERITY_CONFIG } from '@/types/alert'
+import type { AlertRule } from '@/types/alert'
+import { SEVERITY_CONFIG } from '@/types/alert'
 
 interface Props {
   clusterId: string

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
-import { ActiveAlert, SEVERITY_CONFIG } from '@/types/alert'
+import type { ActiveAlert } from '@/types/alert'
+import { SEVERITY_CONFIG } from '@/types/alert'
 
 interface Props {
   clusterId: string

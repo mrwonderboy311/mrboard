@@ -5,7 +5,7 @@ import { AlertRuleForm } from './AlertDashboard/AlertRuleForm'
 import { AlertChannelList } from './AlertDashboard/AlertChannelList'
 import { AlertChannelForm } from './AlertDashboard/AlertChannelForm'
 import { AlertHistory } from './AlertDashboard/AlertHistory'
-import { AlertRule, AlertChannel } from '@/types/alert'
+import type { AlertRule, AlertChannel } from '@/types/alert'
 
 export default function AlertDashboard() {
   const clusterId = localStorage.getItem('clusterId') || ''
