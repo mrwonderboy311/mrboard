@@ -68,6 +68,9 @@ type Xkb_cluster struct { //查询时会将大写以下划线分开
 	// LokiConfig JSON config for Loki field mapping
 	// LokiConfig Loki 字段映射 JSON 配置
 	LokiConfig string `json:"loki_config"`
+	// AlertmanagerUrl Alertmanager service URL for the cluster
+	// AlertmanagerUrl 集群的 Alertmanager 服务地址
+	AlertmanagerUrl string `json:"alertmanager_url"`
 }
 
 type ClusterCount struct {
@@ -139,7 +142,7 @@ func GetList_Cluster(id, clusterId string, page, page_size int64) (dps []Xkb_clu
 	}
 
 	qs = qs.SetCond(cond)
-	qs.Limit(page_size, offset).OrderBy("-id").All(&dps, "id", "cluster_id", "cluster_name", "idc_name", "status", "kube_version", "remarks", "lan_slbip", "wan_slbip", "loki_url", "tempo_url", "prometheus_url", "createtime")
+	qs.Limit(page_size, offset).OrderBy("-id").All(&dps, "id", "cluster_id", "cluster_name", "idc_name", "status", "kube_version", "remarks", "lan_slbip", "wan_slbip", "loki_url", "tempo_url", "prometheus_url", "alertmanager_url", "createtime")
 	//qs.All(&xfr)
 	count, _ = qs.Count()
 	return dps, count
@@ -193,6 +196,7 @@ func Add_Cluster(u *Xkb_cluster) (int64, error) {
 	Ds.TempoUrl = u.TempoUrl
 	Ds.PrometheusUrl = u.PrometheusUrl
 	Ds.LokiConfig = u.LokiConfig
+	Ds.AlertmanagerUrl = u.AlertmanagerUrl
 	num, err := o.Insert(Ds)
 	if err != nil {
 		return 0, err
@@ -272,6 +276,7 @@ func Update_Cluster(u *Xkb_cluster) (int64, error) {
 	op["TempoUrl"] = u.TempoUrl
 	op["PrometheusUrl"] = u.PrometheusUrl
 	op["LokiConfig"] = u.LokiConfig
+	op["AlertmanagerUrl"] = u.AlertmanagerUrl
 	op["Status"] = u.Status
 	//op["Updatetime"] = time.Now().Format("2006-01-02 15:04:05")
 

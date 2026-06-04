@@ -1900,3 +1900,60 @@ CREATE TABLE `xkb_index` (
 -- ----------------------------
 -- Records of xkb_index
 -- ----------------------------
+
+-- ----------------------------
+-- Table structure for alert_rule
+-- ----------------------------
+DROP TABLE IF EXISTS `alert_rule`;
+CREATE TABLE `alert_rule` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `cluster_id` varchar(64) NOT NULL DEFAULT '',
+  `name` varchar(128) NOT NULL DEFAULT '',
+  `expr` text NOT NULL,
+  `source` varchar(16) NOT NULL DEFAULT 'prometheus',
+  `duration` varchar(16) NOT NULL DEFAULT '5m',
+  `severity` varchar(16) NOT NULL DEFAULT 'warning',
+  `labels` json DEFAULT NULL,
+  `annotations` json DEFAULT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_cluster_name` (`cluster_id`,`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for alert_history
+-- ----------------------------
+DROP TABLE IF EXISTS `alert_history`;
+CREATE TABLE `alert_history` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `cluster_id` varchar(64) NOT NULL DEFAULT '',
+  `rule_name` varchar(128) NOT NULL DEFAULT '',
+  `severity` varchar(16) NOT NULL DEFAULT 'warning',
+  `status` varchar(16) NOT NULL DEFAULT 'firing',
+  `labels` json DEFAULT NULL,
+  `annotations` json DEFAULT NULL,
+  `starts_at` datetime DEFAULT NULL,
+  `ends_at` datetime DEFAULT NULL,
+  `notified` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_cluster_status` (`cluster_id`,`status`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for alert_channel
+-- ----------------------------
+DROP TABLE IF EXISTS `alert_channel`;
+CREATE TABLE `alert_channel` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `name` varchar(64) NOT NULL DEFAULT '',
+  `type` varchar(16) NOT NULL DEFAULT 'webhook',
+  `url` text NOT NULL,
+  `headers` json DEFAULT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
