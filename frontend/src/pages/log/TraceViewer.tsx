@@ -14,6 +14,11 @@ import { Search, Crosshair, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import ServiceGraph from './ServiceGraph'
+import { REDPanel } from './REDPanel'
+import { BreakdownView } from './BreakdownView'
+import { StructureView } from './StructureView'
+import { useTraceMetrics } from '@/hooks/useTraceMetrics'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 
 interface TraceEntry {
   traceID: string
@@ -40,8 +45,17 @@ export default function TraceViewer() {
   const [serviceName, setServiceName] = useState('')
   const [tags, setTags] = useState('')
   const [limit, setLimit] = useState('20')
-  const [tab, setTab] = useState<'list' | 'graph'>('list')
   const [clusterId, setClusterId] = useState(localStorage.getItem('clusterId') || '')
+
+  // RED Drilldown state
+  const [activeTab, setActiveTab] = useState<'breakdown' | 'structure' | 'traces' | 'topology'>('traces')
+  const [traceFilter, setTraceFilter] = useState<'all' | 'errors' | 'slow'>('all')
+
+  // RED Metrics
+  const { services: redServices, loading: redLoading, error: redError } = useTraceMetrics({
+    clusterId,
+    timeRange: '1h',
+  })
 
   // Search mode
   const [searchMode, setSearchMode] = useState<'trace' | 'spanid'>('trace')
@@ -109,18 +123,57 @@ export default function TraceViewer() {
 
   return (
     <div className="space-y-4">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">链路追踪</h1>
-        <div className="flex gap-1">
-          <Button variant={tab === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setTab('list')}>链路列表</Button>
-          <Button variant={tab === 'graph' ? 'default' : 'outline'} size="sm" onClick={() => setTab('graph')}>服务拓扑</Button>
-        </div>
       </div>
 
-      {tab === 'list' && (
-        <>
+      {/* RED Overview Panel */}
+      <REDPanel
+        services={redServices}
+        loading={redLoading}
+        error={redError}
+        onRateClick={() => { setTraceFilter('all'); setActiveTab('traces') }}
+        onErrorClick={() => { setTraceFilter('errors'); setActiveTab('traces') }}
+        onDurationClick={() => { setTraceFilter('slow'); setActiveTab('traces') }}
+      />
+
+      {/* Tab Navigation */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+        <TabsList>
+          <TabsTrigger value="breakdown">Breakdown</TabsTrigger>
+          <TabsTrigger value="structure">Structure</TabsTrigger>
+          <TabsTrigger value="traces">Traces</TabsTrigger>
+          <TabsTrigger value="topology">Topology</TabsTrigger>
+        </TabsList>
+
+        {/* Breakdown Tab */}
+        <TabsContent value="breakdown" className="mt-4">
+          <BreakdownView
+            services={redServices}
+            loading={redLoading}
+            onServiceClick={(svc) => { setServiceName(svc); setActiveTab('traces') }}
+          />
+        </TabsContent>
+
+        {/* Structure Tab */}
+        <TabsContent value="structure" className="mt-4">
+          <StructureView traces={[]} loading={false} />
+        </TabsContent>
+
+        {/* Traces Tab */}
+        <TabsContent value="traces" className="mt-4 space-y-3">
+          {/* Trace filter controls */}
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1">
+              <Button variant={traceFilter === 'all' ? 'default' : 'outline'} size="sm" onClick={() => setTraceFilter('all')}>全部</Button>
+              <Button variant={traceFilter === 'errors' ? 'default' : 'outline'} size="sm" onClick={() => setTraceFilter('errors')}>错误</Button>
+              <Button variant={traceFilter === 'slow' ? 'default' : 'outline'} size="sm" onClick={() => setTraceFilter('slow')}>慢调用</Button>
+            </div>
+          </div>
+
+          {/* Search form */}
           <Card><CardContent className="py-3 space-y-3">
-            {/* Mode toggle */}
             <div className="flex gap-1">
               <Button variant={searchMode === 'trace' ? 'default' : 'outline'} size="sm" onClick={() => setSearchMode('trace')}>
                 <Search size={14} className="mr-1" />链路搜索
@@ -183,6 +236,7 @@ export default function TraceViewer() {
             )}
           </CardContent></Card>
 
+          {/* Results table */}
           {searchMode === 'trace' && (
             <Card><CardContent className="p-0">
               <Table>
@@ -213,10 +267,13 @@ export default function TraceViewer() {
               </Table>
             </CardContent></Card>
           )}
-        </>
-      )}
+        </TabsContent>
 
-      {tab === 'graph' && <ServiceGraph />}
+        {/* Topology Tab */}
+        <TabsContent value="topology" className="mt-4">
+          <ServiceGraph />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
