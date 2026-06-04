@@ -35,6 +35,23 @@ func (this *LokiLogController) Labels() {
 	this.ServeJSON()
 }
 
+// 查询标签列表（带值） / Query labels with values
+func (this *LokiLogController) LabelsV2() {
+	clusterId := this.GetString("clusterId")
+	namespace := this.GetString("namespace")
+	start := this.GetString("start")
+	end := this.GetString("end")
+
+	labels, err := m.QueryLabelsWithValues(clusterId, namespace, start, end)
+	if err != nil {
+		this.Data["json"] = &map[string]interface{}{"code": -1, "msg": err.Error()}
+		this.ServeJSON()
+		return
+	}
+	this.Data["json"] = &map[string]interface{}{"code": 0, "msg": "success", "data": labels}
+	this.ServeJSON()
+}
+
 // 查询标签值
 func (this *LokiLogController) LabelValues() {
 	clusterId := this.GetString("clusterId")
@@ -169,6 +186,43 @@ func (this *LokiLogController) Levels() {
 	}
 
 	result, err := m.Levels(clusterId, namespace, services, start, end)
+	if err != nil {
+		this.Data["json"] = &map[string]interface{}{"code": -1, "msg": err.Error()}
+		this.ServeJSON()
+		return
+	}
+	this.Data["json"] = &map[string]interface{}{"code": 0, "msg": "success", "data": result}
+	this.ServeJSON()
+}
+
+// 检测日志字段 / Detect log fields
+func (this *LokiLogController) DetectedFields() {
+	clusterId := this.GetString("clusterId")
+	namespace := this.GetString("namespace")
+	services := this.GetString("services")
+	start := this.GetString("start")
+	end := this.GetString("end")
+
+	result, err := m.QueryDetectedFields(clusterId, namespace, services, start, end)
+	if err != nil {
+		this.Data["json"] = &map[string]interface{}{"code": -1, "msg": err.Error()}
+		this.ServeJSON()
+		return
+	}
+	this.Data["json"] = &map[string]interface{}{"code": 0, "msg": "success", "data": result}
+	this.ServeJSON()
+}
+
+// 查询日志模式 / Query log patterns
+func (this *LokiLogController) Patterns() {
+	clusterId := this.GetString("clusterId")
+	namespace := this.GetString("namespace")
+	services := this.GetString("services")
+	levels := this.GetString("levels")
+	start := this.GetString("start")
+	end := this.GetString("end")
+
+	result, err := m.QueryPatterns(clusterId, namespace, services, levels, start, end)
 	if err != nil {
 		this.Data["json"] = &map[string]interface{}{"code": -1, "msg": err.Error()}
 		this.ServeJSON()

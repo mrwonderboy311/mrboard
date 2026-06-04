@@ -1000,3 +1000,38 @@ func extractPattern(line string) string {
 	return line
 }
 
+// LabelWithValues 带值列表的标签 / Label with value list
+type LabelWithValues struct {
+	Name   string              `json:"name"`
+	Values []DetectedFieldValue `json:"values"`
+}
+
+// QueryLabelsWithValues 查询标签列表及其top值 / Query labels with top values
+func QueryLabelsWithValues(clusterId, namespace, start, end string) ([]LabelWithValues, error) {
+	labelNames, err := QueryLabels(clusterId, namespace, start, end)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []LabelWithValues
+	for _, name := range labelNames {
+		if name == "__name__" || name == "filename" {
+			continue
+		}
+		values, err := QueryLabelValues(clusterId, namespace, name, start, end)
+		if err != nil {
+			continue
+		}
+		lv := LabelWithValues{Name: name}
+		limit := len(values)
+		if limit > 10 {
+			limit = 10
+		}
+		for i := 0; i < limit; i++ {
+			lv.Values = append(lv.Values, DetectedFieldValue{Value: values[i], Count: 1})
+		}
+		result = append(result, lv)
+	}
+	return result, nil
+}
+
