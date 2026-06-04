@@ -2,12 +2,11 @@ import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { StatusBadge } from '@/components/shared/StatusBadge'
+import { DataTable, type Column } from '@/components/shared/DataTable'
 import YamlViewer from '@/components/shared/YamlViewer'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { Trash2, Terminal, FileText } from 'lucide-react'
@@ -93,99 +92,79 @@ export default function PodDetail() {
   if (loading) return <div className="flex items-center justify-center py-16 text-muted-foreground">加载中...</div>
   if (!detail) return <div className="flex items-center justify-center py-16 text-muted-foreground">未找到Pod详情</div>
 
+  const containerColumns: Column<ContainerInfo>[] = [
+    { key: 'name', header: '名称', render: (c) => <span className="font-mono text-xs">{c.name}</span> },
+    { key: 'image', header: '镜像', render: (c) => <span className="font-mono text-xs break-all">{c.image}</span> },
+    { key: 'state', header: '状态', render: (c) => <StatusBadge status={c.state} /> },
+    { key: 'restartCount', header: '重启次数', render: (c) => c.restartCount },
+  ]
+
+  const eventColumns: Column<KubeEvent>[] = [
+    { key: 'eventType', header: '类型', render: (e) => <StatusBadge status={e.eventType} /> },
+    { key: 'kind', header: '对象', render: (e) => e.kind },
+    { key: 'reason', header: '原因', render: (e) => e.reason },
+    { key: 'message', header: '消息', className: 'max-w-lg truncate', render: (e) => <span title={e.message}>{e.message}</span> },
+    { key: 'createTime', header: '时间', render: (e) => e.createTime },
+  ]
+
+  const infoRows: [string, string][] = [
+    ['命名空间', detail.nameSpace],
+    ['节点', detail.nodeName],
+    ['Pod IP', detail.podIp],
+    ['节点 IP', detail.hostIp],
+    ['创建时间', detail.createTime],
+    ['镜像', detail.imgUrl],
+    ['标签', detail.labels],
+    ['注解', detail.annotations],
+  ]
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{podName}</h1>
-        <Button variant="outline" onClick={() => navigate(-1)}>返回</Button>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <Button onClick={() => navigate(`/pod/log?clusterId=${clusterId}&nameSpace=${nameSpace}&podName=${podName}`)}>
-          <FileText size={14} className="mr-1" />查看日志
+      <PageHeader title={podName}>
+        <StatusBadge status={detail.podPhase} />
+        <Button variant="outline" size="sm" onClick={() => navigate(`/pod/log?clusterId=${clusterId}&nameSpace=${nameSpace}&podName=${podName}`)}>
+          <FileText size={14} className="mr-1" />日志
         </Button>
-        <Button onClick={() => navigate(`/pod/terminal?clusterId=${clusterId}&nameSpace=${nameSpace}&podName=${podName}`)}>
+        <Button variant="outline" size="sm" onClick={() => navigate(`/pod/terminal?clusterId=${clusterId}&nameSpace=${nameSpace}&podName=${podName}`)}>
           <Terminal size={14} className="mr-1" />终端
         </Button>
         <ConfirmDialog
-          trigger={<Button variant="destructive"><Trash2 size={14} className="mr-1" />删除</Button>}
+          trigger={<Button variant="destructive" size="sm"><Trash2 size={14} className="mr-1" />删除</Button>}
           title="确认删除" description={`确定删除 Pod "${podName}"？`}
           variant="destructive" onConfirm={handleDelete}
         />
-      </div>
+      </PageHeader>
 
-      <Card>
-        <CardHeader><CardTitle>基本信息</CardTitle></CardHeader>
-        <CardContent>
-          <table className="w-full text-sm">
-            <tbody>
-              {[
-                ['名称', detail.podName, '命名空间', detail.nameSpace],
-                ['状态', detail.podPhase, 'Pod IP', detail.podIp],
-                ['节点', detail.nodeName, '节点 IP', detail.hostIp],
-                ['镜像', detail.imgUrl, '重启次数', String(detail.restartCount)],
-                ['标签', detail.labels, '创建时间', detail.createTime],
-              ].map((row, i) => (
-                <tr key={i} className="border-b last:border-0">
-                  <td className="py-2 pr-4 text-muted-foreground w-24 whitespace-nowrap">{row[0]}</td>
-                  <td className="py-2 pr-8 font-mono text-xs break-all">{row[1] || '-'}</td>
-                  <td className="py-2 pr-4 text-muted-foreground w-24 whitespace-nowrap">{row[2]}</td>
-                  <td className="py-2 font-mono text-xs break-all">{row[3] || '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
-
-      <Tabs defaultValue="containers" onValueChange={handleTabChange}>
+      <Tabs defaultValue="overview" onValueChange={handleTabChange}>
         <TabsList variant="line">
+          <TabsTrigger value="overview">概览</TabsTrigger>
           <TabsTrigger value="containers">容器</TabsTrigger>
           <TabsTrigger value="events">事件</TabsTrigger>
           <TabsTrigger value="yaml">YAML</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="containers">
-          <Card><CardContent className="p-0">
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead>名称</TableHead><TableHead>镜像</TableHead><TableHead>状态</TableHead><TableHead>就绪</TableHead><TableHead>重启</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {(detail.containers || []).length === 0 ? <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">暂无容器信息</TableCell></TableRow>
-                : (detail.containers || []).map((c, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="font-mono text-xs">{c.name}</TableCell>
-                    <TableCell className="font-mono text-xs">{c.image}</TableCell>
-                    <TableCell><Badge variant={c.state === 'running' ? 'default' : 'secondary'}>{c.state}</Badge></TableCell>
-                    <TableCell><Badge variant={c.ready ? 'default' : 'destructive'}>{c.ready ? '是' : '否'}</Badge></TableCell>
-                    <TableCell>{c.restartCount}</TableCell>
-                  </TableRow>
+        <TabsContent value="overview">
+          <Card>
+            <CardHeader><CardTitle>基本信息</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+                {infoRows.map(([label, value]) => (
+                  <div key={label} className="flex gap-2">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap w-16 shrink-0">{label}</span>
+                    <span className="text-sm font-mono break-all">{value || '-'}</span>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
-          </CardContent></Card>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="containers">
+          <DataTable columns={containerColumns} data={detail.containers || []} emptyMessage="暂无容器信息" />
         </TabsContent>
 
         <TabsContent value="events">
-          <Card><CardContent className="p-0">
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead>类型</TableHead><TableHead>对象</TableHead><TableHead>消息</TableHead><TableHead>原因</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {events.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">暂无事件</TableCell></TableRow>
-                : events.map((evt, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Badge variant={evt.eventType === 'Normal' ? 'default' : 'destructive'}>{evt.eventType}</Badge></TableCell>
-                    <TableCell>{evt.kind}</TableCell>
-                    <TableCell className="max-w-lg truncate" title={evt.message}>{evt.message}</TableCell>
-                    <TableCell>{evt.reason}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent></Card>
+          <DataTable columns={eventColumns} data={events} emptyMessage="暂无事件" />
         </TabsContent>
 
         <TabsContent value="yaml">
