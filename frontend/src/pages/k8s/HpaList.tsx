@@ -1,16 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Search, FileCode, Trash2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 interface HpaItem {
   hpaName: string
@@ -50,6 +48,7 @@ export default function HpaList() {
   const [filtered, setFiltered] = useState<HpaItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchName, setSearchName] = useState('')
+  const [page, setPage] = useState(1)
   const clusterId = localStorage.getItem('clusterId') || ''
 
   const [createOpen, setCreateOpen] = useState(false)
@@ -76,6 +75,12 @@ export default function HpaList() {
 
   useEffect(() => { fetchData() }, [clusterId])
   useEffect(() => { setFiltered(searchName ? items.filter(i => i.hpaName.toLowerCase().includes(searchName.toLowerCase())) : items) }, [items, searchName])
+  useEffect(() => { setPage(1) }, [searchName])
+
+  const paged = useMemo(() => {
+    const start = (page - 1) * 20
+    return filtered.slice(start, start + 20)
+  }, [filtered, page])
 
   const handleDelete = async (item: HpaItem) => {
     if (!confirm('确定删除 ' + item.hpaName + '？')) return
@@ -104,12 +109,30 @@ export default function HpaList() {
     } catch (err) { toast.error((err as Error).message) } finally { setSubmitting(false) }
   }
 
+  const columns: Column<HpaItem>[] = [
+    { key: 'hpaName', header: '名称', className: 'font-medium', render: (d) => d.hpaName },
+    { key: 'nameSpace', header: '命名空间', render: (d) => d.nameSpace },
+    { key: 'targetRef', header: '目标', render: (d) => d.targetRef },
+    { key: 'minReplicas', header: '最小', render: (d) => d.minReplicas },
+    { key: 'maxReplicas', header: '最大', render: (d) => d.maxReplicas },
+    { key: 'currentReplicas', header: '当前副本', render: (d) => d.currentReplicas },
+    { key: 'targetCPU', header: '目标CPU', render: (d) => d.targetCPU },
+    { key: 'currentCPU', header: '当前CPU', render: (d) => d.currentCPU || '-' },
+    {
+      key: 'actions', header: '操作', render: (d) => (
+        <div className="flex gap-1">
+          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/hpa/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&hpaName=' + d.hpaName)}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => handleDelete(d)}><Trash2 size={14} className="text-destructive" /></Button>
+        </div>
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">自动伸缩[HPA]</h1>
+      <PageHeader title="自动伸缩" description="HPA 管理">
         <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />新增</Button>
-      </div>
+      </PageHeader>
       <Card><CardContent className="py-3">
         <div className="flex gap-3 items-center">
           <Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" />
@@ -117,33 +140,14 @@ export default function HpaList() {
         </div>
       </CardContent></Card>
       <Card><CardContent className="p-0">
-        <Table>
-          <TableHeader><TableRow>
-            <TableHead>名称</TableHead><TableHead>命名空间</TableHead><TableHead>目标</TableHead><TableHead>最小</TableHead><TableHead>最大</TableHead><TableHead>当前副本</TableHead><TableHead>目标CPU</TableHead><TableHead>当前CPU</TableHead><TableHead>操作</TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
-            {loading ? <TableRow><TableCell colSpan={9} className="text-center py-8">加载中...</TableCell></TableRow>
-            : filtered.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
-            : filtered.map(d => (
-              <TableRow key={d.nameSpace + '/' + d.hpaName}>
-                <TableCell className="font-medium">{d.hpaName}</TableCell>
-                <TableCell>{d.nameSpace}</TableCell>
-                <TableCell>{d.targetRef}</TableCell>
-                <TableCell>{d.minReplicas}</TableCell>
-                <TableCell>{d.maxReplicas}</TableCell>
-                <TableCell>{d.currentReplicas}</TableCell>
-                <TableCell>{d.targetCPU}</TableCell>
-                <TableCell><Badge variant={d.currentCPU ? 'default' : 'secondary'}>{d.currentCPU || '-'}</Badge></TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button variant="outline" size="sm" onClick={() => navigate('/k8s/hpa/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&hpaName=' + d.hpaName)}><FileCode size={14} /></Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDelete(d)}><Trash2 size={14} className="text-destructive" /></Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={columns as unknown as Column<Record<string, unknown>>[]}
+          data={paged as unknown as Record<string, unknown>[]}
+          loading={loading}
+          pagination={{ page, limit: 20, total: filtered.length }}
+          onPageChange={setPage}
+          emptyMessage="暂无数据"
+        />
       </CardContent></Card>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

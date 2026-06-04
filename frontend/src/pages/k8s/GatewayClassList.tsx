@@ -1,13 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import { Search, FileCode, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 interface GcItem {
   name: string
@@ -20,6 +19,7 @@ export default function GatewayClassList() {
   const navigate = useNavigate()
   const [items, setItems] = useState<GcItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
   const clusterId = localStorage.getItem('clusterId') || ''
 
   const fetchData = async () => {
@@ -32,31 +32,40 @@ export default function GatewayClassList() {
 
   useEffect(() => { fetchData() }, [clusterId])
 
+  const paged = useMemo(() => {
+    const start = (page - 1) * 20
+    return items.slice(start, start + 20)
+  }, [items, page])
+
+  const columns: Column<GcItem>[] = [
+    { key: 'name', header: '名称', className: 'font-medium', render: (d) => d.name },
+    { key: 'controller', header: '控制器', render: (d) => d.controller },
+    { key: 'description', header: '描述', render: (d) => d.description || '-' },
+    { key: 'createTime', header: '创建时间', className: 'text-sm text-muted-foreground whitespace-nowrap', render: (d) => d.createTime },
+    {
+      key: 'actions', header: '操作', render: (d) => (
+        <div className="flex gap-1">
+          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/gatewayclass/detail?clusterId=' + clusterId + '&gcName=' + d.name)}><Eye size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/gatewayclass/yaml?clusterId=' + clusterId + '&gcName=' + d.name)}><FileCode size={14} /></Button>
+        </div>
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">网关控制器[GatewayClass]</h1>
-      <Card><CardContent className="py-3">
+      <PageHeader title="网关控制器" description="GatewayClass 管理">
         <Button variant="outline" size="sm" onClick={fetchData}><Search size={14} className="mr-1" />刷新</Button>
-      </CardContent></Card>
+      </PageHeader>
       <Card><CardContent className="p-0">
-        <Table>
-          <TableHeader><TableRow>
-            <TableHead>名称</TableHead><TableHead>控制器</TableHead><TableHead>描述</TableHead><TableHead>创建时间</TableHead><TableHead>操作</TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
-            {loading ? <TableRow><TableCell colSpan={5} className="text-center py-8">加载中...</TableCell></TableRow>
-            : items.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
-            : items.map(d => (
-              <TableRow key={d.name}>
-                <TableCell className="font-medium">{d.name}</TableCell>
-                <TableCell>{d.controller}</TableCell>
-                <TableCell>{d.description || '-'}</TableCell>
-                <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{d.createTime}</TableCell>
-                <TableCell><div className="flex gap-1"><Button variant="outline" size="sm" onClick={() => navigate('/k8s/gatewayclass/detail?clusterId=' + clusterId + '&gcName=' + d.name)}><Eye size={14} /></Button><Button variant="outline" size="sm" onClick={() => navigate('/k8s/gatewayclass/yaml?clusterId=' + clusterId + '&gcName=' + d.name)}><FileCode size={14} /></Button></div></TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={columns as unknown as Column<Record<string, unknown>>[]}
+          data={paged as unknown as Record<string, unknown>[]}
+          loading={loading}
+          pagination={{ page, limit: 20, total: items.length }}
+          onPageChange={setPage}
+          emptyMessage="暂无数据"
+        />
       </CardContent></Card>
     </div>
   )

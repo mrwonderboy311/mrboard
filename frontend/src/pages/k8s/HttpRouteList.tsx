@@ -1,16 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { Search, FileCode, Trash2, Eye, Plus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 interface RouteItem {
   name: string
@@ -49,6 +48,7 @@ export default function HttpRouteList() {
   const [filtered, setFiltered] = useState<RouteItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchName, setSearchName] = useState('')
+  const [page, setPage] = useState(1)
   const clusterId = localStorage.getItem('clusterId') || ''
 
   const [createOpen, setCreateOpen] = useState(false)
@@ -63,7 +63,6 @@ export default function HttpRouteList() {
   const [formBackendService, setFormBackendService] = useState('')
   const [formBackendPort, setFormBackendPort] = useState('80')
 
-  // Enhanced fields
   const [formPathType, setFormPathType] = useState('PathPrefix')
   const [rules, setRules] = useState<RuleRow[]>([{ path: '/', pathType: 'PathPrefix', backendService: '', backendPort: '80' }])
   const [headers, setHeaders] = useState<HeaderRow[]>([])
@@ -97,7 +96,6 @@ export default function HttpRouteList() {
       rule.backendRefs = [{ name: r.backendService, port: Number(r.backendPort) || 80 }]
       return rule
     })
-    // Fallback: if no enhanced rules, use simple form fields
     if (yamlRules.length === 0 && formBackendService) {
       const match: Record<string, unknown> = { path: { type: formPathType, value: formPath || '/' } }
       if (headers.length > 0) {
@@ -150,6 +148,12 @@ ${(yamlRules.length > 0 ? yamlRules : [{ matches: [{ path: { type: 'PathPrefix',
 
   useEffect(() => { fetchData() }, [clusterId])
   useEffect(() => { setFiltered(searchName ? items.filter(i => i.name.toLowerCase().includes(searchName.toLowerCase())) : items) }, [items, searchName])
+  useEffect(() => { setPage(1) }, [searchName])
+
+  const paged = useMemo(() => {
+    const start = (page - 1) * 20
+    return filtered.slice(start, start + 20)
+  }, [filtered, page])
 
   const handleDelete = async (item: RouteItem) => {
     if (!confirm('确定删除 ' + item.name + '？')) return
@@ -176,12 +180,29 @@ ${(yamlRules.length > 0 ? yamlRules : [{ matches: [{ path: { type: 'PathPrefix',
     } catch (err) { toast.error((err as Error).message) } finally { setSubmitting(false) }
   }
 
+  const columns: Column<RouteItem>[] = [
+    { key: 'name', header: '名称', className: 'font-medium', render: (d) => d.name },
+    { key: 'nameSpace', header: '命名空间', render: (d) => d.nameSpace },
+    { key: 'hostnames', header: '主机名', render: (d) => d.hostnames || '-' },
+    { key: 'parentRefs', header: '父引用', render: (d) => d.parentRefs || '-' },
+    { key: 'rules', header: '规则数', render: (d) => d.rules },
+    { key: 'createTime', header: '创建时间', className: 'text-sm text-muted-foreground whitespace-nowrap', render: (d) => d.createTime },
+    {
+      key: 'actions', header: '操作', render: (d) => (
+        <div className="flex gap-1">
+          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/httproute/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&routeName=' + d.name)}><Eye size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/httproute/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&routeName=' + d.name)}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => handleDelete(d)}><Trash2 size={14} className="text-destructive" /></Button>
+        </div>
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">HTTP路由[HTTPRoute]</h1>
+      <PageHeader title="HTTP路由" description="HTTPRoute 管理">
         <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />新增</Button>
-      </div>
+      </PageHeader>
       <Card><CardContent className="py-3">
         <div className="flex gap-3 items-center">
           <Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" />
@@ -189,32 +210,14 @@ ${(yamlRules.length > 0 ? yamlRules : [{ matches: [{ path: { type: 'PathPrefix',
         </div>
       </CardContent></Card>
       <Card><CardContent className="p-0">
-        <Table>
-          <TableHeader><TableRow>
-            <TableHead>名称</TableHead><TableHead>命名空间</TableHead><TableHead>主机名</TableHead><TableHead>父引用</TableHead><TableHead>规则数</TableHead><TableHead>创建时间</TableHead><TableHead>操作</TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
-            {loading ? <TableRow><TableCell colSpan={7} className="text-center py-8">加载中...</TableCell></TableRow>
-            : filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
-            : filtered.map(d => (
-              <TableRow key={d.nameSpace + '/' + d.name}>
-                <TableCell className="font-medium">{d.name}</TableCell>
-                <TableCell>{d.nameSpace}</TableCell>
-                <TableCell>{d.hostnames || '-'}</TableCell>
-                <TableCell>{d.parentRefs || '-'}</TableCell>
-                <TableCell>{d.rules}</TableCell>
-                <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{d.createTime}</TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button variant="outline" size="sm" onClick={() => navigate('/k8s/httproute/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&routeName=' + d.name)}><Eye size={14} /></Button>
-                    <Button variant="outline" size="sm" onClick={() => navigate('/k8s/httproute/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&routeName=' + d.name)}><FileCode size={14} /></Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDelete(d)}><Trash2 size={14} className="text-destructive" /></Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={columns as unknown as Column<Record<string, unknown>>[]}
+          data={paged as unknown as Record<string, unknown>[]}
+          loading={loading}
+          pagination={{ page, limit: 20, total: filtered.length }}
+          onPageChange={setPage}
+          emptyMessage="暂无数据"
+        />
       </CardContent></Card>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -226,7 +229,6 @@ ${(yamlRules.length > 0 ? yamlRules : [{ matches: [{ path: { type: 'PathPrefix',
           </div>
           {createTab === 'form' ? (
             <div className="space-y-4">
-              {/* Basic Info */}
               <div className="rounded-lg border p-3 space-y-3">
                 <h4 className="text-sm font-semibold text-muted-foreground">基本信息</h4>
                 <div className="grid grid-cols-2 gap-3">
@@ -240,7 +242,6 @@ ${(yamlRules.length > 0 ? yamlRules : [{ matches: [{ path: { type: 'PathPrefix',
                 <p className="text-xs text-muted-foreground">多个主机名用英文逗号分隔</p>
               </div>
 
-              {/* Rules */}
               <div className="rounded-lg border p-3 space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-semibold text-muted-foreground">路由规则</h4>
@@ -274,7 +275,6 @@ ${(yamlRules.length > 0 ? yamlRules : [{ matches: [{ path: { type: 'PathPrefix',
                 ))}
               </div>
 
-              {/* Header Matches */}
               <div className="rounded-lg border p-3 space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-semibold text-muted-foreground">请求头匹配 <span className="text-xs font-normal">(可选)</span></h4>
@@ -290,7 +290,6 @@ ${(yamlRules.length > 0 ? yamlRules : [{ matches: [{ path: { type: 'PathPrefix',
                 ))}
               </div>
 
-              {/* Legacy fallback fields */}
               <div className="rounded-lg border p-3 space-y-3">
                 <h4 className="text-sm font-semibold text-muted-foreground">快速配置 <span className="text-xs font-normal">(单规则时使用)</span></h4>
                 <div className="grid grid-cols-3 gap-3">

@@ -1,17 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Search, FileCode, Trash2, Play, Eye, Plus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 
 interface CronJobItem {
   cronjobName: string
@@ -48,6 +47,7 @@ export default function CronJobList() {
   const [filtered, setFiltered] = useState<CronJobItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchName, setSearchName] = useState('')
+  const [page, setPage] = useState(1)
   const clusterId = localStorage.getItem('clusterId') || ''
 
   const [createOpen, setCreateOpen] = useState(false)
@@ -84,6 +84,12 @@ export default function CronJobList() {
 
   useEffect(() => { fetchData() }, [clusterId])
   useEffect(() => { setFiltered(searchName ? items.filter(i => i.cronjobName.toLowerCase().includes(searchName.toLowerCase())) : items) }, [items, searchName])
+  useEffect(() => { setPage(1) }, [searchName])
+
+  const paged = useMemo(() => {
+    const start = (page - 1) * 20
+    return filtered.slice(start, start + 20)
+  }, [filtered, page])
 
   const handleRun = async () => {
     if (!runTarget) return
@@ -123,12 +129,32 @@ export default function CronJobList() {
     } catch (err) { toast.error((err as Error).message) } finally { setSubmitting(false) }
   }
 
+  const columns: Column<CronJobItem>[] = [
+    { key: 'cronjobName', header: '名称', className: 'font-medium', render: (d) => d.cronjobName },
+    { key: 'nameSpace', header: '命名空间', render: (d) => d.nameSpace },
+    { key: 'schedule', header: '调度', className: 'font-mono text-sm', render: (d) => d.schedule },
+    { key: 'suspend', header: '暂停', render: (d) => <StatusBadge status={d.suspend ? 'Inactive' : 'Active'} /> },
+    { key: 'active', header: '活跃', render: (d) => d.active },
+    { key: 'lastSchedule', header: '上次调度', className: 'text-sm text-muted-foreground', render: (d) => d.lastSchedule || '-' },
+    { key: 'imageUrl', header: '镜像', className: 'font-mono text-xs max-w-xs truncate', render: (d) => <span title={d.imageUrl}>{d.imageUrl}</span> },
+    { key: 'createTime', header: '创建时间', className: 'text-sm text-muted-foreground whitespace-nowrap', render: (d) => d.createTime },
+    {
+      key: 'actions', header: '操作', render: (d) => (
+        <div className="flex gap-1">
+          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/cronjob/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&cronjobName=' + d.cronjobName)}><Eye size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => setRunTarget(d)}><Play size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/cronjob/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&cronjobName=' + d.cronjobName)}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => setDeleteTarget(d)}><Trash2 size={14} className="text-destructive" /></Button>
+        </div>
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">定时任务[CronJob]</h1>
+      <PageHeader title="定时任务" description="CronJob 管理">
         <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />新增</Button>
-      </div>
+      </PageHeader>
       <Card><CardContent className="py-3">
         <div className="flex gap-3 items-center">
           <Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" />
@@ -136,35 +162,14 @@ export default function CronJobList() {
         </div>
       </CardContent></Card>
       <Card><CardContent className="p-0">
-        <Table>
-          <TableHeader><TableRow>
-            <TableHead>名称</TableHead><TableHead>命名空间</TableHead><TableHead>调度</TableHead><TableHead>暂停</TableHead><TableHead>活跃</TableHead><TableHead>上次调度</TableHead><TableHead>镜像</TableHead><TableHead>创建时间</TableHead><TableHead>操作</TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
-            {loading ? <TableRow><TableCell colSpan={9} className="text-center py-8">加载中...</TableCell></TableRow>
-            : filtered.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
-            : filtered.map(d => (
-              <TableRow key={d.nameSpace + '/' + d.cronjobName}>
-                <TableCell className="font-medium">{d.cronjobName}</TableCell>
-                <TableCell>{d.nameSpace}</TableCell>
-                <TableCell className="font-mono text-sm">{d.schedule}</TableCell>
-                <TableCell><Badge variant={d.suspend ? 'destructive' : 'default'}>{d.suspend ? '是' : '否'}</Badge></TableCell>
-                <TableCell>{d.active}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">{d.lastSchedule || '-'}</TableCell>
-                <TableCell className="font-mono text-xs max-w-xs truncate" title={d.imageUrl}>{d.imageUrl}</TableCell>
-                <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{d.createTime}</TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button variant="outline" size="sm" onClick={() => navigate('/k8s/cronjob/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&cronjobName=' + d.cronjobName)}><Eye size={14} /></Button>
-                    <Button variant="outline" size="sm" onClick={() => setRunTarget(d)}><Play size={14} /></Button>
-                    <Button variant="outline" size="sm" onClick={() => navigate('/k8s/cronjob/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&cronjobName=' + d.cronjobName)}><FileCode size={14} /></Button>
-                    <Button variant="outline" size="sm" onClick={() => setDeleteTarget(d)}><Trash2 size={14} className="text-destructive" /></Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={columns as unknown as Column<Record<string, unknown>>[]}
+          data={paged as unknown as Record<string, unknown>[]}
+          loading={loading}
+          pagination={{ page, limit: 20, total: filtered.length }}
+          onPageChange={setPage}
+          emptyMessage="暂无数据"
+        />
       </CardContent></Card>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

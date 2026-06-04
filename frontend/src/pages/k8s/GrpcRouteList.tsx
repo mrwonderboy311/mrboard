@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Search, FileCode, Trash2, Eye, Plus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 interface RouteItem { name: string; nameSpace: string; hostnames: string; parentRefs: string; rules: number; createTime: string }
-
 interface BackendRow { service: string; port: string }
 
 const defaultYaml = `apiVersion: gateway.networking.k8s.io/v1
@@ -34,6 +34,7 @@ export default function GrpcRouteList() {
   const [filtered, setFiltered] = useState<RouteItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchName, setSearchName] = useState('')
+  const [page, setPage] = useState(1)
   const clusterId = localStorage.getItem('clusterId') || ''
 
   const [createOpen, setCreateOpen] = useState(false)
@@ -47,7 +48,6 @@ export default function GrpcRouteList() {
   const [formBackendService, setFormBackendService] = useState('')
   const [formBackendPort, setFormBackendPort] = useState('50051')
 
-  // Enhanced fields
   const [backends, setBackends] = useState<BackendRow[]>([{ service: '', port: '50051' }])
   const [methodService, setMethodService] = useState('')
   const [methodName, setMethodName] = useState('')
@@ -69,11 +69,7 @@ export default function GrpcRouteList() {
     if (effectiveBackends.length === 0 && formBackendService) {
       effectiveBackends.push({ service: formBackendService, port: formBackendPort })
     }
-    const matchSection = methodService || methodName ? `    - matches:
-        - method:
-            service: ${methodService || ''}
-            method: ${methodName || ''}
-` : ''
+    const matchSection = methodService || methodName ? `    - matches:\n        - method:\n            service: ${methodService || ''}\n            method: ${methodName || ''}\n` : ''
     const backendSection = (effectiveBackends.length > 0 ? effectiveBackends : [{ service: 'my-service', port: '50051' }]).map(b =>
       `        - name: ${b.service}\n          port: ${b.port}`
     ).join('\n')
@@ -104,6 +100,12 @@ ${backendSection}`
   }
   useEffect(() => { fetchData() }, [clusterId])
   useEffect(() => { setFiltered(searchName ? items.filter(i => i.name.toLowerCase().includes(searchName.toLowerCase())) : items) }, [items, searchName])
+  useEffect(() => { setPage(1) }, [searchName])
+
+  const paged = useMemo(() => {
+    const start = (page - 1) * 20
+    return filtered.slice(start, start + 20)
+  }, [filtered, page])
 
   const handleDelete = async (item: RouteItem) => {
     if (!confirm('确定删除 ' + item.name + '？')) return
@@ -127,18 +129,40 @@ ${backendSection}`
     } catch (err) { toast.error((err as Error).message) } finally { setSubmitting(false) }
   }
 
+  const columns: Column<RouteItem>[] = [
+    { key: 'name', header: '名称', className: 'font-medium', render: (d) => d.name },
+    { key: 'nameSpace', header: '命名空间', render: (d) => d.nameSpace },
+    { key: 'hostnames', header: '主机名', render: (d) => d.hostnames || '-' },
+    { key: 'parentRefs', header: '父引用', render: (d) => d.parentRefs || '-' },
+    { key: 'rules', header: '规则数', render: (d) => d.rules },
+    { key: 'createTime', header: '创建时间', className: 'text-sm text-muted-foreground whitespace-nowrap', render: (d) => d.createTime },
+    {
+      key: 'actions', header: '操作', render: (d) => (
+        <div className="flex gap-1">
+          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/grpcroute/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&routeName=' + d.name)}><Eye size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/grpcroute/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&routeName=' + d.name)}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => handleDelete(d)}><Trash2 size={14} className="text-destructive" /></Button>
+        </div>
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">GRPC路由[GRPCRoute]</h1>
+      <PageHeader title="GRPC路由" description="GRPCRoute 管理">
         <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />新增</Button>
-      </div>
+      </PageHeader>
       <Card><CardContent className="py-3"><div className="flex gap-3 items-center"><Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" /><Button variant="outline" size="sm" onClick={fetchData}><Search size={14} className="mr-1" />刷新</Button></div></CardContent></Card>
-      <Card><CardContent className="p-0"><Table><TableHeader><TableRow><TableHead>名称</TableHead><TableHead>命名空间</TableHead><TableHead>主机名</TableHead><TableHead>父引用</TableHead><TableHead>规则数</TableHead><TableHead>创建时间</TableHead><TableHead>操作</TableHead></TableRow></TableHeader>
-        <TableBody>{loading ? <TableRow><TableCell colSpan={7} className="text-center py-8">加载中...</TableCell></TableRow>
-        : filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
-        : filtered.map(d => (<TableRow key={d.nameSpace + '/' + d.name}><TableCell className="font-medium">{d.name}</TableCell><TableCell>{d.nameSpace}</TableCell><TableCell>{d.hostnames || '-'}</TableCell><TableCell>{d.parentRefs || '-'}</TableCell><TableCell>{d.rules}</TableCell><TableCell className="text-sm text-muted-foreground whitespace-nowrap">{d.createTime}</TableCell><TableCell><div className="flex gap-1"><Button variant="outline" size="sm" onClick={() => navigate('/k8s/grpcroute/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&routeName=' + d.name)}><Eye size={14} /></Button><Button variant="outline" size="sm" onClick={() => navigate('/k8s/grpcroute/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&routeName=' + d.name)}><FileCode size={14} /></Button><Button variant="outline" size="sm" onClick={() => handleDelete(d)}><Trash2 size={14} className="text-destructive" /></Button></div></TableCell></TableRow>))}</TableBody>
-      </Table></CardContent></Card>
+      <Card><CardContent className="p-0">
+        <DataTable
+          columns={columns as unknown as Column<Record<string, unknown>>[]}
+          data={paged as unknown as Record<string, unknown>[]}
+          loading={loading}
+          pagination={{ page, limit: 20, total: filtered.length }}
+          onPageChange={setPage}
+          emptyMessage="暂无数据"
+        />
+      </CardContent></Card>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
@@ -149,7 +173,6 @@ ${backendSection}`
           </div>
           {createTab === 'form' ? (
             <div className="space-y-4">
-              {/* Basic Info */}
               <div className="rounded-lg border p-3 space-y-3">
                 <h4 className="text-sm font-semibold text-muted-foreground">基本信息</h4>
                 <div className="grid grid-cols-2 gap-3">
@@ -163,7 +186,6 @@ ${backendSection}`
                 <p className="text-xs text-muted-foreground">多个主机名用英文逗号分隔</p>
               </div>
 
-              {/* Method Match */}
               <div className="rounded-lg border p-3 space-y-3">
                 <h4 className="text-sm font-semibold text-muted-foreground">gRPC 方法匹配 <span className="text-xs font-normal">(可选)</span></h4>
                 <div className="grid grid-cols-2 gap-3">
@@ -173,7 +195,6 @@ ${backendSection}`
                 <p className="text-xs text-muted-foreground">指定 gRPC 服务和方法进行精确路由匹配</p>
               </div>
 
-              {/* Multiple Backends */}
               <div className="rounded-lg border p-3 space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-semibold text-muted-foreground">后端服务</h4>
@@ -189,7 +210,6 @@ ${backendSection}`
                 ))}
               </div>
 
-              {/* Legacy fallback */}
               <div className="rounded-lg border p-3 space-y-3">
                 <h4 className="text-sm font-semibold text-muted-foreground">快速配置 <span className="text-xs font-normal">(单后端时使用)</span></h4>
                 <div className="grid grid-cols-2 gap-3">
