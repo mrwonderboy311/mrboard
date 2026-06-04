@@ -9,7 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import {
-  ChevronDown, ChevronLeft, Pause, Play, RefreshCw, Search, X, Maximize2,
+  ChevronDown, ChevronLeft, Layers, Pause, Play, RefreshCw, Search, X, Maximize2,
   Filter, Info, BarChart3, Network,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -754,12 +754,12 @@ export default function PrometheusMetrics() {
           </div>
 
           {/* Auto-generated PromQL display */}
-          <div className="mt-2 flex items-center gap-2 text-xs">
-            <span className="font-bold text-orange-500 font-mono shrink-0">PromQL</span>
-            <code className="flex-1 bg-muted/50 px-2 py-1 rounded text-[11px] font-mono truncate" title={generatedQuery}>
+          <div className="mt-2.5 flex items-center gap-2 text-xs">
+            <span className="font-bold text-amber-600 font-mono shrink-0 text-[11px] tracking-wider uppercase">PromQL</span>
+            <code className="flex-1 bg-muted/60 px-3 py-1.5 rounded-md font-mono text-[11px] truncate border border-border/50 text-foreground/80" title={generatedQuery}>
               {generatedQuery}
             </code>
-            <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={() => {
+            <Button variant="ghost" size="sm" className="h-7 px-2.5 text-[11px] text-muted-foreground hover:text-foreground" onClick={() => {
               navigator.clipboard.writeText(generatedQuery)
               toast.success('已复制 PromQL')
             }}>
@@ -947,7 +947,15 @@ export default function PrometheusMetrics() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">指标查看</h1>
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <BarChart3 size={20} className="text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight">指标查看</h1>
+            <p className="text-xs text-muted-foreground">Prometheus 指标探索与下钻</p>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <Select value={clusterId} onValueChange={(v: string | null) => { if (v) setClusterId(v) }}>
             <SelectTrigger className="w-48 h-8 text-xs"><SelectValue placeholder="选择集群" /></SelectTrigger>
@@ -974,13 +982,13 @@ export default function PrometheusMetrics() {
       <Card>
         <CardContent className="py-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-orange-500 font-mono shrink-0">PromQL</span>
+            <span className="font-bold text-amber-500 dark:text-amber-400 font-mono shrink-0 text-[11px] tracking-wider uppercase">PromQL</span>
             <Input
               value={customPromQL}
               onChange={e => setCustomPromQL(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleCustomQuery()}
               placeholder='rate(http_requests_total[5m])'
-              className="h-8 font-mono text-sm"
+              className="h-8 font-mono text-sm bg-muted/40 border-border/50 placeholder:text-muted-foreground/50"
             />
             <Button size="sm" onClick={handleCustomQuery} disabled={customLoading} className="h-8 px-3 shrink-0">
               {customLoading ? <RefreshCw size={12} className="animate-spin" /> : '查询'}
@@ -1016,30 +1024,37 @@ export default function PrometheusMetrics() {
         {sidebarOpen && (
           <div className="w-[220px] shrink-0 space-y-3">
             {/* Type filter */}
-            <Card>
-              <CardContent className="py-3 space-y-2">
-                <div className="text-xs font-semibold text-muted-foreground uppercase">指标类型</div>
-                {(['all', 'counter', 'gauge', 'histogram'] as const).map(t => (
-                  <button
-                    key={t}
-                    onClick={() => { setTypeFilter(t); setShowCount(20) }}
-                    className={`flex items-center justify-between w-full px-2 py-1.5 rounded text-xs transition-colors ${
-                      typeFilter === t ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-muted/50'
-                    }`}
-                  >
-                    <span>{t === 'all' ? '全部' : metricTypeLabel(t)}</span>
-                    <span className="text-muted-foreground">{typeCounts[t as keyof typeof typeCounts] || 0}</span>
-                  </button>
-                ))}
+            <Card className="bg-muted/30">
+              <CardContent className="py-3 space-y-1.5">
+                <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">指标类型</div>
+                {(['all', 'counter', 'gauge', 'histogram'] as const).map(t => {
+                  const active = typeFilter === t
+                  const dotColor = t === 'counter' ? 'bg-orange-500' : t === 'gauge' ? 'bg-blue-500' : t === 'histogram' ? 'bg-purple-500' : 'bg-primary'
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => { setTypeFilter(t); setShowCount(20) }}
+                      className={`flex items-center justify-between w-full px-2.5 py-2 rounded-lg text-xs transition-all ${
+                        active ? 'bg-primary/10 text-primary font-medium shadow-sm' : 'hover:bg-muted/60 text-foreground/70'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        {t !== 'all' && <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />}
+                        {t === 'all' ? '全部' : metricTypeLabel(t)}
+                      </span>
+                      <span className={`tabular-nums ${active ? 'text-primary/70' : 'text-muted-foreground'}`}>{typeCounts[t as keyof typeof typeCounts] || 0}</span>
+                    </button>
+                  )
+                })}
               </CardContent>
             </Card>
 
             {/* Label filter */}
-            <Card>
+            <Card className="bg-muted/30">
               <CardContent className="py-3 space-y-2">
-                <div className="text-xs font-semibold text-muted-foreground uppercase">标签过滤</div>
+                <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">标签过滤</div>
                 <Select value={selectedLabel} onValueChange={(v: string | null) => { if (v) { setSelectedLabel(v); setSelectedLabelValue('') } else { setSelectedLabel(''); setSelectedLabelValue('') } }}>
-                  <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="选择标签" /></SelectTrigger>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="选择标签" /></SelectTrigger>
                   <SelectContent>
                     {labelNames.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
                   </SelectContent>
@@ -1048,7 +1063,7 @@ export default function PrometheusMetrics() {
                   <div className="max-h-[200px] overflow-y-auto space-y-0.5">
                     <button
                       onClick={() => setSelectedLabelValue('')}
-                      className={`w-full text-left px-2 py-1 rounded text-xs ${!selectedLabelValue ? 'bg-blue-50 text-blue-700' : 'hover:bg-muted/50'}`}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs transition-all ${!selectedLabelValue ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted/60 text-foreground/70'}`}
                     >
                       全部
                     </button>
@@ -1056,7 +1071,7 @@ export default function PrometheusMetrics() {
                       <button
                         key={v}
                         onClick={() => setSelectedLabelValue(v)}
-                        className={`w-full text-left px-2 py-1 rounded text-xs truncate ${selectedLabelValue === v ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-muted/50'}`}
+                        className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs truncate transition-all ${selectedLabelValue === v ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted/60 text-foreground/70'}`}
                         title={v}
                       >
                         {v}
@@ -1102,7 +1117,7 @@ export default function PrometheusMetrics() {
           </div>
 
           {/* Metric cards grid */}
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {visibleNames.map(name => {
               const card = metricCards.get(name)
               const loading = card?.loading ?? true
@@ -1111,37 +1126,48 @@ export default function PrometheusMetrics() {
               const lastValue = card?.lastValue ?? '-'
               const info = detectMetricInfo(name)
               const isEmpty = !loading && !error && series.length === 0
+              const accentColor = info.type === 'counter' ? '#f97316' : info.type === 'histogram' ? '#a855f7' : '#3b82f6'
 
               return (
                 <Card
                   key={name}
-                  className={`cursor-pointer hover:border-blue-300 hover:shadow-sm transition-all group ${isEmpty ? 'opacity-50' : ''}`}
+                  className={`cursor-pointer hover:ring-2 hover:ring-primary/20 hover:shadow-md transition-[box-shadow,ring] group relative overflow-hidden ${isEmpty ? 'opacity-40' : ''}`}
                   onClick={() => handleDrilldown(name)}
                 >
-                  <CardContent className="p-2.5">
-                    <div className="flex items-start justify-between mb-0.5">
-                      <div className="text-[11px] font-medium truncate flex-1" title={name}>{name}</div>
-                      <Maximize2 size={10} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-1" />
+                  {/* Left accent bar by metric type */}
+                  <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl" style={{ backgroundColor: accentColor }} />
+                  <CardContent className="pl-4 pr-3 py-3">
+                    <div className="flex items-start justify-between mb-1">
+                      <div className="text-xs font-medium font-mono truncate flex-1 text-foreground/80" title={name}>{name}</div>
+                      <Maximize2 size={11} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-1.5" />
                     </div>
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <span className="text-base font-bold">
-                        {loading ? <span className="text-muted-foreground text-xs">...</span> : error ? <span className="text-destructive text-xs">-</span> : lastValue}
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-lg font-bold font-mono tabular-nums">
+                        {loading ? <span className="text-muted-foreground text-xs animate-pulse">加载中</span> : error ? <span className="text-destructive text-xs">错误</span> : lastValue}
                       </span>
-                      <span className={`text-[10px] px-1 py-0.5 rounded border ${metricTypeBadgeColor(info.type)}`}>
+                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${metricTypeBadgeColor(info.type)}`}>
                         {metricTypeLabel(info.type)}
-                      </span>
+                      </Badge>
                     </div>
-                    <div className="h-[36px]">
+                    <div className="h-[48px] -mx-1">
                       {loading ? (
-                        <div className="h-full bg-muted/30 rounded animate-pulse" />
+                        <div className="h-full space-y-1.5">
+                          <div className="h-2 w-3/4 bg-muted/40 rounded animate-pulse" />
+                          <div className="h-[30px] bg-muted/30 rounded animate-pulse" />
+                        </div>
                       ) : error ? (
-                        <div className="text-[10px] text-destructive truncate">{error}</div>
+                        <div className="flex items-center h-full">
+                          <span className="text-[10px] text-destructive bg-destructive/5 px-2 py-1 rounded">{error}</span>
+                        </div>
                       ) : (
-                        <Sparkline data={series[0]?.values || []} />
+                        <Sparkline data={series[0]?.values || []} height={48} />
                       )}
                     </div>
                     {series.length > 1 && (
-                      <div className="text-[10px] text-muted-foreground mt-0.5">{series.length} 条序列</div>
+                      <div className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                        <Layers size={10} />
+                        {series.length} 条序列
+                      </div>
                     )}
                   </CardContent>
                 </Card>

@@ -1,21 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
-import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 
 interface AdminUser {
   Id: number
@@ -50,6 +49,30 @@ export default function AdminList() {
   })
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null)
+
+  const columns: Column<AdminUser>[] = useMemo(() => [
+    { key: 'Id', header: 'ID', className: 'w-16', render: (u) => u.Id },
+    { key: 'Username', header: '用户名', render: (u) => <span className="font-medium">{u.Username}</span> },
+    { key: 'Telphone', header: '电话', render: (u) => u.Telphone },
+    { key: 'Nickname', header: '名字', render: (u) => u.Nickname },
+    { key: 'Department', header: '部门', render: (u) => u.Department },
+    { key: 'Lastlogintime', header: '上次登录', render: (u) => u.Lastlogintime },
+    { key: 'Lastloginip', header: '登录IP', render: (u) => u.Lastloginip },
+    { key: 'Status', header: '状态', render: (u) => <StatusBadge status={u.Status === '1' ? 'Active' : 'Inactive'} /> },
+    { key: 'Remark', header: '备注', render: (u) => u.Remark },
+    {
+      key: 'actions', header: '操作', render: (u) => (
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" render={<Link to={`/rbac/admin/edit/${u.Id}`} />}>
+            <Pencil size={14} />
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setDeleteTarget(u)}>
+            <Trash2 size={14} />
+          </Button>
+        </div>
+      ),
+    },
+  ], [])
 
   const fetchUsers = async () => {
     setLoading(true)
@@ -134,64 +157,15 @@ export default function AdminList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">管理员列表</h1>
+      <PageHeader title="管理员">
         <Button onClick={() => { resetForm(); setDialogOpen(true) }}>
           <Plus size={16} className="mr-2" />添加
         </Button>
-      </div>
+      </PageHeader>
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-16">ID</TableHead>
-                <TableHead>用户名</TableHead>
-                <TableHead>电话</TableHead>
-                <TableHead>名字</TableHead>
-                <TableHead>部门</TableHead>
-                <TableHead>上次登录</TableHead>
-                <TableHead>登录IP</TableHead>
-                <TableHead>状态</TableHead>
-                <TableHead>备注</TableHead>
-                <TableHead>操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={10} className="text-center py-8">加载中...</TableCell></TableRow>
-              ) : users.length === 0 ? (
-                <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
-              ) : users.map(u => (
-                <TableRow key={u.Id}>
-                  <TableCell>{u.Id}</TableCell>
-                  <TableCell className="font-medium">{u.Username}</TableCell>
-                  <TableCell>{u.Telphone}</TableCell>
-                  <TableCell>{u.Nickname}</TableCell>
-                  <TableCell>{u.Department}</TableCell>
-                  <TableCell>{u.Lastlogintime}</TableCell>
-                  <TableCell>{u.Lastloginip}</TableCell>
-                  <TableCell>
-                    <Badge variant={u.Status === '1' ? 'default' : 'secondary'}>
-                      {u.Status === '1' ? '启用' : '禁用'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{u.Remark}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" render={<Link to={`/rbac/admin/edit/${u.Id}`} />}>
-                        <Pencil size={14} />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setDeleteTarget(u)}>
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable columns={columns} data={users} loading={loading} emptyMessage="暂无数据" />
         </CardContent>
       </Card>
 

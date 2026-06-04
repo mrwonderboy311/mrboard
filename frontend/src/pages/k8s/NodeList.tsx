@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Search, FileCode, Trash2, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
@@ -33,7 +32,9 @@ export default function NodeK8sList() {
   const [filtered, setFiltered] = useState<NodeItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchName, setSearchName] = useState('')
+  const [page, setPage] = useState(1)
   const clusterId = localStorage.getItem('clusterId') || ''
+  const pageSize = 20
 
   const fetchData = async () => {
     setLoading(true)
@@ -51,7 +52,10 @@ export default function NodeK8sList() {
 
   useEffect(() => {
     setFiltered(searchName ? items.filter(i => i.nodeName.toLowerCase().includes(searchName.toLowerCase())) : items)
+    setPage(1)
   }, [items, searchName])
+
+  const paged = filtered.slice((page - 1) * pageSize, page * pageSize)
 
   const handleDelete = async (name: string) => {
     if (!confirm('确定删除节点 ' + name + '？')) return
@@ -62,11 +66,30 @@ export default function NodeK8sList() {
     } catch (err) { toast.error((err as Error).message) }
   }
 
+  const columns: Column<NodeItem>[] = [
+    { key: 'name', header: '名称', render: n => <span className="font-medium">{n.nodeName}</span> },
+    { key: 'state', header: '状态', render: n => <StatusBadge status={n.nodeState} /> },
+    { key: 'role', header: '角色', render: n => n.nodeRole },
+    { key: 'ip', header: 'IP', className: 'font-mono text-sm', render: n => n.nodeIp },
+    { key: 'info', header: '节点信息', className: 'text-xs', render: n => n.nodeInfo || '-' },
+    { key: 'cpu', header: 'CPU', render: n => n.cpuUsage },
+    { key: 'mem', header: '内存', render: n => n.memUsage },
+    {
+      key: 'actions',
+      header: '操作',
+      render: n => (
+        <div className="flex gap-1">
+          <Button variant="outline" size="sm" onClick={() => navigate('/node/detail?clusterId=' + clusterId + '&nodeName=' + n.nodeName)}><Eye size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/node/yaml?clusterId=' + clusterId + '&nodeName=' + n.nodeName)}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => handleDelete(n.nodeName)}><Trash2 size={14} className="text-destructive" /></Button>
+        </div>
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">节点列表</h1>
-      </div>
+      <PageHeader title="节点" description="Node 管理" />
       <Card>
         <CardContent className="py-3">
           <div className="flex gap-3 items-center">
@@ -77,44 +100,13 @@ export default function NodeK8sList() {
       </Card>
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>名称</TableHead>
-                <TableHead>状态</TableHead>
-                <TableHead>角色</TableHead>
-                <TableHead>IP</TableHead>
-                <TableHead>节点信息</TableHead>
-                <TableHead>CPU</TableHead>
-                <TableHead>内存</TableHead>
-                <TableHead>操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8">加载中...</TableCell></TableRow>
-              ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
-              ) : filtered.map(n => (
-                <TableRow key={n.nodeName}>
-                  <TableCell className="font-medium">{n.nodeName}</TableCell>
-                  <TableCell><Badge variant={n.nodeState === 'Ready' ? 'default' : 'destructive'}>{n.nodeState}</Badge></TableCell>
-                  <TableCell>{n.nodeRole}</TableCell>
-                  <TableCell className="font-mono text-sm">{n.nodeIp}</TableCell>
-                  <TableCell className="text-xs">{n.nodeInfo || '-'}</TableCell>
-                  <TableCell>{n.cpuUsage}</TableCell>
-                  <TableCell>{n.memUsage}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="outline" size="sm" onClick={() => navigate('/node/detail?clusterId=' + clusterId + '&nodeName=' + n.nodeName)}><Eye size={14} /></Button>
-                      <Button variant="outline" size="sm" onClick={() => navigate('/node/yaml?clusterId=' + clusterId + '&nodeName=' + n.nodeName)}><FileCode size={14} /></Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(n.nodeName)}><Trash2 size={14} className="text-destructive" /></Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={columns}
+            data={paged}
+            loading={loading}
+            pagination={{ page, limit: pageSize, total: filtered.length }}
+            onPageChange={setPage}
+          />
         </CardContent>
       </Card>
     </div>

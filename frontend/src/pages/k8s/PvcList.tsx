@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Search, FileCode, Eye, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 
 interface PvcItem {
   pvcName: string
@@ -39,6 +40,7 @@ export default function PvcList() {
   const [filtered, setFiltered] = useState<PvcItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchName, setSearchName] = useState('')
+  const [page, setPage] = useState(1)
   const clusterId = localStorage.getItem('clusterId') || ''
 
   const [createOpen, setCreateOpen] = useState(false)
@@ -58,6 +60,12 @@ export default function PvcList() {
   }
   useEffect(() => { fetchData() }, [clusterId])
   useEffect(() => { setFiltered(searchName ? items.filter(i => i.pvcName.toLowerCase().includes(searchName.toLowerCase())) : items) }, [items, searchName])
+  useEffect(() => { setPage(1) }, [searchName])
+
+  const paged = useMemo(() => {
+    const start = (page - 1) * 20
+    return filtered.slice(start, start + 20)
+  }, [filtered, page])
 
   const handleDelete = async (ns: string, name: string) => {
     if (!confirm('确定删除 PVC ' + name + '？')) return
@@ -94,34 +102,42 @@ ${formStorageClass ? '  storageClassName: ' + formStorageClass + '\n' : ''}  res
     } catch (err) { toast.error((err as Error).message) } finally { setSubmitting(false) }
   }
 
+  const columns: Column<PvcItem>[] = [
+    { key: 'pvcName', header: '名称', className: 'font-medium', render: (d) => d.pvcName },
+    { key: 'nameSpace', header: '命名空间', render: (d) => d.nameSpace },
+    { key: 'status', header: '状态', render: (d) => <StatusBadge status={d.status} /> },
+    { key: 'volumeName', header: '卷', render: (d) => d.volumeName || '-' },
+    { key: 'capacity', header: '容量', render: (d) => d.capacity || '-' },
+    { key: 'accessMode', header: '访问模式', render: (d) => d.accessMode },
+    { key: 'storageClass', header: '存储类', render: (d) => d.storageClass },
+    { key: 'createTime', header: '创建时间', className: 'text-sm text-muted-foreground whitespace-nowrap', render: (d) => d.createTime },
+    {
+      key: 'actions', header: '操作', render: (d) => (
+        <div className="flex gap-1">
+          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/pvc/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&pvcName=' + d.pvcName)}><Eye size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/pvc/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&pvcName=' + d.pvcName)}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => handleDelete(d.nameSpace, d.pvcName)}><Trash2 size={14} className="text-destructive" /></Button>
+        </div>
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">存储声明[PVC]</h1>
+      <PageHeader title="存储声明" description="PersistentVolumeClaim 管理">
         <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />新增</Button>
-      </div>
+      </PageHeader>
       <Card><CardContent className="py-3"><div className="flex gap-3 items-center"><Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" /><Button variant="outline" size="sm" onClick={fetchData}><Search size={14} className="mr-1" />刷新</Button></div></CardContent></Card>
-      <Card><CardContent className="p-0"><Table><TableHeader><TableRow><TableHead>名称</TableHead><TableHead>命名空间</TableHead><TableHead>状态</TableHead><TableHead>卷</TableHead><TableHead>容量</TableHead><TableHead>访问模式</TableHead><TableHead>存储类</TableHead><TableHead>创建时间</TableHead><TableHead>操作</TableHead></TableRow></TableHeader>
-        <TableBody>{loading ? <TableRow><TableCell colSpan={9} className="text-center py-8">加载中...</TableCell></TableRow>
-        : filtered.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
-        : filtered.map(d => (<TableRow key={d.nameSpace + '/' + d.pvcName}>
-          <TableCell className="font-medium">{d.pvcName}</TableCell>
-          <TableCell>{d.nameSpace}</TableCell>
-          <TableCell><Badge variant={d.status === 'Bound' ? 'default' : 'destructive'}>{d.status}</Badge></TableCell>
-          <TableCell>{d.volumeName || '-'}</TableCell>
-          <TableCell>{d.capacity || '-'}</TableCell>
-          <TableCell>{d.accessMode}</TableCell>
-          <TableCell>{d.storageClass}</TableCell>
-          <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{d.createTime}</TableCell>
-          <TableCell>
-            <div className="flex gap-1">
-              <Button variant="outline" size="sm" onClick={() => navigate('/k8s/pvc/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&pvcName=' + d.pvcName)}><Eye size={14} /></Button>
-              <Button variant="outline" size="sm" onClick={() => navigate('/k8s/pvc/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&pvcName=' + d.pvcName)}><FileCode size={14} /></Button>
-              <Button variant="outline" size="sm" onClick={() => handleDelete(d.nameSpace, d.pvcName)}><Trash2 size={14} className="text-destructive" /></Button>
-            </div>
-          </TableCell>
-        </TableRow>))}</TableBody>
-      </Table></CardContent></Card>
+      <Card><CardContent className="p-0">
+        <DataTable
+          columns={columns as unknown as Column<Record<string, unknown>>[]}
+          data={paged as unknown as Record<string, unknown>[]}
+          loading={loading}
+          pagination={{ page, limit: 20, total: filtered.length }}
+          onPageChange={setPage}
+          emptyMessage="暂无数据"
+        />
+      </CardContent></Card>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">

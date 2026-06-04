@@ -1,16 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Plus, Pencil, Eye, Trash2, Lock, BookOpen, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Article, ApiResponse } from '@/types'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 export default function WikiList() {
   const [searchParams] = useSearchParams()
@@ -18,6 +17,47 @@ export default function WikiList() {
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+
+  const columns: Column<Article>[] = useMemo(() => [
+    { key: 'id', header: 'ID', className: 'w-16', render: (a) => a.id },
+    {
+      key: 'xcolumn', header: '栏目', className: 'w-28', render: (a) => (
+        <Badge variant="outline">{a.xcolumn}</Badge>
+      ),
+    },
+    {
+      key: 'title', header: '标题', render: (a) => (
+        <Link to={`/wiki/detail/${a.id}`} className="text-blue-600 hover:underline font-medium">
+          {a.title}
+        </Link>
+      ),
+    },
+    { key: 'author', header: '作者', className: 'w-24', render: (a) => a.author },
+    { key: 'updatetime', header: '更新时间', className: 'w-40', render: (a) => <span className="text-sm text-muted-foreground">{a.updatetime}</span> },
+    {
+      key: 'authkey', header: '加密', className: 'w-16', render: (a) => (
+        a.authkey === 'true'
+          ? <Lock size={16} className="text-red-500" />
+          : <BookOpen size={16} className="text-green-600" />
+      ),
+    },
+    {
+      key: 'actions', header: '操作', className: 'w-44', render: (a) => (
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" render={<Link to={`/wiki/edit/${a.id}`} />}>
+            <Pencil size={14} />
+          </Button>
+          <Button variant="outline" size="sm" render={<Link to={`/wiki/detail/${a.id}`} />}>
+            <Eye size={14} />
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => handleDelete(a.id, a.title)}>
+            <Trash2 size={14} />
+          </Button>
+        </div>
+      ),
+    },
+  ], [])
 
   const fetchArticles = async () => {
     setLoading(true)
@@ -54,16 +94,18 @@ export default function WikiList() {
     a.author.toLowerCase().includes(search.toLowerCase())
   )
 
+  useEffect(() => { setPage(1) }, [search, xcolumnFilter])
+
+  const PAGE_SIZE = 20
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">
-          {xcolumnFilter ? `栏目: ${xcolumnFilter}` : '文档列表'}
-        </h1>
+      <PageHeader title={xcolumnFilter ? `栏目: ${xcolumnFilter}` : '文档中心'}>
         <Button render={<Link to={`/wiki/add${xcolumnFilter ? `?xcolumn=${xcolumnFilter}` : ''}`} />}>
           <Plus size={16} className="mr-2" />添加文档
         </Button>
-      </div>
+      </PageHeader>
 
       <div className="flex items-center gap-2 max-w-sm">
         <Search size={16} className="text-muted-foreground" />
@@ -76,60 +118,14 @@ export default function WikiList() {
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-16">ID</TableHead>
-                <TableHead className="w-28">栏目</TableHead>
-                <TableHead>标题</TableHead>
-                <TableHead className="w-24">作者</TableHead>
-                <TableHead className="w-40">更新时间</TableHead>
-                <TableHead className="w-16">加密</TableHead>
-                <TableHead className="w-44">操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-8">加载中...</TableCell></TableRow>
-              ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">暂无文档</TableCell></TableRow>
-              ) : filtered.map(article => (
-                <TableRow key={article.id}>
-                  <TableCell>{article.id}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{article.xcolumn}</Badge>
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    <Link to={`/wiki/detail/${article.id}`} className="text-blue-600 hover:underline">
-                      {article.title}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{article.author}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{article.updatetime}</TableCell>
-                  <TableCell>
-                    {article.authkey === 'true' ? (
-                      <Lock size={16} className="text-red-500" />
-                    ) : (
-                      <BookOpen size={16} className="text-green-600" />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" render={<Link to={`/wiki/edit/${article.id}`} />}>
-                        <Pencil size={14} />
-                      </Button>
-                      <Button variant="outline" size="sm" render={<Link to={`/wiki/detail/${article.id}`} />}>
-                        <Eye size={14} />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(article.id, article.title)}>
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={columns}
+            data={paged}
+            loading={loading}
+            emptyMessage="暂无文档"
+            pagination={{ page, limit: PAGE_SIZE, total: filtered.length }}
+            onPageChange={setPage}
+          />
         </CardContent>
       </Card>
     </div>

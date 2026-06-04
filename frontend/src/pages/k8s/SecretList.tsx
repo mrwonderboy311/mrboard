@@ -1,17 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Search, FileCode, Trash2, Eye, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 interface SecretItem {
   secretName: string
@@ -40,6 +38,7 @@ export default function SecretList() {
   const [loading, setLoading] = useState(true)
   const [searchName, setSearchName] = useState('')
   const [selectedNs, setSelectedNs] = useState('')
+  const [page, setPage] = useState(1)
   const clusterId = localStorage.getItem('clusterId') || ''
 
   const [createOpen, setCreateOpen] = useState(false)
@@ -75,6 +74,12 @@ export default function SecretList() {
     if (searchName) result = result.filter(i => i.secretName.toLowerCase().includes(searchName.toLowerCase()))
     setFiltered(result)
   }, [items, searchName, selectedNs])
+  useEffect(() => { setPage(1) }, [searchName, selectedNs])
+
+  const paged = useMemo(() => {
+    const start = (page - 1) * 20
+    return filtered.slice(start, start + 20)
+  }, [filtered, page])
 
   const handleDelete = async () => {
     if (!deleteTarget) return
@@ -109,14 +114,28 @@ export default function SecretList() {
     } catch (err) { toast.error((err as Error).message) } finally { setSubmitting(false) }
   }
 
+  const columns: Column<SecretItem>[] = [
+    { key: 'secretName', header: '名称', className: 'font-medium', render: (d) => d.secretName },
+    { key: 'nameSpace', header: '命名空间', render: (d) => d.nameSpace },
+    { key: 'secretType', header: '类型', render: (d) => d.secretType },
+    { key: 'data', header: '数据键', className: 'font-mono text-xs', render: (d) => d.data || '-' },
+    { key: 'createTime', header: '创建时间', className: 'text-sm text-muted-foreground whitespace-nowrap', render: (d) => d.createTime },
+    {
+      key: 'actions', header: '操作', render: (d) => (
+        <div className="flex gap-1">
+          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/secret/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&secretName=' + d.secretName)}><Eye size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/secret/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&secretName=' + d.secretName)}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => setDeleteTarget(d)}><Trash2 size={14} className="text-destructive" /></Button>
+        </div>
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">加密字典[Secret]</h1>
-        <div className="flex gap-2">
-          <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />新增</Button>
-        </div>
-      </div>
+      <PageHeader title="加密字典" description="Secret 管理">
+        <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />新增</Button>
+      </PageHeader>
       <Card><CardContent className="py-3">
         <div className="flex gap-3 items-center">
           <Select value={selectedNs || '__all__'} onValueChange={v => setSelectedNs(v === '__all__' ? '' : (v ?? ''))}>
@@ -131,31 +150,14 @@ export default function SecretList() {
         </div>
       </CardContent></Card>
       <Card><CardContent className="p-0">
-        <Table>
-          <TableHeader><TableRow>
-            <TableHead>名称</TableHead><TableHead>命名空间</TableHead><TableHead>类型</TableHead><TableHead>数据键</TableHead><TableHead>创建时间</TableHead><TableHead>操作</TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
-            {loading ? <TableRow><TableCell colSpan={6} className="text-center py-8">加载中...</TableCell></TableRow>
-            : filtered.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
-            : filtered.map(d => (
-              <TableRow key={d.nameSpace + '/' + d.secretName}>
-                <TableCell className="font-medium">{d.secretName}</TableCell>
-                <TableCell>{d.nameSpace}</TableCell>
-                <TableCell><Badge variant="outline">{d.secretType}</Badge></TableCell>
-                <TableCell className="font-mono text-xs">{d.data || '-'}</TableCell>
-                <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{d.createTime}</TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button variant="outline" size="sm" onClick={() => navigate('/k8s/secret/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&secretName=' + d.secretName)}><Eye size={14} /></Button>
-                    <Button variant="outline" size="sm" onClick={() => navigate('/k8s/secret/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&secretName=' + d.secretName)}><FileCode size={14} /></Button>
-                    <Button variant="outline" size="sm" onClick={() => setDeleteTarget(d)}><Trash2 size={14} className="text-destructive" /></Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={columns as unknown as Column<Record<string, unknown>>[]}
+          data={paged as unknown as Record<string, unknown>[]}
+          loading={loading}
+          pagination={{ page, limit: 20, total: filtered.length }}
+          onPageChange={setPage}
+          emptyMessage="暂无数据"
+        />
       </CardContent></Card>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

@@ -1,15 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import { Search, FileCode, Trash2, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 
 interface DsItem {
   daemonsetName: string
@@ -29,6 +28,7 @@ export default function DaemonSetList() {
   const [filtered, setFiltered] = useState<DsItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchName, setSearchName] = useState('')
+  const [page, setPage] = useState(1)
   const clusterId = localStorage.getItem('clusterId') || ''
 
   const fetchData = async () => {
@@ -41,6 +41,12 @@ export default function DaemonSetList() {
 
   useEffect(() => { fetchData() }, [clusterId])
   useEffect(() => { setFiltered(searchName ? items.filter(i => i.daemonsetName.toLowerCase().includes(searchName.toLowerCase())) : items) }, [items, searchName])
+  useEffect(() => { setPage(1) }, [searchName])
+
+  const paged = useMemo(() => {
+    const start = (page - 1) * 20
+    return filtered.slice(start, start + 20)
+  }, [filtered, page])
 
   const handleDelete = async (item: DsItem) => {
     if (!confirm('确定删除 ' + item.daemonsetName + '？')) return
@@ -51,9 +57,27 @@ export default function DaemonSetList() {
     } catch (err) { toast.error((err as Error).message) }
   }
 
+  const columns: Column<DsItem>[] = [
+    { key: 'daemonsetName', header: '名称', className: 'font-medium', render: (d) => d.daemonsetName },
+    { key: 'nameSpace', header: '命名空间', render: (d) => d.nameSpace },
+    { key: 'podNumber', header: 'Pod数', render: (d) => d.podNumber },
+    { key: 'status', header: '状态', render: (d) => <StatusBadge status={d.status} /> },
+    { key: 'imgUrl', header: '镜像', className: 'font-mono text-xs max-w-xs truncate', render: (d) => <span title={d.imgUrl}>{d.imgUrl}</span> },
+    { key: 'createTime', header: '创建时间', className: 'text-sm text-muted-foreground whitespace-nowrap', render: (d) => d.createTime },
+    {
+      key: 'actions', header: '操作', render: (d) => (
+        <div className="flex gap-1">
+          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/daemonset/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&dsName=' + d.daemonsetName)}><Eye size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/k8s/daemonset/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&dsName=' + d.daemonsetName)}><FileCode size={14} /></Button>
+          <Button variant="outline" size="sm" onClick={() => handleDelete(d)}><Trash2 size={14} className="text-destructive" /></Button>
+        </div>
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">守护进程集[DaemonSet]</h1>
+      <PageHeader title="守护进程集" description="DaemonSet 管理" />
       <Card><CardContent className="py-3">
         <div className="flex gap-3 items-center">
           <Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" />
@@ -61,32 +85,14 @@ export default function DaemonSetList() {
         </div>
       </CardContent></Card>
       <Card><CardContent className="p-0">
-        <Table>
-          <TableHeader><TableRow>
-            <TableHead>名称</TableHead><TableHead>命名空间</TableHead><TableHead>Pod数</TableHead><TableHead>状态</TableHead><TableHead>镜像</TableHead><TableHead>创建时间</TableHead><TableHead>操作</TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
-            {loading ? <TableRow><TableCell colSpan={7} className="text-center py-8">加载中...</TableCell></TableRow>
-            : filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
-            : filtered.map(d => (
-              <TableRow key={d.nameSpace + '/' + d.daemonsetName}>
-                <TableCell className="font-medium">{d.daemonsetName}</TableCell>
-                <TableCell>{d.nameSpace}</TableCell>
-                <TableCell>{d.podNumber}</TableCell>
-                <TableCell><Badge variant="outline">{d.status}</Badge></TableCell>
-                <TableCell className="font-mono text-xs max-w-xs truncate" title={d.imgUrl}>{d.imgUrl}</TableCell>
-                <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{d.createTime}</TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button variant="outline" size="sm" onClick={() => navigate('/k8s/daemonset/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&dsName=' + d.daemonsetName)}><Eye size={14} /></Button>
-                    <Button variant="outline" size="sm" onClick={() => navigate('/k8s/daemonset/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&dsName=' + d.daemonsetName)}><FileCode size={14} /></Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDelete(d)}><Trash2 size={14} className="text-destructive" /></Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={columns as unknown as Column<Record<string, unknown>>[]}
+          data={paged as unknown as Record<string, unknown>[]}
+          loading={loading}
+          pagination={{ page, limit: 20, total: filtered.length }}
+          onPageChange={setPage}
+          emptyMessage="暂无数据"
+        />
       </CardContent></Card>
     </div>
   )

@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select'
 import { Plus, Trash2, Shield, Search, ChevronsUpDown, Maximize2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 interface TreeNode {
   Id: number
@@ -252,8 +253,7 @@ export default function NodeList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">目录分组 - 节点列表</h1>
+      <PageHeader title="目录结构">
         <div className="flex gap-2">
           <Button onClick={() => {
             setForm({ Title: '', Name: '', Pid: '0', Level: '1', Group_id: '', Status: '2', Remark: '' })
@@ -265,7 +265,7 @@ export default function NodeList() {
             <Shield size={16} className="mr-2" />授权给角色
           </Button>
         </div>
-      </div>
+      </PageHeader>
 
       <Card>
         <CardContent className="p-4">

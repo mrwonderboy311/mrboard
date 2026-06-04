@@ -1,13 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import { Search } from 'lucide-react'
 import { toast } from 'sonner'
+import { DataTable, type Column } from '@/components/shared/DataTable'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 interface NodePool {
   name: string
@@ -20,6 +19,7 @@ export default function NodePoolList() {
   const [items, setItems] = useState<NodePool[]>([])
   const [loading, setLoading] = useState(true)
   const [searchName, setSearchName] = useState('')
+  const [page, setPage] = useState(1)
   const clusterId = localStorage.getItem('clusterId') || ''
 
   const fetchData = async () => {
@@ -38,9 +38,21 @@ export default function NodePoolList() {
 
   const filtered = searchName ? items.filter(i => i.name.toLowerCase().includes(searchName.toLowerCase())) : items
 
+  const paged = useMemo(() => {
+    const start = (page - 1) * 20
+    return filtered.slice(start, start + 20)
+  }, [filtered, page])
+
+  const columns: Column<NodePool>[] = [
+    { key: 'name', header: '名称', className: 'font-medium', render: (n) => n.name },
+    { key: 'nodeCount', header: '节点数', render: (n) => n.nodeCount },
+    { key: 'labels', header: '标签', className: 'font-mono text-xs', render: (n) => n.labels },
+    { key: 'status', header: '状态', render: (n) => n.status },
+  ]
+
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">节点池</h1>
+      <PageHeader title="节点池" description="Node Pool 管理" />
       <Card>
         <CardContent className="py-3">
           <div className="flex gap-3 items-center">
@@ -51,30 +63,14 @@ export default function NodePoolList() {
       </Card>
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>名称</TableHead>
-                <TableHead>节点数</TableHead>
-                <TableHead>标签</TableHead>
-                <TableHead>状态</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={4} className="text-center py-8">加载中...</TableCell></TableRow>
-              ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
-              ) : filtered.map(n => (
-                <TableRow key={n.name}>
-                  <TableCell className="font-medium">{n.name}</TableCell>
-                  <TableCell>{n.nodeCount}</TableCell>
-                  <TableCell className="font-mono text-xs">{n.labels}</TableCell>
-                  <TableCell>{n.status}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={columns as unknown as Column<Record<string, unknown>>[]}
+            data={paged as unknown as Record<string, unknown>[]}
+            loading={loading}
+            pagination={{ page, limit: 20, total: filtered.length }}
+            onPageChange={setPage}
+            emptyMessage="暂无数据"
+          />
         </CardContent>
       </Card>
     </div>
