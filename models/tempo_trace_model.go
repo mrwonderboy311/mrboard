@@ -423,6 +423,103 @@ func QueryTraceQLMetrics(clusterId, query, start, end, step string) ([]traceQLMe
 	return resp.Data.Result, nil
 }
 
+// REDServiceMetrics 单个服务的RED指标 / RED metrics for a single service
+type REDServiceMetrics struct {
+	ServiceName string     `json:"serviceName"`
+	Rate        [][]interface{} `json:"rate"`
+	ErrorRate   [][]interface{} `json:"errorRate"`
+	DurationP99 [][]interface{} `json:"durationP99"`
+}
+
+// GetREDMetrics 获取RED指标 / Get RED metrics for services
+func GetREDMetrics(clusterId, service, start, end, step string) ([]REDServiceMetrics, error) {
+	if step == "" {
+		step = "60"
+	}
+
+	// Build service filter
+	svcFilter := ""
+	if service != "" {
+		svcFilter = fmt.Sprintf(`resource.service.name="%s"`, service)
+	}
+
+	// Build 3 TraceQL queries
+	rateQuery := fmt.Sprintf(`{%s} | count_over_time() by (resource.service.name)`, svcFilter)
+	errorQuery := fmt.Sprintf(`{%s, status=error} | count_over_time() by (resource.service.name)`, svcFilter)
+	durationQuery := fmt.Sprintf(`{%s} | quantile_over_time(duration, 0.99) by (resource.service.name)`, svcFilter)
+
+	// Run queries concurrently
+	type result struct {
+		name    string
+		results []traceQLMetricsResult
+		err     error
+	}
+
+	ch := make(chan result, 3)
+	go func() {
+		r, err := QueryTraceQLMetrics(clusterId, rateQuery, start, end, step)
+		ch <- result{"rate", r, err}
+	}()
+	go func() {
+		r, err := QueryTraceQLMetrics(clusterId, errorQuery, start, end, step)
+		ch <- result{"error", r, err}
+	}()
+	go func() {
+		r, err := QueryTraceQLMetrics(clusterId, durationQuery, start, end, step)
+		ch <- result{"duration", r, err}
+	}()
+
+	// Collect results
+	rateMap := make(map[string][][]interface{})
+	errorMap := make(map[string][][]interface{})
+	durationMap := make(map[string][][]interface{})
+
+	for i := 0; i < 3; i++ {
+		res := <-ch
+		if res.err != nil {
+			continue // Skip failed queries gracefully
+		}
+		for _, r := range res.results {
+			svcName := r.Metric["resource.service.name"]
+			if svcName == "" {
+				svcName = "unknown"
+			}
+			switch res.name {
+			case "rate":
+				rateMap[svcName] = r.Values
+			case "error":
+				errorMap[svcName] = r.Values
+			case "duration":
+				durationMap[svcName] = r.Values
+			}
+		}
+	}
+
+	// Merge into REDServiceMetrics
+	svcSet := make(map[string]bool)
+	for svc := range rateMap {
+		svcSet[svc] = true
+	}
+	for svc := range errorMap {
+		svcSet[svc] = true
+	}
+	for svc := range durationMap {
+		svcSet[svc] = true
+	}
+
+	var services []REDServiceMetrics
+	for svc := range svcSet {
+		services = append(services, REDServiceMetrics{
+			ServiceName: svc,
+			Rate:        rateMap[svc],
+			ErrorRate:   errorMap[svc],
+			DurationP99: durationMap[svc],
+		})
+	}
+
+	return services, nil
+}
+
 // GetDependencies 获取服务依赖 / Get service dependencies (via Prometheus service graph metrics)
 func GetDependencies(clusterId, start, end string) ([]TempoDependency, error) {
 	// Service graph metrics are written to Prometheus by Tempo's metrics-generator

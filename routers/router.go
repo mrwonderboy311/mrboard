@@ -446,4 +446,5 @@ func init() {
 	beego.Router("/mrboard/trace/v1/TagValues", &controllers.TempoTraceController{}, "*:TagValues")       //标签值 | Tag values
 	beego.Router("/mrboard/trace/v1/TraceBySpanID", &controllers.TempoTraceController{}, "get:TraceBySpanID") //通过SpanID查找链路 | Get trace by span ID
 	beego.Router("/mrboard/trace/v1/ServiceOverview", &controllers.TempoTraceController{}, "get:ServiceOverview") //服务概览 | Service overview
+	beego.Router("/mrboard/trace/v1/REDMetrics", &controllers.TempoTraceController{}, "get:REDMetrics")           //RED指标 | RED metrics
 }

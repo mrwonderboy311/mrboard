@@ -11,6 +11,24 @@ type TempoTraceController struct {
 	beego.Controller
 }
 
+// REDMetrics 获取RED指标
+func (this *TempoTraceController) REDMetrics() {
+	clusterId := this.GetString("clusterId")
+	service := this.GetString("service")
+	start := this.GetString("start")
+	end := this.GetString("end")
+	step := this.GetString("step")
+
+	metrics, err := m.GetREDMetrics(clusterId, service, start, end, step)
+	if err != nil {
+		this.Data["json"] = &map[string]interface{}{"code": -1, "msg": err.Error()}
+		this.ServeJSON()
+		return
+	}
+	this.Data["json"] = &map[string]interface{}{"code": 0, "msg": "success", "data": map[string]interface{}{"services": metrics}}
+	this.ServeJSON()
+}
+
 // Search 搜索链路
 func (this *TempoTraceController) Search() {
 	clusterId := this.GetString("clusterId")
