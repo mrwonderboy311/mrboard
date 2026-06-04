@@ -520,96 +520,165 @@ func GetREDMetrics(clusterId, service, start, end, step string) ([]REDServiceMet
 	return services, nil
 }
 
-// GetDependencies 获取服务依赖 / Get service dependencies (via Prometheus service graph metrics)
+// GetDependencies 获取服务依赖 / Get service dependencies (via TraceQL Metrics with trace-sampling fallback)
 func GetDependencies(clusterId, start, end string) ([]TempoDependency, error) {
-	// Service graph metrics are written to Prometheus by Tempo's metrics-generator
-	promUrl := "http://kps-kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090"
+	step := "60"
 
-	// Query 1: total call counts
-	query := "traces_service_graph_request_total"
-	reqUrl := fmt.Sprintf("%s/api/v1/query?query=%s", promUrl, query)
+	// Try TraceQL Metrics for cross-service call counts (using parent.service.name)
+	callQuery := `{} | count_over_time() by (resource.service.name, parent.service.name)`
+	callResults, err := QueryTraceQLMetrics(clusterId, callQuery, start, end, step)
+	if err == nil && len(callResults) > 0 {
+		return buildDependenciesFromMetrics(clusterId, callResults, start, end, step)
+	}
 
-	body, err := tempoHttpGet(reqUrl)
+	// TraceQL Metrics failed or returned empty — fall back to sampling traces
+	return getDependenciesFromTraces(clusterId, start, end)
+}
+
+// buildDependenciesFromMetrics aggregates TraceQL Metrics results into TempoDependency array
+func buildDependenciesFromMetrics(clusterId string, callResults []traceQLMetricsResult, start, end, step string) ([]TempoDependency, error) {
+	// Sum call counts across time-series buckets
+	type edgeKey struct{ parent, child string }
+	callMap := make(map[edgeKey]int64)
+	for _, r := range callResults {
+		parent := r.Metric["parent.service.name"]
+		child := r.Metric["resource.service.name"]
+		if parent == "" || child == "" || parent == child {
+			continue
+		}
+		var total int64
+		for _, v := range r.Values {
+			if len(v) >= 2 {
+				if s, ok := v[1].(string); ok {
+					var n int64
+					fmt.Sscanf(s, "%d", &n)
+					total += n
+				}
+			}
+		}
+		callMap[edgeKey{parent, child}] += total
+	}
+
+	if len(callMap) == 0 {
+		return getDependenciesFromTraces(clusterId, start, end)
+	}
+
+	// Fetch error counts in parallel
+	errorQuery := `{status=error} | count_over_time() by (resource.service.name, parent.service.name)`
+	errorResults, _ := QueryTraceQLMetrics(clusterId, errorQuery, start, end, step)
+	errorMap := make(map[edgeKey]int64)
+	for _, r := range errorResults {
+		parent := r.Metric["parent.service.name"]
+		child := r.Metric["resource.service.name"]
+		if parent == "" || child == "" {
+			continue
+		}
+		var total int64
+		for _, v := range r.Values {
+			if len(v) >= 2 {
+				if s, ok := v[1].(string); ok {
+					var n int64
+					fmt.Sscanf(s, "%d", &n)
+					total += n
+				}
+			}
+		}
+		errorMap[edgeKey{parent, child}] += total
+	}
+
+	// Build dependency list
+	var deps []TempoDependency
+	for ek, calls := range callMap {
+		var errRate float64
+		if calls > 0 {
+			errRate = float64(errorMap[ek]) / float64(calls)
+		}
+		deps = append(deps, TempoDependency{
+			Parent:    ek.parent,
+			Child:     ek.child,
+			CallCount: calls,
+			ErrorRate: errRate,
+		})
+	}
+
+	return deps, nil
+}
+
+// getDependenciesFromTraces derives service dependencies by sampling recent traces
+func getDependenciesFromTraces(clusterId, start, end string) ([]TempoDependency, error) {
+	// Sample recent traces
+	traces, err := SearchTraces(clusterId, "", "", "", start, end, "200", "", "")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("trace sampling failed: %v", err)
+	}
+	if len(traces) == 0 {
+		return []TempoDependency{}, nil
 	}
 
-	var resp prometheusQueryResponse
-	if err := json.Unmarshal(body, &resp); err != nil {
-		return nil, fmt.Errorf("parse prometheus response error: %v", err)
+	type edgeKey struct{ parent, child string }
+	type edgeData struct {
+		callCount   int64
+		totalDurNs  int64
+		errorCount  int64
 	}
+	edgeMap := make(map[edgeKey]*edgeData)
 
-	// Build deps map keyed by parent+child
-	depMap := make(map[string]*TempoDependency)
-	for _, r := range resp.Data.Result {
-		var count int64
-		if s, ok := r.Value[1].(string); ok {
-			fmt.Sscanf(s, "%d", &count)
+	for _, t := range traces {
+		detail, err := GetTraceDetail(clusterId, t.TraceID)
+		if err != nil {
+			continue
 		}
-		key := r.Metric.Client + "|" + r.Metric.Server
-		depMap[key] = &TempoDependency{
-			Parent:    r.Metric.Client,
-			Child:     r.Metric.Server,
-			CallCount: count,
-		}
-	}
 
-	// Query 2: rpm via rate (multiply by 60 for per-minute)
-	rpmQuery := "rate(traces_service_graph_request_total[1m]) * 60"
-	rpmUrl := fmt.Sprintf("%s/api/v1/query?query=%s", promUrl, rpmQuery)
-	if rpmBody, err := tempoHttpGet(rpmUrl); err == nil {
-		var rpmResp prometheusQueryResponse
-		if json.Unmarshal(rpmBody, &rpmResp) == nil {
-			for _, r := range rpmResp.Data.Result {
-				key := r.Metric.Client + "|" + r.Metric.Server
-				if dep, ok := depMap[key]; ok {
-					if s, ok := r.Value[1].(string); ok {
-						var rpm float64
-						fmt.Sscanf(s, "%f", &rpm)
-						dep.Rpm = int64(rpm + 0.5)
-					}
-				}
+		// Build spanID -> serviceName map
+		spanSvc := make(map[string]string)
+		for _, span := range detail.Spans {
+			spanSvc[span.SpanID] = span.ServiceName
+		}
+
+		// Derive edges from parent-child span relationships across services
+		for _, span := range detail.Spans {
+			if span.ParentSpanID == "" || span.ParentSpanID == "0000000000000000" {
+				continue
+			}
+			parentSvc, ok := spanSvc[span.ParentSpanID]
+			if !ok || parentSvc == span.ServiceName {
+				continue // same-service span, skip
+			}
+			ek := edgeKey{parentSvc, span.ServiceName}
+			ed, exists := edgeMap[ek]
+			if !exists {
+				ed = &edgeData{}
+				edgeMap[ek] = ed
+			}
+			ed.callCount++
+			ed.totalDurNs += span.Duration
+			if span.Status == "error" {
+				ed.errorCount++
 			}
 		}
 	}
 
-	// Query 3: average latency from duration histogram
-	latencyQuery := "traces_service_graph_request_duration_seconds_sum / traces_service_graph_request_duration_seconds_count * 1000"
-	latencyUrl := fmt.Sprintf("%s/api/v1/query?query=%s", promUrl, latencyQuery)
-	if latencyBody, err := tempoHttpGet(latencyUrl); err == nil {
-		var latencyResp prometheusQueryResponse
-		if json.Unmarshal(latencyBody, &latencyResp) == nil {
-			for _, r := range latencyResp.Data.Result {
-				key := r.Metric.Client + "|" + r.Metric.Server
-				if dep, ok := depMap[key]; ok {
-					if s, ok := r.Value[1].(string); ok {
-						fmt.Sscanf(s, "%f", &dep.AvgLatencyMs)
-					}
-				}
-			}
-		}
-	}
-
-	// Query 4: error rate = failed / total
-	errorQuery := "traces_service_graph_request_failed_total / traces_service_graph_request_total"
-	errorUrl := fmt.Sprintf("%s/api/v1/query?query=%s", promUrl, errorQuery)
-	if errorBody, err := tempoHttpGet(errorUrl); err == nil {
-		var errorResp prometheusQueryResponse
-		if json.Unmarshal(errorBody, &errorResp) == nil {
-			for _, r := range errorResp.Data.Result {
-				key := r.Metric.Client + "|" + r.Metric.Server
-				if dep, ok := depMap[key]; ok {
-					if s, ok := r.Value[1].(string); ok {
-						fmt.Sscanf(s, "%f", &dep.ErrorRate)
-					}
-				}
-			}
-		}
+	if len(edgeMap) == 0 {
+		return []TempoDependency{}, nil
 	}
 
 	var deps []TempoDependency
-	for _, dep := range depMap {
-		deps = append(deps, *dep)
+	for ek, ed := range edgeMap {
+		var avgLatencyMs float64
+		if ed.callCount > 0 {
+			avgLatencyMs = float64(ed.totalDurNs) / float64(ed.callCount) / 1e6
+		}
+		var errRate float64
+		if ed.callCount > 0 {
+			errRate = float64(ed.errorCount) / float64(ed.callCount)
+		}
+		deps = append(deps, TempoDependency{
+			Parent:       ek.parent,
+			Child:        ek.child,
+			CallCount:    ed.callCount,
+			AvgLatencyMs: avgLatencyMs,
+			ErrorRate:    errRate,
+		})
 	}
 
 	return deps, nil
