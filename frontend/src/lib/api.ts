@@ -11,9 +11,17 @@ export async function api<T>(url: string, options?: RequestInit): Promise<T> {
     },
   })
 
-  if (res.status === 401) {
+  if (res.status === 401 || res.status === 403) {
+    localStorage.removeItem('mrboard_user')
     window.location.href = '/login'
     throw new Error('Unauthorized')
+  }
+
+  // Handle 302 redirects — backend redirected to login template, treat as auth failure
+  if (res.redirected && res.url.includes('/public/login')) {
+    localStorage.removeItem('mrboard_user')
+    window.location.href = '/login'
+    throw new Error('Session expired')
   }
 
   if (!res.ok) {
