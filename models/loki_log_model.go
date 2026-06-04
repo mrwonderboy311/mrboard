@@ -641,3 +641,397 @@ func Levels(clusterId, namespace string, services []string, start, end string) (
 	return levelCounts, nil
 }
 
+// DetectedFieldValue 检测到的字段值 / Detected field value
+type DetectedFieldValue struct {
+	Value string `json:"value"`
+	Count int    `json:"count"`
+}
+
+// DetectedField 检测到的字段 / Detected field
+type DetectedField struct {
+	Name   string              `json:"name"`
+	Type   string              `json:"type"`
+	Values []DetectedFieldValue `json:"values"`
+}
+
+// DetectedFieldsResult 检测字段结果 / Detected fields result
+type DetectedFieldsResult struct {
+	Fields []DetectedField `json:"fields"`
+}
+
+// parseLogFields 解析日志行中的字段 / Parse fields from a log line
+func parseLogFields(line string) map[string]string {
+	fields := make(map[string]string)
+
+	// Try JSON parsing
+	if strings.HasPrefix(strings.TrimSpace(line), "{") {
+		var obj map[string]interface{}
+		if json.Unmarshal([]byte(line), &obj) == nil {
+			for k, v := range obj {
+				switch v.(type) {
+				case string:
+					fields[k] = v.(string)
+				case float64:
+					fields[k] = strconv.FormatFloat(v.(float64), 'f', -1, 64)
+				case bool:
+					fields[k] = strconv.FormatBool(v.(bool))
+				}
+			}
+			return fields
+		}
+	}
+
+	// Fall back to logfmt parsing
+	parts := strings.Fields(line)
+	for _, part := range parts {
+		idx := strings.Index(part, "=")
+		if idx <= 0 {
+			continue
+		}
+		key := part[:idx]
+		val := part[idx+1:]
+		// Strip surrounding quotes
+		if len(val) >= 2 && val[0] == '"' && val[len(val)-1] == '"' {
+			val = val[1 : len(val)-1]
+		}
+		if key != "" && val != "" {
+			fields[key] = val
+		}
+	}
+
+	return fields
+}
+
+// sortFieldValues 按计数降序排序 / Sort field values by count descending
+func sortFieldValues(values []DetectedFieldValue) {
+	for i := 1; i < len(values); i++ {
+		key := values[i]
+		j := i - 1
+		for j >= 0 && values[j].Count < key.Count {
+			values[j+1] = values[j]
+			j--
+		}
+		values[j+1] = key
+	}
+}
+
+// QueryDetectedFields 从日志样本中检测结构化字段 / Detect structured fields from log samples
+func QueryDetectedFields(clusterId, namespace, servicesStr string, start, end string) (*DetectedFieldsResult, error) {
+	lokiUrl, err := GetLokiUrl(clusterId)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := GetLokiConfig(clusterId)
+
+	var services []string
+	if servicesStr != "" {
+		for _, s := range strings.Split(servicesStr, ",") {
+			s = strings.TrimSpace(s)
+			if s != "" {
+				services = append(services, s)
+			}
+		}
+	}
+
+	query := buildLogQLWithConfig(namespace, services, nil, "", "", cfg)
+
+	// Try | json pipeline first, fall back to | logfmt
+	jsonQuery := query + " | json"
+	reqUrl := fmt.Sprintf("%s/loki/api/v1/query_range?query=%s&start=%s&end=%s&limit=200&direction=forward",
+		lokiUrl, url.QueryEscape(jsonQuery), start, end)
+
+	body, err := lokiHttpGet(reqUrl)
+	if err != nil {
+		// Fall back to logfmt
+		logfmtQuery := query + " | logfmt"
+		reqUrl = fmt.Sprintf("%s/loki/api/v1/query_range?query=%s&start=%s&end=%s&limit=200&direction=forward",
+			lokiUrl, url.QueryEscape(logfmtQuery), start, end)
+		body, err = lokiHttpGet(reqUrl)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var resp lokiResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, fmt.Errorf("parse detected fields response error: %v", err)
+	}
+	if resp.Status != "success" {
+		return nil, fmt.Errorf("loki detected fields query failed: %s", resp.Status)
+	}
+
+	var streams []lokiStreamResult
+	if err := json.Unmarshal(resp.Data.Result, &streams); err != nil {
+		return nil, fmt.Errorf("parse streams error: %v", err)
+	}
+
+	// Collect field occurrences and value counts
+	type valueMap = map[string]int
+	fieldCounts := make(map[string]valueMap)
+
+	for _, stream := range streams {
+		for _, val := range stream.Values {
+			if len(val) < 2 {
+				continue
+			}
+			line := fmt.Sprintf("%v", val[1])
+			fields := parseLogFields(line)
+			for k, v := range fields {
+				if _, ok := fieldCounts[k]; !ok {
+					fieldCounts[k] = make(valueMap)
+				}
+				fieldCounts[k][v]++
+			}
+		}
+	}
+
+	// Build result with top 10 values per field
+	result := &DetectedFieldsResult{}
+	for name, vm := range fieldCounts {
+		var values []DetectedFieldValue
+		totalCount := 0
+		for val, cnt := range vm {
+			values = append(values, DetectedFieldValue{Value: val, Count: cnt})
+			totalCount += cnt
+		}
+		sortFieldValues(values)
+		if len(values) > 10 {
+			values = values[:10]
+		}
+		fieldType := "string"
+		if totalCount > 0 {
+			fieldType = detectFieldType(values)
+		}
+		result.Fields = append(result.Fields, DetectedField{
+			Name:   name,
+			Type:   fieldType,
+			Values: values,
+		})
+	}
+
+	return result, nil
+}
+
+// detectFieldType 检测字段类型 / Detect field type from values
+func detectFieldType(values []DetectedFieldValue) string {
+	for _, v := range values {
+		if v.Value == "" {
+			continue
+		}
+		if _, err := strconv.ParseFloat(v.Value, 64); err == nil {
+			return "number"
+		}
+		lower := strings.ToLower(v.Value)
+		if lower == "true" || lower == "false" {
+			return "boolean"
+		}
+	}
+	return "string"
+}
+
+// LogPattern 日志模式 / Log pattern
+type LogPattern struct {
+	Pattern    string  `json:"pattern"`
+	Count      int     `json:"count"`
+	Percentage float64 `json:"percentage"`
+	Sample     string  `json:"sample"`
+}
+
+// PatternsResult 模式检测结果 / Patterns detection result
+type PatternsResult struct {
+	Patterns []LogPattern `json:"patterns"`
+}
+
+// QueryPatterns 检测日志模式 / Detect log patterns
+func QueryPatterns(clusterId, namespace, servicesStr, levelsStr string, start, end string) (*PatternsResult, error) {
+	lokiUrl, err := GetLokiUrl(clusterId)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := GetLokiConfig(clusterId)
+
+	var services []string
+	if servicesStr != "" {
+		for _, s := range strings.Split(servicesStr, ",") {
+			s = strings.TrimSpace(s)
+			if s != "" {
+				services = append(services, s)
+			}
+		}
+	}
+
+	var levels []string
+	if levelsStr != "" {
+		for _, l := range strings.Split(levelsStr, ",") {
+			l = strings.TrimSpace(l)
+			if l != "" {
+				levels = append(levels, l)
+			}
+		}
+	}
+
+	query := buildLogQLWithConfig(namespace, services, levels, "", "", cfg)
+
+	// Try Loki native pattern API first
+	reqUrl := fmt.Sprintf("%s/loki/api/v1/patterns?query=%s&start=%s&end=%s",
+		lokiUrl, url.QueryEscape(query), start, end)
+
+	body, err := lokiHttpGet(reqUrl)
+	if err == nil {
+		var resp struct {
+			Status string `json:"status"`
+			Data   []struct {
+				Pattern string       `json:"pattern"`
+				Samples [][]string   `json:"samples"`
+			} `json:"data"`
+		}
+		if json.Unmarshal(body, &resp) == nil && resp.Status == "success" && len(resp.Data) > 0 {
+			totalSamples := 0
+			for _, p := range resp.Data {
+				totalSamples += len(p.Samples)
+			}
+			var patterns []LogPattern
+			for _, p := range resp.Data {
+				count := len(p.Samples)
+				pct := 0.0
+				if totalSamples > 0 {
+					pct = float64(count) / float64(totalSamples) * 100
+				}
+				sample := ""
+				if len(p.Samples) > 0 && len(p.Samples[0]) > 0 {
+					sample = p.Samples[0][0]
+				}
+				patterns = append(patterns, LogPattern{
+					Pattern:    p.Pattern,
+					Count:      count,
+					Percentage: pct,
+					Sample:     sample,
+				})
+			}
+			return &PatternsResult{Patterns: patterns}, nil
+		}
+	}
+
+	// Fallback: client-side pattern detection
+	return fallbackPatternDetection(clusterId, namespace, services, levels, start, end, cfg)
+}
+
+// fallbackPatternDetection 客户端模式检测 / Client-side pattern detection
+func fallbackPatternDetection(clusterId, namespace string, services, levels []string, start, end string, cfg *LokiConfig) (*PatternsResult, error) {
+	entries, _, err := QueryLogs(clusterId, namespace, services, levels, "", "", start, end, 5000, "forward")
+	if err != nil {
+		return nil, err
+	}
+
+	type patternInfo struct {
+		count    int
+		sample   string
+		pattern  string
+	}
+	patternMap := make(map[string]*patternInfo)
+
+	for _, entry := range entries {
+		p := extractPattern(entry.Message)
+		if p == "" {
+			continue
+		}
+		if pi, ok := patternMap[p]; ok {
+			pi.count++
+		} else {
+			patternMap[p] = &patternInfo{count: 1, sample: entry.Message, pattern: p}
+		}
+	}
+
+	// Sort by count descending
+	var sorted []*patternInfo
+	for _, pi := range patternMap {
+		sorted = append(sorted, pi)
+	}
+	for i := 1; i < len(sorted); i++ {
+		key := sorted[i]
+		j := i - 1
+		for j >= 0 && sorted[j].count < key.count {
+			sorted[j+1] = sorted[j]
+			j--
+		}
+		sorted[j+1] = key
+	}
+
+	// Take top 20
+	if len(sorted) > 20 {
+		sorted = sorted[:20]
+	}
+
+	total := len(entries)
+	var patterns []LogPattern
+	for _, pi := range sorted {
+		pct := 0.0
+		if total > 0 {
+			pct = float64(pi.count) / float64(total) * 100
+		}
+		patterns = append(patterns, LogPattern{
+			Pattern:    pi.pattern,
+			Count:      pi.count,
+			Percentage: pct,
+			Sample:     pi.sample,
+		})
+	}
+
+	return &PatternsResult{Patterns: patterns}, nil
+}
+
+// extractPattern 从日志行提取模式 / Extract pattern from a log line
+var (
+	uuidRe = regexp.MustCompile(`[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}`)
+	ipRe   = regexp.MustCompile(`\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b`)
+	hexRe  = regexp.MustCompile(`\b[0-9a-fA-F]{8,}\b`)
+	numRe  = regexp.MustCompile(`\b\d{2,}\b`)
+	quotedRe = regexp.MustCompile(`"[^"]{3,}"`)
+)
+
+func extractPattern(line string) string {
+	line = uuidRe.ReplaceAllString(line, "{uuid}")
+	line = ipRe.ReplaceAllString(line, "{ip}")
+	line = hexRe.ReplaceAllString(line, "{hex}")
+	line = numRe.ReplaceAllString(line, "{n}")
+	line = quotedRe.ReplaceAllString(line, `"{s}"`)
+	return line
+}
+
+// LabelWithValues 带值列表的标签 / Label with value list
+type LabelWithValues struct {
+	Name   string              `json:"name"`
+	Values []DetectedFieldValue `json:"values"`
+}
+
+// QueryLabelsWithValues 查询标签列表及其top值 / Query labels with top values
+func QueryLabelsWithValues(clusterId, namespace, start, end string) ([]LabelWithValues, error) {
+	labelNames, err := QueryLabels(clusterId, namespace, start, end)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []LabelWithValues
+	for _, name := range labelNames {
+		if name == "__name__" || name == "filename" {
+			continue
+		}
+		values, err := QueryLabelValues(clusterId, namespace, name, start, end)
+		if err != nil {
+			continue
+		}
+		lv := LabelWithValues{Name: name}
+		limit := len(values)
+		if limit > 10 {
+			limit = 10
+		}
+		for i := 0; i < limit; i++ {
+			lv.Values = append(lv.Values, DetectedFieldValue{Value: values[i], Count: 1})
+		}
+		result = append(result, lv)
+	}
+	return result, nil
+}
+

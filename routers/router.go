@@ -428,11 +428,14 @@ func init() {
 	beego.Router("/fav/v1/Del", &controllers.FavController{}, "*:Del")   //删除收藏 | Delete favorite
 
 	//Loki日志查看相关路由 | Loki log viewer related routes
-	beego.Router("/mrboard/log/v1/Labels", &controllers.LokiLogController{}, "*:Labels")           //日志标签列表 | Log labels list
+	beego.Router("/mrboard/log/v1/Labels", &controllers.LokiLogController{}, "*:Labels")             //日志标签列表 | Log labels list
+	beego.Router("/mrboard/log/v1/LabelsV2", &controllers.LokiLogController{}, "*:LabelsV2")         //标签列表（带值） | Labels with values
 	beego.Router("/mrboard/log/v1/LabelValues", &controllers.LokiLogController{}, "*:LabelValues") //日志标签值列表 | Log label values list
 	beego.Router("/mrboard/log/v1/Query", &controllers.LokiLogController{}, "*:Query")             //日志查询 | Log query
 	beego.Router("/mrboard/log/v1/Histogram", &controllers.LokiLogController{}, "*:Histogram")     //日志直方图 | Log histogram
-	beego.Router("/mrboard/log/v1/Levels", &controllers.LokiLogController{}, "*:Levels")           //日志级别分布 | Log level distribution
+	beego.Router("/mrboard/log/v1/Levels", &controllers.LokiLogController{}, "*:Levels")               //日志级别分布 | Log level distribution
+	beego.Router("/mrboard/log/v1/DetectedFields", &controllers.LokiLogController{}, "*:DetectedFields") //检测日志字段 | Detect log fields
+	beego.Router("/mrboard/log/v1/Patterns", &controllers.LokiLogController{}, "*:Patterns")               //日志模式检测 | Log pattern detection
 	beego.Handler("/mrboard/log/v1/Tail", &controllers.LokiLogTailHandler{}, true)                 //实时日志流 | Live log tail WebSocket
 
 	//Tempo链路追踪相关路由 | Tempo tracing related routes
