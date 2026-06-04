@@ -1,0 +1,525 @@
+- generic [ref=e2]:
+  - generic [ref=e5]:
+    - complementary [ref=e6]:
+      - generic [ref=e7]: MRBoard
+      - separator [ref=e8]
+      - navigation [ref=e9]:
+        - generic [ref=e10]:
+          - button "K8S管理" [active] [ref=e11]:
+            - img [ref=e12]
+            - generic [ref=e15]: K8S管理
+            - img [ref=e16]
+          - generic [ref=e491]:
+            - link "全部集群" [ref=e492] [cursor=pointer]:
+              - /url: /cluster/list
+              - img [ref=e493]
+              - text: 全部集群
+            - link "我的k8s" [ref=e495] [cursor=pointer]:
+              - /url: /rbac/myClusterList
+              - img [ref=e496]
+              - text: 我的k8s
+            - link "我的收藏" [ref=e498] [cursor=pointer]:
+              - /url: /favorite/list
+              - img [ref=e499]
+              - text: 我的收藏
+        - button "集群信息" [ref=e19]:
+          - img [ref=e20]
+          - generic [ref=e23]: 集群信息
+          - img [ref=e24]
+        - button "工作负载" [ref=e27]:
+          - img [ref=e28]
+          - generic [ref=e31]: 工作负载
+          - img [ref=e32]
+        - button "网络" [ref=e35]:
+          - img [ref=e36]
+          - generic [ref=e41]: 网络
+          - img [ref=e42]
+        - button "网关管理" [ref=e45]:
+          - img [ref=e46]
+          - generic [ref=e49]: 网关管理
+          - img [ref=e50]
+        - button "配置管理" [ref=e53]:
+          - img [ref=e54]
+          - generic [ref=e58]: 配置管理
+          - img [ref=e59]
+        - button "存储" [ref=e62]:
+          - img [ref=e63]
+          - generic [ref=e65]: 存储
+          - img [ref=e66]
+        - button "运维管理" [ref=e69]:
+          - img [ref=e70]
+          - generic [ref=e73]: 运维管理
+          - img [ref=e74]
+        - button "构建发布" [ref=e77]:
+          - img [ref=e78]
+          - generic [ref=e82]: 构建发布
+          - img [ref=e83]
+        - button "权限管理" [ref=e86]:
+          - img [ref=e87]
+          - generic [ref=e89]: 权限管理
+          - img [ref=e90]
+        - button "文档中心" [ref=e93]:
+          - img [ref=e94]
+          - generic [ref=e96]: 文档中心
+          - img [ref=e97]
+        - button "可观测性" [ref=e100]:
+          - img [ref=e101]
+          - generic [ref=e103]: 可观测性
+          - img [ref=e104]
+        - link "搜索" [ref=e106] [cursor=pointer]:
+          - /url: /search
+          - img [ref=e107]
+          - text: 搜索
+        - link "AI助手" [ref=e110] [cursor=pointer]:
+          - /url: /ai/chat
+          - img [ref=e111]
+          - text: AI助手
+      - separator [ref=e113]
+      - button "用户" [ref=e115]:
+        - img
+        - text: 用户
+    - generic [ref=e116]:
+      - banner [ref=e117]:
+        - button "用户" [ref=e118]:
+          - img
+          - text: 用户
+      - main [ref=e119]:
+        - generic [ref=e120]:
+          - generic [ref=e121]:
+            - heading "存储卷[PV]" [level=1] [ref=e122]
+            - button "新增" [ref=e124]:
+              - img
+              - text: 新增
+          - generic [ref=e127]:
+            - textbox "搜索名称" [ref=e128]
+            - button "刷新" [ref=e129]:
+              - img
+              - text: 刷新
+          - table [ref=e133]:
+            - rowgroup [ref=e134]:
+              - row "名称 状态 容量 访问模式 回收策略 存储类 声明 创建时间 操作" [ref=e135]:
+                - columnheader "名称" [ref=e136]
+                - columnheader "状态" [ref=e137]
+                - columnheader "容量" [ref=e138]
+                - columnheader "访问模式" [ref=e139]
+                - columnheader "回收策略" [ref=e140]
+                - columnheader "存储类" [ref=e141]
+                - columnheader "声明" [ref=e142]
+                - columnheader "创建时间" [ref=e143]
+                - columnheader "操作" [ref=e144]
+            - rowgroup [ref=e145]:
+              - row "pvc-000f42b1-f734-46b5-b420-9cf6fadde485 Bound 2Gi ReadWriteOnce Retain nfs-csi 命名空间:mall-swarm<br>名称:data-nacos-registry-0 2026-05-29 09:24:16" [ref=e146]:
+                - cell "pvc-000f42b1-f734-46b5-b420-9cf6fadde485" [ref=e147]
+                - cell "Bound" [ref=e148]:
+                  - generic [ref=e149]: Bound
+                - cell "2Gi" [ref=e150]
+                - cell "ReadWriteOnce" [ref=e151]
+                - cell "Retain" [ref=e152]
+                - cell "nfs-csi" [ref=e153]
+                - cell "命名空间:mall-swarm<br>名称:data-nacos-registry-0" [ref=e154]
+                - cell "2026-05-29 09:24:16" [ref=e155]
+                - cell [ref=e156]:
+                  - generic [ref=e157]:
+                    - button [ref=e158]:
+                      - img
+                    - button [ref=e159]:
+                      - img
+                    - button [ref=e160]:
+                      - img
+              - row "pvc-1c79bf42-7d38-49ff-b8a1-82f4f401cb5d Bound 1Gi ReadWriteOnce Retain nfs-csi 命名空间:mall-swarm<br>名称:logs-nacos-registry-0 2026-05-29 09:24:16" [ref=e161]:
+                - cell "pvc-1c79bf42-7d38-49ff-b8a1-82f4f401cb5d" [ref=e162]
+                - cell "Bound" [ref=e163]:
+                  - generic [ref=e164]: Bound
+                - cell "1Gi" [ref=e165]
+                - cell "ReadWriteOnce" [ref=e166]
+                - cell "Retain" [ref=e167]
+                - cell "nfs-csi" [ref=e168]
+                - cell "命名空间:mall-swarm<br>名称:logs-nacos-registry-0" [ref=e169]
+                - cell "2026-05-29 09:24:16" [ref=e170]
+                - cell [ref=e171]:
+                  - generic [ref=e172]:
+                    - button [ref=e173]:
+                      - img
+                    - button [ref=e174]:
+                      - img
+                    - button [ref=e175]:
+                      - img
+              - row "pvc-1da5ae2e-f2f9-4843-b079-1ef66e5c36dc Bound 20Gi ReadWriteOnce Retain nfs-csi 命名空间:observability<br>名称:prometheus-kps-kube-prometheus-stack-prometheus-db-prometheus-kps-kube-prometheus-stack-prometheus-0 2026-03-20 04:37:31" [ref=e176]:
+                - cell "pvc-1da5ae2e-f2f9-4843-b079-1ef66e5c36dc" [ref=e177]
+                - cell "Bound" [ref=e178]:
+                  - generic [ref=e179]: Bound
+                - cell "20Gi" [ref=e180]
+                - cell "ReadWriteOnce" [ref=e181]
+                - cell "Retain" [ref=e182]
+                - cell "nfs-csi" [ref=e183]
+                - cell "命名空间:observability<br>名称:prometheus-kps-kube-prometheus-stack-prometheus-db-prometheus-kps-kube-prometheus-stack-prometheus-0" [ref=e184]
+                - cell "2026-03-20 04:37:31" [ref=e185]
+                - cell [ref=e186]:
+                  - generic [ref=e187]:
+                    - button [ref=e188]:
+                      - img
+                    - button [ref=e189]:
+                      - img
+                    - button [ref=e190]:
+                      - img
+              - row "pvc-30734620-57ed-464f-80b9-a8290ce5ebb0 Bound 8Gi ReadWriteOnce Retain nfs-csi 命名空间:mall-swarm<br>名称:data-db-0 2026-05-29 09:24:14" [ref=e191]:
+                - cell "pvc-30734620-57ed-464f-80b9-a8290ce5ebb0" [ref=e192]
+                - cell "Bound" [ref=e193]:
+                  - generic [ref=e194]: Bound
+                - cell "8Gi" [ref=e195]
+                - cell "ReadWriteOnce" [ref=e196]
+                - cell "Retain" [ref=e197]
+                - cell "nfs-csi" [ref=e198]
+                - cell "命名空间:mall-swarm<br>名称:data-db-0" [ref=e199]
+                - cell "2026-05-29 09:24:14" [ref=e200]
+                - cell [ref=e201]:
+                  - generic [ref=e202]:
+                    - button [ref=e203]:
+                      - img
+                    - button [ref=e204]:
+                      - img
+                    - button [ref=e205]:
+                      - img
+              - row "pvc-34b0a01e-71c8-407b-81d5-1d241b50fbcf Released 10Gi ReadWriteOnce Retain nfs-csi 命名空间:observability<br>名称:storage-loki-0 2026-03-20 04:24:32" [ref=e206]:
+                - cell "pvc-34b0a01e-71c8-407b-81d5-1d241b50fbcf" [ref=e207]
+                - cell "Released" [ref=e208]:
+                  - generic [ref=e209]: Released
+                - cell "10Gi" [ref=e210]
+                - cell "ReadWriteOnce" [ref=e211]
+                - cell "Retain" [ref=e212]
+                - cell "nfs-csi" [ref=e213]
+                - cell "命名空间:observability<br>名称:storage-loki-0" [ref=e214]
+                - cell "2026-03-20 04:24:32" [ref=e215]
+                - cell [ref=e216]:
+                  - generic [ref=e217]:
+                    - button [ref=e218]:
+                      - img
+                    - button [ref=e219]:
+                      - img
+                    - button [ref=e220]:
+                      - img
+              - row "pvc-34bb7d5d-5762-4877-909b-a9d8acac1589 Released 2Gi ReadWriteOnce Retain nfs-csi 命名空间:xkube<br>名称:redis-data-redis-0 2026-06-01 04:09:29" [ref=e221]:
+                - cell "pvc-34bb7d5d-5762-4877-909b-a9d8acac1589" [ref=e222]
+                - cell "Released" [ref=e223]:
+                  - generic [ref=e224]: Released
+                - cell "2Gi" [ref=e225]
+                - cell "ReadWriteOnce" [ref=e226]
+                - cell "Retain" [ref=e227]
+                - cell "nfs-csi" [ref=e228]
+                - cell "命名空间:xkube<br>名称:redis-data-redis-0" [ref=e229]
+                - cell "2026-06-01 04:09:29" [ref=e230]
+                - cell [ref=e231]:
+                  - generic [ref=e232]:
+                    - button [ref=e233]:
+                      - img
+                    - button [ref=e234]:
+                      - img
+                    - button [ref=e235]:
+                      - img
+              - row "pvc-34feba2c-3e5f-4893-8a09-cdcac0959830 Bound 2Gi ReadWriteOnce Retain nfs-csi 命名空间:mall-swarm<br>名称:data-rabbit-0 2026-05-29 09:24:15" [ref=e236]:
+                - cell "pvc-34feba2c-3e5f-4893-8a09-cdcac0959830" [ref=e237]
+                - cell "Bound" [ref=e238]:
+                  - generic [ref=e239]: Bound
+                - cell "2Gi" [ref=e240]
+                - cell "ReadWriteOnce" [ref=e241]
+                - cell "Retain" [ref=e242]
+                - cell "nfs-csi" [ref=e243]
+                - cell "命名空间:mall-swarm<br>名称:data-rabbit-0" [ref=e244]
+                - cell "2026-05-29 09:24:15" [ref=e245]
+                - cell [ref=e246]:
+                  - generic [ref=e247]:
+                    - button [ref=e248]:
+                      - img
+                    - button [ref=e249]:
+                      - img
+                    - button [ref=e250]:
+                      - img
+              - row "pvc-479d58df-8fba-4e13-aa16-8b61f0b5f531 Bound 2Gi ReadWriteOnce Retain nfs-csi 命名空间:mall-swarm<br>名称:data-mongo-0 2026-05-29 09:24:14" [ref=e251]:
+                - cell "pvc-479d58df-8fba-4e13-aa16-8b61f0b5f531" [ref=e252]
+                - cell "Bound" [ref=e253]:
+                  - generic [ref=e254]: Bound
+                - cell "2Gi" [ref=e255]
+                - cell "ReadWriteOnce" [ref=e256]
+                - cell "Retain" [ref=e257]
+                - cell "nfs-csi" [ref=e258]
+                - cell "命名空间:mall-swarm<br>名称:data-mongo-0" [ref=e259]
+                - cell "2026-05-29 09:24:14" [ref=e260]
+                - cell [ref=e261]:
+                  - generic [ref=e262]:
+                    - button [ref=e263]:
+                      - img
+                    - button [ref=e264]:
+                      - img
+                    - button [ref=e265]:
+                      - img
+              - row "pvc-4a3c82bd-4c0a-4f6f-91a2-08a2a4fefb65 Bound 5Gi ReadWriteOnce Retain nfs-csi 命名空间:mrboard<br>名称:redis-data-redis-0 2026-06-03 02:27:42" [ref=e266]:
+                - cell "pvc-4a3c82bd-4c0a-4f6f-91a2-08a2a4fefb65" [ref=e267]
+                - cell "Bound" [ref=e268]:
+                  - generic [ref=e269]: Bound
+                - cell "5Gi" [ref=e270]
+                - cell "ReadWriteOnce" [ref=e271]
+                - cell "Retain" [ref=e272]
+                - cell "nfs-csi" [ref=e273]
+                - cell "命名空间:mrboard<br>名称:redis-data-redis-0" [ref=e274]
+                - cell "2026-06-03 02:27:42" [ref=e275]
+                - cell [ref=e276]:
+                  - generic [ref=e277]:
+                    - button [ref=e278]:
+                      - img
+                    - button [ref=e279]:
+                      - img
+                    - button [ref=e280]:
+                      - img
+              - row "pvc-5a7ab1db-b3bb-4276-b5db-e88f997942cd Bound 5Gi ReadWriteMany Retain nfs-csi 命名空间:mall-swarm<br>名称:mall-app-logs 2026-05-29 09:23:12" [ref=e281]:
+                - cell "pvc-5a7ab1db-b3bb-4276-b5db-e88f997942cd" [ref=e282]
+                - cell "Bound" [ref=e283]:
+                  - generic [ref=e284]: Bound
+                - cell "5Gi" [ref=e285]
+                - cell "ReadWriteMany" [ref=e286]
+                - cell "Retain" [ref=e287]
+                - cell "nfs-csi" [ref=e288]
+                - cell "命名空间:mall-swarm<br>名称:mall-app-logs" [ref=e289]
+                - cell "2026-05-29 09:23:12" [ref=e290]
+                - cell [ref=e291]:
+                  - generic [ref=e292]:
+                    - button [ref=e293]:
+                      - img
+                    - button [ref=e294]:
+                      - img
+                    - button [ref=e295]:
+                      - img
+              - row "pvc-70722a5c-e0ca-4e8c-a3ad-be146a0358d3 Bound 2Gi ReadWriteOnce Retain nfs-csi 命名空间:observability<br>名称:storage-kps-grafana-0 2026-05-29 07:59:33" [ref=e296]:
+                - cell "pvc-70722a5c-e0ca-4e8c-a3ad-be146a0358d3" [ref=e297]
+                - cell "Bound" [ref=e298]:
+                  - generic [ref=e299]: Bound
+                - cell "2Gi" [ref=e300]
+                - cell "ReadWriteOnce" [ref=e301]
+                - cell "Retain" [ref=e302]
+                - cell "nfs-csi" [ref=e303]
+                - cell "命名空间:observability<br>名称:storage-kps-grafana-0" [ref=e304]
+                - cell "2026-05-29 07:59:33" [ref=e305]
+                - cell [ref=e306]:
+                  - generic [ref=e307]:
+                    - button [ref=e308]:
+                      - img
+                    - button [ref=e309]:
+                      - img
+                    - button [ref=e310]:
+                      - img
+              - row "pvc-9fc19af0-618c-4e17-ae2e-8ae782cbb56f Bound 1Gi ReadWriteMany Retain nfs-csi 命名空间:default<br>名称:nfs-sc-smoke 2026-03-20 04:23:46" [ref=e311]:
+                - cell "pvc-9fc19af0-618c-4e17-ae2e-8ae782cbb56f" [ref=e312]
+                - cell "Bound" [ref=e313]:
+                  - generic [ref=e314]: Bound
+                - cell "1Gi" [ref=e315]
+                - cell "ReadWriteMany" [ref=e316]
+                - cell "Retain" [ref=e317]
+                - cell "nfs-csi" [ref=e318]
+                - cell "命名空间:default<br>名称:nfs-sc-smoke" [ref=e319]
+                - cell "2026-03-20 04:23:46" [ref=e320]
+                - cell [ref=e321]:
+                  - generic [ref=e322]:
+                    - button [ref=e323]:
+                      - img
+                    - button [ref=e324]:
+                      - img
+                    - button [ref=e325]:
+                      - img
+              - row "pvc-aaf64891-876f-4a3e-ba3a-65a5a82a78d1 Bound 5Gi ReadWriteOnce Retain nfs-csi 命名空间:observability<br>名称:alertmanager-kps-kube-prometheus-stack-alertmanager-db-alertmanager-kps-kube-prometheus-stack-alertmanager-0 2026-03-20 08:07:47" [ref=e326]:
+                - cell "pvc-aaf64891-876f-4a3e-ba3a-65a5a82a78d1" [ref=e327]
+                - cell "Bound" [ref=e328]:
+                  - generic [ref=e329]: Bound
+                - cell "5Gi" [ref=e330]
+                - cell "ReadWriteOnce" [ref=e331]
+                - cell "Retain" [ref=e332]
+                - cell "nfs-csi" [ref=e333]
+                - cell "命名空间:observability<br>名称:alertmanager-kps-kube-prometheus-stack-alertmanager-db-alertmanager-kps-kube-prometheus-stack-alertmanager-0" [ref=e334]
+                - cell "2026-03-20 08:07:47" [ref=e335]
+                - cell [ref=e336]:
+                  - generic [ref=e337]:
+                    - button [ref=e338]:
+                      - img
+                    - button [ref=e339]:
+                      - img
+                    - button [ref=e340]:
+                      - img
+              - row "pvc-b521a524-64a8-4bc5-a3f7-79ee3fae80ee Released 10Gi ReadWriteOnce Retain nfs-csi 命名空间:xkube<br>名称:mysql-data-mysql-0 2026-06-01 04:09:29" [ref=e341]:
+                - cell "pvc-b521a524-64a8-4bc5-a3f7-79ee3fae80ee" [ref=e342]
+                - cell "Released" [ref=e343]:
+                  - generic [ref=e344]: Released
+                - cell "10Gi" [ref=e345]
+                - cell "ReadWriteOnce" [ref=e346]
+                - cell "Retain" [ref=e347]
+                - cell "nfs-csi" [ref=e348]
+                - cell "命名空间:xkube<br>名称:mysql-data-mysql-0" [ref=e349]
+                - cell "2026-06-01 04:09:29" [ref=e350]
+                - cell [ref=e351]:
+                  - generic [ref=e352]:
+                    - button [ref=e353]:
+                      - img
+                    - button [ref=e354]:
+                      - img
+                    - button [ref=e355]:
+                      - img
+              - row "pvc-c1c352b0-a991-41f2-aab3-735cbc99c6d6 Bound 2Gi ReadWriteOnce Retain nfs-csi 命名空间:mall-swarm<br>名称:data-redis-0 2026-05-29 09:24:14" [ref=e356]:
+                - cell "pvc-c1c352b0-a991-41f2-aab3-735cbc99c6d6" [ref=e357]
+                - cell "Bound" [ref=e358]:
+                  - generic [ref=e359]: Bound
+                - cell "2Gi" [ref=e360]
+                - cell "ReadWriteOnce" [ref=e361]
+                - cell "Retain" [ref=e362]
+                - cell "nfs-csi" [ref=e363]
+                - cell "命名空间:mall-swarm<br>名称:data-redis-0" [ref=e364]
+                - cell "2026-05-29 09:24:14" [ref=e365]
+                - cell [ref=e366]:
+                  - generic [ref=e367]:
+                    - button [ref=e368]:
+                      - img
+                    - button [ref=e369]:
+                      - img
+                    - button [ref=e370]:
+                      - img
+              - row "pvc-c537c0cd-95ff-4e9c-9833-568ed5d65070 Bound 5Gi ReadWriteOnce Retain nfs-csi 命名空间:observability<br>名称:data-pyroscope-0 2026-05-30 14:25:40" [ref=e371]:
+                - cell "pvc-c537c0cd-95ff-4e9c-9833-568ed5d65070" [ref=e372]
+                - cell "Bound" [ref=e373]:
+                  - generic [ref=e374]: Bound
+                - cell "5Gi" [ref=e375]
+                - cell "ReadWriteOnce" [ref=e376]
+                - cell "Retain" [ref=e377]
+                - cell "nfs-csi" [ref=e378]
+                - cell "命名空间:observability<br>名称:data-pyroscope-0" [ref=e379]
+                - cell "2026-05-30 14:25:40" [ref=e380]
+                - cell [ref=e381]:
+                  - generic [ref=e382]:
+                    - button [ref=e383]:
+                      - img
+                    - button [ref=e384]:
+                      - img
+                    - button [ref=e385]:
+                      - img
+              - row "pvc-c659a092-ed90-4215-a8ba-1cdb7a8c9ed9 Bound 10Gi ReadWriteOnce Retain nfs-csi 命名空间:observability<br>名称:storage-loki-0 2026-05-30 15:26:29" [ref=e386]:
+                - cell "pvc-c659a092-ed90-4215-a8ba-1cdb7a8c9ed9" [ref=e387]
+                - cell "Bound" [ref=e388]:
+                  - generic [ref=e389]: Bound
+                - cell "10Gi" [ref=e390]
+                - cell "ReadWriteOnce" [ref=e391]
+                - cell "Retain" [ref=e392]
+                - cell "nfs-csi" [ref=e393]
+                - cell "命名空间:observability<br>名称:storage-loki-0" [ref=e394]
+                - cell "2026-05-30 15:26:29" [ref=e395]
+                - cell [ref=e396]:
+                  - generic [ref=e397]:
+                    - button [ref=e398]:
+                      - img
+                    - button [ref=e399]:
+                      - img
+                    - button [ref=e400]:
+                      - img
+              - row "pvc-d7745cef-1965-4cf3-9f9f-c55f5a9e7358 Released 10Gi ReadWriteOnce Retain nfs-csi 命名空间:observability<br>名称:storage-loki-0 2026-04-17 07:24:40" [ref=e401]:
+                - cell "pvc-d7745cef-1965-4cf3-9f9f-c55f5a9e7358" [ref=e402]
+                - cell "Released" [ref=e403]:
+                  - generic [ref=e404]: Released
+                - cell "10Gi" [ref=e405]
+                - cell "ReadWriteOnce" [ref=e406]
+                - cell "Retain" [ref=e407]
+                - cell "nfs-csi" [ref=e408]
+                - cell "命名空间:observability<br>名称:storage-loki-0" [ref=e409]
+                - cell "2026-04-17 07:24:40" [ref=e410]
+                - cell [ref=e411]:
+                  - generic [ref=e412]:
+                    - button [ref=e413]:
+                      - img
+                    - button [ref=e414]:
+                      - img
+                    - button [ref=e415]:
+                      - img
+              - row "pvc-e10b0837-6336-4558-96f1-0efd1f8dcb04 Bound 2Gi ReadWriteOnce Retain nfs-csi 命名空间:cinema-go<br>名称:mongo-data 2026-03-24 08:55:03" [ref=e416]:
+                - cell "pvc-e10b0837-6336-4558-96f1-0efd1f8dcb04" [ref=e417]
+                - cell "Bound" [ref=e418]:
+                  - generic [ref=e419]: Bound
+                - cell "2Gi" [ref=e420]
+                - cell "ReadWriteOnce" [ref=e421]
+                - cell "Retain" [ref=e422]
+                - cell "nfs-csi" [ref=e423]
+                - cell "命名空间:cinema-go<br>名称:mongo-data" [ref=e424]
+                - cell "2026-03-24 08:55:03" [ref=e425]
+                - cell [ref=e426]:
+                  - generic [ref=e427]:
+                    - button [ref=e428]:
+                      - img
+                    - button [ref=e429]:
+                      - img
+                    - button [ref=e430]:
+                      - img
+              - row "pvc-f1f3993d-2ffb-48d5-8e36-7f8c975cc151 Released 10Gi ReadWriteOnce Retain nfs-csi 命名空间:observability<br>名称:storage-loki-0 2026-05-29 08:04:11" [ref=e431]:
+                - cell "pvc-f1f3993d-2ffb-48d5-8e36-7f8c975cc151" [ref=e432]
+                - cell "Released" [ref=e433]:
+                  - generic [ref=e434]: Released
+                - cell "10Gi" [ref=e435]
+                - cell "ReadWriteOnce" [ref=e436]
+                - cell "Retain" [ref=e437]
+                - cell "nfs-csi" [ref=e438]
+                - cell "命名空间:observability<br>名称:storage-loki-0" [ref=e439]
+                - cell "2026-05-29 08:04:11" [ref=e440]
+                - cell [ref=e441]:
+                  - generic [ref=e442]:
+                    - button [ref=e443]:
+                      - img
+                    - button [ref=e444]:
+                      - img
+                    - button [ref=e445]:
+                      - img
+              - row "pvc-f779b01e-b867-4717-9da4-8d7ec155c886 Bound 10Gi ReadWriteOnce Retain nfs-csi 命名空间:mrboard<br>名称:mysql-data-mysql-0 2026-06-03 02:27:27" [ref=e446]:
+                - cell "pvc-f779b01e-b867-4717-9da4-8d7ec155c886" [ref=e447]
+                - cell "Bound" [ref=e448]:
+                  - generic [ref=e449]: Bound
+                - cell "10Gi" [ref=e450]
+                - cell "ReadWriteOnce" [ref=e451]
+                - cell "Retain" [ref=e452]
+                - cell "nfs-csi" [ref=e453]
+                - cell "命名空间:mrboard<br>名称:mysql-data-mysql-0" [ref=e454]
+                - cell "2026-06-03 02:27:27" [ref=e455]
+                - cell [ref=e456]:
+                  - generic [ref=e457]:
+                    - button [ref=e458]:
+                      - img
+                    - button [ref=e459]:
+                      - img
+                    - button [ref=e460]:
+                      - img
+              - row "pvc-f7c58909-a1f5-4e66-a5b3-d5709c242c5b Bound 10Gi ReadWriteOnce Retain nfs-csi 命名空间:observability<br>名称:storage-tempo-0 2026-03-20 04:38:15" [ref=e461]:
+                - cell "pvc-f7c58909-a1f5-4e66-a5b3-d5709c242c5b" [ref=e462]
+                - cell "Bound" [ref=e463]:
+                  - generic [ref=e464]: Bound
+                - cell "10Gi" [ref=e465]
+                - cell "ReadWriteOnce" [ref=e466]
+                - cell "Retain" [ref=e467]
+                - cell "nfs-csi" [ref=e468]
+                - cell "命名空间:observability<br>名称:storage-tempo-0" [ref=e469]
+                - cell "2026-03-20 04:38:15" [ref=e470]
+                - cell [ref=e471]:
+                  - generic [ref=e472]:
+                    - button [ref=e473]:
+                      - img
+                    - button [ref=e474]:
+                      - img
+                    - button [ref=e475]:
+                      - img
+              - row "pvc-f953ebe6-0977-4dae-9162-7cb93b88774d Bound 5Gi ReadWriteOnce Retain nfs-csi 命名空间:mall-swarm<br>名称:data-es-0 2026-05-29 09:24:15" [ref=e476]:
+                - cell "pvc-f953ebe6-0977-4dae-9162-7cb93b88774d" [ref=e477]
+                - cell "Bound" [ref=e478]:
+                  - generic [ref=e479]: Bound
+                - cell "5Gi" [ref=e480]
+                - cell "ReadWriteOnce" [ref=e481]
+                - cell "Retain" [ref=e482]
+                - cell "nfs-csi" [ref=e483]
+                - cell "命名空间:mall-swarm<br>名称:data-es-0" [ref=e484]
+                - cell "2026-05-29 09:24:15" [ref=e485]
+                - cell [ref=e486]:
+                  - generic [ref=e487]:
+                    - button [ref=e488]:
+                      - img
+                    - button [ref=e489]:
+                      - img
+                    - button [ref=e490]:
+                      - img
+  - region "Notifications alt+T"

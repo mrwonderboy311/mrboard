@@ -93,7 +93,7 @@ func (this *MainController) Login() {
 		username := this.GetString("username")
 		password := this.GetString("password")
 		src := this.GetString("src")
-		if src != "xkubeApp" { //app登录不做验证码校验
+		if src != "mrboardApp" { //app登录不做验证码校验
 			if MobileVerifyCode {
 				telcode := this.GetString("telcode")
 				telCodeOk := m.VerifyTelCode(username, telcode)

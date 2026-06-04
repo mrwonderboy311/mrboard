@@ -127,8 +127,14 @@ func NodeList(kubeconfig string) ([]Kubenode, error) {
 			}
 		}
 
-		var nodeRole = node.Labels["node-role.kubernetes.io/work"]
-		if nodeRole == "" {
+		var nodeRole string
+		if _, ok := node.Labels["node-role.kubernetes.io/control-plane"]; ok {
+			nodeRole = "Master"
+		} else if _, ok := node.Labels["node-role.kubernetes.io/master"]; ok {
+			nodeRole = "Master"
+		} else if _, ok := node.Labels["node-role.kubernetes.io/work"]; ok {
+			nodeRole = "Worker"
+		} else {
 			nodeRole = "Worker"
 		}
 

@@ -2,10 +2,9 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
-
 	"log"
-	//"time"
 	"xkube/common"
 	m "xkube/models"
 
@@ -19,45 +18,63 @@ type ClusterController struct {
 
 // 列表
 func (this *ClusterController) List() {
-
-	// userinfo := this.GetSession("userinfo")
-	// if userinfo == nil {
-	// 	this.Data["json"] = &map[string]interface{}{"code": -1, "msg": "NoLogin", "count": 0}
-	// 	this.ServeJSON()
-	// 	return
-	// }
-	// for kk, vvs := range this.Ctx.Request.Header {
-	// 	for _, v1 := range vvs {
-	// 		log.Printf("%s:%s\n", kk, v1)
-	// 	}
-	// }
-
 	id := this.GetString("id")
 	clusterId := this.GetString("clusterId")
-	//clusterName := this.GetString("clusterName")
 	page, _ := this.GetInt64("page")
 	page_size, _ := this.GetInt64("limit")
 
+	// Redis缓存：仅缓存无筛选条件的全量列表（首页最频繁的请求）
+	cacheKey := fmt.Sprintf("clusterList:%s:%d:%d", clusterId, page, page_size)
+	if id == "" {
+		if cached := common.Get(cacheKey); cached != "" {
+			var cacheResp map[string]interface{}
+			if err := json.Unmarshal([]byte(cached), &cacheResp); err == nil {
+				this.Data["json"] = &cacheResp
+				this.ServeJSON()
+				return
+			}
+		}
+	}
+
 	datas, count := m.GetList_Cluster(id, clusterId, page, page_size)
-	this.Data["json"] = &map[string]interface{}{"code": 0, "msg": "", "count": count, "data": &datas}
+	resp := map[string]interface{}{"code": 0, "msg": "", "count": count, "data": &datas}
+
+	// 写入Redis缓存，300秒过期
+	if id == "" {
+		if body, err := json.Marshal(&resp); err == nil {
+			_ = common.SetEx(cacheKey, string(body), 300)
+		}
+	}
+
+	this.Data["json"] = &resp
 	this.ServeJSON()
 }
 
 func (this *ClusterController) Detail() {
-	// userinfo := this.GetSession("userinfo")
-	// if userinfo == nil {
-	// 	this.Data["json"] = &map[string]interface{}{"code": -1, "msg": "NoLogin"}
-	// 	this.ServeJSON()
-	// 	return
-	// }
 	id, _ := this.GetInt64("id")
+
+	// Redis缓存
+	cacheKey := fmt.Sprintf("clusterDetail:%d", id)
+	if cached := common.Get(cacheKey); cached != "" {
+		var cacheResp map[string]interface{}
+		if err := json.Unmarshal([]byte(cached), &cacheResp); err == nil {
+			this.Data["json"] = &cacheResp
+			this.ServeJSON()
+			return
+		}
+	}
+
 	datas, err := m.GetDetail_Cluster(id)
 	if err != nil {
 		this.Data["json"] = &map[string]interface{}{"code": -1, "msg": "DeailFail"}
 		this.ServeJSON()
 		return
 	}
-	this.Data["json"] = &map[string]interface{}{"code": 0, "msg": "", "data": &datas}
+	resp := map[string]interface{}{"code": 0, "msg": "", "data": &datas}
+	if body, err := json.Marshal(&resp); err == nil {
+		_ = common.SetEx(cacheKey, string(body), 300)
+	}
+	this.Data["json"] = &resp
 	this.ServeJSON()
 }
 
@@ -79,9 +96,16 @@ func (this *ClusterController) Add() {
 		u.WanSlbip = gp.Get("wan_slbip").String()
 		u.Status = gp.Get("status").Int()
 		u.Remarks = gp.Get("remarks").String()
+		u.LokiUrl = gp.Get("loki_url").String()
+		u.PrometheusUrl = gp.Get("prometheus_url").String()
+		u.LokiConfig = gp.Get("loki_config").String()
 
 		id, err := m.Add_Cluster(&u)
 		if err == nil && id > 0 {
+			// 清除集群列表缓存
+			for _, k := range common.Keys("clusterList:*") {
+				_ = common.Del(k)
+			}
 			log.Printf("[INFO] Add success")
 			this.Ctx.WriteString(`{"code":0,"msg":"success"}`)
 		} else {
@@ -104,6 +128,11 @@ func (this *ClusterController) Del() {
 	respid, err := m.DelById_Cluster(Id)
 	if err == nil && respid > 0 {
 		_ = common.Del("count_" + cluster_id)
+		// 清除集群缓存
+		_ = common.Del(fmt.Sprintf("clusterDetail:%d", Id))
+		for _, k := range common.Keys("clusterList:*") {
+			_ = common.Del(k)
+		}
 		log.Printf("[INFO] Delsuccess")
 		this.Ctx.WriteString(`{"code":0,"msg":"success"}`)
 	} else {
@@ -124,6 +153,15 @@ func (this *ClusterController) Edit() {
 		value := gp.Get("value").String()
 		_, err := m.Edit_Cluster(id, name, value)
 		if err == nil {
+			// 清除集群缓存
+			for _, k := range common.Keys("clusterList:*") {
+				_ = common.Del(k)
+			}
+			_ = common.Del("clusterDetail:" + id)
+			_ = common.Del("lokiUrl:" + id)
+			_ = common.Del("lokiConfig:" + id)
+			_ = common.Del("tempoUrl:" + id)
+			_ = common.Del("prometheusUrl:" + id)
 			this.Ctx.WriteString(`{"code":0,"msg":"success"}`)
 		} else {
 			log.Printf("[ERROR] update Fail:%s\n", err)
@@ -155,9 +193,21 @@ func (this *ClusterController) Update() {
 		u.WanSlbip = gp.Get("wan_slbip").String()
 		u.Status = gp.Get("status").Int()
 		u.Remarks = gp.Get("remarks").String()
+		u.LokiUrl = gp.Get("loki_url").String()
+		u.PrometheusUrl = gp.Get("prometheus_url").String()
+		u.LokiConfig = gp.Get("loki_config").String()
 
 		id, err := m.Update_Cluster(&u)
 		if err == nil && id > 0 {
+			// 清除集群缓存
+			_ = common.Del(fmt.Sprintf("clusterDetail:%d", u.Id))
+			_ = common.Del("lokiUrl:" + u.ClusterId)
+			_ = common.Del("lokiConfig:" + u.ClusterId)
+			_ = common.Del("tempoUrl:" + u.ClusterId)
+			_ = common.Del("prometheusUrl:" + u.ClusterId)
+			for _, k := range common.Keys("clusterList:*") {
+				_ = common.Del(k)
+			}
 			this.Ctx.WriteString(`{"code":0,"msg":"success"}`)
 		} else {
 			log.Printf("[ERROR] updatekubeCluster Fail:%s\n", err)

@@ -1,0 +1,100 @@
+- generic [ref=e2]:
+  - generic [ref=e15]:
+    - complementary [ref=e16]:
+      - generic [ref=e17]: MRBoard
+      - separator [ref=e18]
+      - navigation [ref=e19]:
+        - button "K8S管理" [ref=e21]:
+          - img [ref=e22]
+          - generic [ref=e25]: K8S管理
+          - img [ref=e26]
+        - button "集群信息" [ref=e29]:
+          - img [ref=e30]
+          - generic [ref=e33]: 集群信息
+          - img [ref=e34]
+        - button "工作负载" [ref=e37]:
+          - img [ref=e38]
+          - generic [ref=e41]: 工作负载
+          - img [ref=e42]
+        - button "网络" [ref=e45]:
+          - img [ref=e46]
+          - generic [ref=e51]: 网络
+          - img [ref=e52]
+        - button "网关管理" [ref=e55]:
+          - img [ref=e56]
+          - generic [ref=e59]: 网关管理
+          - img [ref=e60]
+        - button "配置管理" [ref=e63]:
+          - img [ref=e64]
+          - generic [ref=e68]: 配置管理
+          - img [ref=e69]
+        - button "存储" [ref=e72]:
+          - img [ref=e73]
+          - generic [ref=e75]: 存储
+          - img [ref=e76]
+        - button "运维管理" [ref=e79]:
+          - img [ref=e80]
+          - generic [ref=e83]: 运维管理
+          - img [ref=e84]
+        - button "构建发布" [ref=e87]:
+          - img [ref=e88]
+          - generic [ref=e92]: 构建发布
+          - img [ref=e93]
+        - button "权限管理" [ref=e96]:
+          - img [ref=e97]
+          - generic [ref=e99]: 权限管理
+          - img [ref=e100]
+        - button "文档中心" [ref=e103]:
+          - img [ref=e104]
+          - generic [ref=e106]: 文档中心
+          - img [ref=e107]
+        - button "可观测性" [ref=e110]:
+          - img [ref=e111]
+          - generic [ref=e113]: 可观测性
+          - img [ref=e114]
+        - link "搜索" [ref=e116] [cursor=pointer]:
+          - /url: /search
+          - img [ref=e117]
+          - text: 搜索
+        - link "AI助手" [ref=e120] [cursor=pointer]:
+          - /url: /ai/chat
+          - img [ref=e121]
+          - text: AI助手
+      - separator [ref=e123]
+      - button "admin" [ref=e125]:
+        - img
+        - text: admin
+    - generic [ref=e126]:
+      - banner [ref=e127]:
+        - button "admin" [ref=e128]:
+          - img
+          - text: admin
+      - main [ref=e129]:
+        - generic [ref=e130]:
+          - heading "仪表盘" [level=1] [ref=e131]
+          - generic [ref=e132]:
+            - generic [ref=e133]:
+              - generic [ref=e134]:
+                - generic [ref=e135]: 集群
+                - img [ref=e136]
+              - generic [ref=e140]: "-"
+            - generic [ref=e141]:
+              - generic [ref=e142]:
+                - generic [ref=e143]: 应用
+                - img [ref=e144]
+              - generic [ref=e148]: "-"
+            - generic [ref=e149]:
+              - generic [ref=e150]:
+                - generic [ref=e151]: 用户
+                - img [ref=e152]
+              - generic [ref=e158]: "-"
+            - generic [ref=e159]:
+              - generic [ref=e160]:
+                - generic [ref=e161]: 流水线
+                - img [ref=e162]
+              - generic [ref=e167]: "-"
+  - region "Notifications alt+T":
+    - list:
+      - listitem [ref=e168]:
+        - img [ref=e170]
+        - generic [ref=e174]: 登录成功

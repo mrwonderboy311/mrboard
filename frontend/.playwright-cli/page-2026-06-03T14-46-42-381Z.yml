@@ -1,0 +1,10 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: MRBoard
+      - paragraph [ref=e7]: Kubernetes 多集群管理平台
+    - generic [ref=e9]:
+      - textbox "用户名" [active] [ref=e10]
+      - textbox "密码" [ref=e11]
+      - button "登录" [ref=e12]
+  - region "Notifications alt+T"

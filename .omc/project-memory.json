@@ -1,0 +1,565 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1780465933643,
+  "projectRoot": "/root/xkube",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "Go",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "go.mod"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "playwright",
+        "version": "1.60.0",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "go",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build 2>&1 | tail -10",
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": "*.spec.ts",
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs",
+      "tests"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "common": {
+      "path": "common",
+      "purpose": null,
+      "fileCount": 5,
+      "lastAccessed": 1780465933621,
+      "keyFiles": [
+        "AGENTS.md",
+        "aliyun_client.go",
+        "k8sclient.go",
+        "mysql_lib.go",
+        "redis_lib.go"
+      ]
+    },
+    "conf": {
+      "path": "conf",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1780465933623,
+      "keyFiles": [
+        "AGENTS.md",
+        "app.conf"
+      ]
+    },
+    "controllers": {
+      "path": "controllers",
+      "purpose": "Controllers",
+      "fileCount": 51,
+      "lastAccessed": 1780465933630,
+      "keyFiles": [
+        "AGENTS.md",
+        "aliyun_flow.go",
+        "apply_yaml.go",
+        "appname.go",
+        "backup.go"
+      ]
+    },
+    "deploy": {
+      "path": "deploy",
+      "purpose": null,
+      "fileCount": 5,
+      "lastAccessed": 1780465933630,
+      "keyFiles": [
+        "k8s-frontend.yaml",
+        "k8s.yaml",
+        "nginx.conf",
+        "prometheus-scrape-config.yaml",
+        "prometheus-servicemonitor.yaml"
+      ]
+    },
+    "docker-compose": {
+      "path": "docker-compose",
+      "purpose": null,
+      "fileCount": 3,
+      "lastAccessed": 1780465933631,
+      "keyFiles": [
+        "AGENTS.md",
+        "db_xkube.sql",
+        "docker-compose.yml"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 0,
+      "lastAccessed": 1780465933631,
+      "keyFiles": []
+    },
+    "frontend": {
+      "path": "frontend",
+      "purpose": null,
+      "fileCount": 16,
+      "lastAccessed": 1780465933632,
+      "keyFiles": [
+        "Dockerfile",
+        "README.md",
+        "components.json",
+        "eslint.config.js",
+        "index.html"
+      ]
+    },
+    "middleware": {
+      "path": "middleware",
+      "purpose": "Middleware",
+      "fileCount": 1,
+      "lastAccessed": 1780465933632,
+      "keyFiles": [
+        "metrics.go"
+      ]
+    },
+    "models": {
+      "path": "models",
+      "purpose": "Data models",
+      "fileCount": 49,
+      "lastAccessed": 1780465933632,
+      "keyFiles": [
+        "AGENTS.md",
+        "applyYaml_model.go",
+        "appname_model.go",
+        "backup_model.go",
+        "cdr_model.go"
+      ]
+    },
+    "routers": {
+      "path": "routers",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1780465933633,
+      "keyFiles": [
+        "AGENTS.md",
+        "router.go"
+      ]
+    },
+    "screenshots": {
+      "path": "screenshots",
+      "purpose": null,
+      "fileCount": 13,
+      "lastAccessed": 1780465933635,
+      "keyFiles": [
+        "01_login.png",
+        "02_filled.png",
+        "03_after_login.png",
+        "cicd_list.png",
+        "cluster_add.png"
+      ]
+    },
+    "specs": {
+      "path": "specs",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1780465933635,
+      "keyFiles": []
+    },
+    "test-results": {
+      "path": "test-results",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1780465933636,
+      "keyFiles": []
+    },
+    "tests": {
+      "path": "tests",
+      "purpose": "Test files",
+      "fileCount": 18,
+      "lastAccessed": 1780465933636,
+      "keyFiles": [
+        "cicd.spec.ts",
+        "full-test.spec.ts",
+        "helpers.ts",
+        "k8s-cluster-info.spec.ts",
+        "k8s-config-storage.spec.ts"
+      ]
+    },
+    "views": {
+      "path": "views",
+      "purpose": "View templates",
+      "fileCount": 1,
+      "lastAccessed": 1780465933637,
+      "keyFiles": [
+        "AGENTS.md"
+      ]
+    },
+    "xadmin": {
+      "path": "xadmin",
+      "purpose": null,
+      "fileCount": 3,
+      "lastAccessed": 1780465933637,
+      "keyFiles": [
+        "AGENTS.md",
+        "Router.go",
+        "admin.go"
+      ]
+    },
+    "frontend/dist": {
+      "path": "frontend/dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 3,
+      "lastAccessed": 1780465933640,
+      "keyFiles": [
+        "favicon.svg",
+        "icons.svg",
+        "index.html"
+      ]
+    },
+    "frontend/node_modules": {
+      "path": "frontend/node_modules",
+      "purpose": "Dependencies",
+      "fileCount": 1,
+      "lastAccessed": 1780465933642,
+      "keyFiles": []
+    },
+    "xadmin/src": {
+      "path": "xadmin/src",
+      "purpose": "Source code",
+      "fileCount": 2,
+      "lastAccessed": 1780465933643,
+      "keyFiles": [
+        "AGENTS.md",
+        "rbac.go"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "frontend/src/pages/log/LogViewer.tsx",
+      "accessCount": 28,
+      "lastAccessed": 1780532871176,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/monitor/PrometheusMetrics.tsx",
+      "accessCount": 10,
+      "lastAccessed": 1780536318905,
+      "type": "file"
+    },
+    {
+      "path": "controllers/cluster.go",
+      "accessCount": 6,
+      "lastAccessed": 1780469662282,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/monitor/ServiceHealth.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1780494144272,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/PvList.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1780466130784,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/HttpRouteList.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780466327061,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/GrpcRouteList.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780466327370,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/TcpRouteList.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780466327602,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/UdpRouteList.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780466327876,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/ConfigMapList.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780466345431,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/SecretList.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780466345702,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/ServiceList.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780466345964,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/IngressList.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780466346342,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/NamespaceList.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780466379749,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/CronJobList.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780466380030,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/StatefulSetList.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780466380342,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/GatewayList.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780466380643,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/HpaList.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780466380952,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/log/TraceViewer.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780479339747,
+      "type": "file"
+    },
+    {
+      "path": "tests/observability.spec.ts",
+      "accessCount": 3,
+      "lastAccessed": 1780493091438,
+      "type": "file"
+    },
+    {
+      "path": "controllers/loki_log.go",
+      "accessCount": 3,
+      "lastAccessed": 1780494351340,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/ServiceCreate.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1780466130953,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/IngressCreate.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1780466131021,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/SecretCreate.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1780466131116,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/ConfigMapCreate.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1780466131131,
+      "type": "file"
+    },
+    {
+      "path": "frontend/nginx.conf",
+      "accessCount": 2,
+      "lastAccessed": 1780478763414,
+      "type": "file"
+    },
+    {
+      "path": "conf/app.conf",
+      "accessCount": 2,
+      "lastAccessed": 1780479273097,
+      "type": "file"
+    },
+    {
+      "path": "tests/helpers.ts",
+      "accessCount": 2,
+      "lastAccessed": 1780492729055,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/monitor/MonitorDashboard.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1780494132431,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/monitor/TimeSeriesChart.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1780494144045,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/types/prometheus.ts",
+      "accessCount": 2,
+      "lastAccessed": 1780533964176,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/StatefulSetCreate.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780466036633,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/GatewayCreate.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780466036869,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/HpaCreate.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780466036909,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/CronJobCreate.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780466036978,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/NamespaceCreate.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780466037024,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/UdpRouteCreate.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780466048108,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/GrpcRouteCreate.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780466048216,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/TcpRouteCreate.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780466048257,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/k8s/HttpRouteCreate.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780466048308,
+      "type": "file"
+    },
+    {
+      "path": "Dockerfile",
+      "accessCount": 1,
+      "lastAccessed": 1780474364211,
+      "type": "file"
+    },
+    {
+      "path": "xadmin/src/rbac.go",
+      "accessCount": 1,
+      "lastAccessed": 1780479237625,
+      "type": "file"
+    },
+    {
+      "path": "specs/008-prometheus-drilldown-metrics/plan.md",
+      "accessCount": 1,
+      "lastAccessed": 1780494098128,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/lib/promql.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780494132312,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/hooks/usePrometheus.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780494132483,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/monitor/ResourceTable.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780494132517,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/monitor/MetricCard.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780494144198,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/components/ui/table.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780494156758,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/lib/api.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780494351397,
+      "type": "file"
+    },
+    {
+      "path": "models/loki_log_model.go",
+      "accessCount": 1,
+      "lastAccessed": 1780494361387,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

@@ -132,3 +132,8 @@ func GetRolesYaml(kubeconfig, nameSpace, rolesName string) (string, error) {
 	}
 	return string(yamlBytes), nil
 }
+
+// RolesDelete 删除Role
+func RolesDelete(kubeconfig, nameSpace, rolesName string) error {
+	return common.ClientSet(kubeconfig).RbacV1().Roles(nameSpace).Delete(context.TODO(), rolesName, metav1.DeleteOptions{})
+}

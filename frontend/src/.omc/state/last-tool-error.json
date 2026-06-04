@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"kubectl port-forward -n xkube svc/xkube-frontend 3000:80 &>/tmp/pf2.log &\\necho \\\"PF PID=$!\\\"; sleep 3 && curl -s -c /tmp/cookie3.txt -X POST http://localhost:3000/public/login -d 'isajax=...",
+  "error": "Exit code 52\nPF PID=1006842\n[1]+  Exit 1                  kubectl port-forward -n xkube svc/xkube-frontend 3000:80 &> /tmp/pf2.log",
+  "timestamp": "2026-06-01T14:04:22.650Z",
+  "retry_count": 1
+}

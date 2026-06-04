@@ -1,0 +1,118 @@
+- generic [ref=e2]:
+  - generic [ref=e5]:
+    - complementary [ref=e6]:
+      - generic [ref=e7]: MRBoard
+      - separator [ref=e8]
+      - navigation [ref=e9]:
+        - button "K8S管理" [ref=e11]:
+          - img [ref=e12]
+          - generic [ref=e15]: K8S管理
+          - img [ref=e16]
+        - button "集群信息" [ref=e19]:
+          - img [ref=e20]
+          - generic [ref=e23]: 集群信息
+          - img [ref=e24]
+        - button "工作负载" [ref=e27]:
+          - img [ref=e28]
+          - generic [ref=e31]: 工作负载
+          - img [ref=e32]
+        - button "网络" [ref=e35]:
+          - img [ref=e36]
+          - generic [ref=e41]: 网络
+          - img [ref=e42]
+        - button "网关管理" [ref=e45]:
+          - img [ref=e46]
+          - generic [ref=e49]: 网关管理
+          - img [ref=e50]
+        - button "配置管理" [ref=e53]:
+          - img [ref=e54]
+          - generic [ref=e58]: 配置管理
+          - img [ref=e59]
+        - button "存储" [ref=e62]:
+          - img [ref=e63]
+          - generic [ref=e65]: 存储
+          - img [ref=e66]
+        - button "运维管理" [ref=e69]:
+          - img [ref=e70]
+          - generic [ref=e73]: 运维管理
+          - img [ref=e74]
+        - button "构建发布" [ref=e77]:
+          - img [ref=e78]
+          - generic [ref=e82]: 构建发布
+          - img [ref=e83]
+        - button "权限管理" [ref=e86]:
+          - img [ref=e87]
+          - generic [ref=e89]: 权限管理
+          - img [ref=e90]
+        - button "文档中心" [ref=e93]:
+          - img [ref=e94]
+          - generic [ref=e96]: 文档中心
+          - img [ref=e97]
+        - generic [ref=e99]:
+          - button "可观测性" [active] [ref=e100]:
+            - img [ref=e101]
+            - generic [ref=e103]: 可观测性
+            - img [ref=e104]
+          - generic [ref=e158]:
+            - link "监控面板" [ref=e159] [cursor=pointer]:
+              - /url: /monitor/dashboard
+              - img [ref=e160]
+              - text: 监控面板
+            - link "Prometheus 指标" [ref=e162] [cursor=pointer]:
+              - /url: /monitor/prometheus
+              - img [ref=e163]
+              - text: Prometheus 指标
+            - link "服务健康" [ref=e165] [cursor=pointer]:
+              - /url: /monitor/service-health
+              - img [ref=e166]
+              - text: 服务健康
+            - link "日志查询" [ref=e168] [cursor=pointer]:
+              - /url: /log/loki
+              - img [ref=e169]
+              - text: 日志查询
+            - link "链路追踪" [ref=e171] [cursor=pointer]:
+              - /url: /log/trace
+              - img [ref=e172]
+              - text: 链路追踪
+        - link "搜索" [ref=e106] [cursor=pointer]:
+          - /url: /search
+          - img [ref=e107]
+          - text: 搜索
+        - link "AI助手" [ref=e110] [cursor=pointer]:
+          - /url: /ai/chat
+          - img [ref=e111]
+          - text: AI助手
+      - separator [ref=e113]
+      - button "用户" [ref=e115]:
+        - img
+        - text: 用户
+    - generic [ref=e116]:
+      - banner [ref=e117]:
+        - button "用户" [ref=e118]:
+          - img
+          - text: 用户
+      - main [ref=e119]:
+        - generic [ref=e120]:
+          - heading "仪表盘" [level=1] [ref=e121]
+          - generic [ref=e122]:
+            - generic [ref=e123]:
+              - generic [ref=e124]:
+                - generic [ref=e125]: 集群
+                - img [ref=e126]
+              - generic [ref=e130]: "-"
+            - generic [ref=e131]:
+              - generic [ref=e132]:
+                - generic [ref=e133]: 应用
+                - img [ref=e134]
+              - generic [ref=e138]: "-"
+            - generic [ref=e139]:
+              - generic [ref=e140]:
+                - generic [ref=e141]: 用户
+                - img [ref=e142]
+              - generic [ref=e148]: "-"
+            - generic [ref=e149]:
+              - generic [ref=e150]:
+                - generic [ref=e151]: 流水线
+                - img [ref=e152]
+              - generic [ref=e157]: "-"
+  - region "Notifications alt+T"

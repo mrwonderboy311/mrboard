@@ -115,3 +115,8 @@ func GetRoleBindingYaml(kubeconfig, nameSpace, rbName string) (string, error) {
 	}
 	return string(yamlBytes), nil
 }
+
+// RoleBindingDelete 删除RoleBinding
+func RoleBindingDelete(kubeconfig, nameSpace, rbName string) error {
+	return common.ClientSet(kubeconfig).RbacV1().RoleBindings(nameSpace).Delete(context.TODO(), rbName, metav1.DeleteOptions{})
+}

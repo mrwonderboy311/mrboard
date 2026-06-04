@@ -93,3 +93,21 @@ func (this *PvcController) Yaml() {
 	yamlStr, _ := m.GetPersistentVolumeClaimYaml(clusterId, nameSpace, pvcName)
 	this.Ctx.WriteString(yamlStr)
 }
+
+func (this *PvcController) Del() {
+	clusterId := this.GetString("clusterId")
+	nameSpace := this.GetString("nameSpace")
+	pvcName := this.GetString("pvcName")
+	kubeconfig, _ := common.GetKubeConfigByClusterId(clusterId)
+	err := m.PersistentVolumeClaimDelete(kubeconfig, nameSpace, pvcName)
+	msg := "success"
+	code := 0
+	if err != nil {
+		log.Println(err)
+		msg = err.Error()
+		code = -1
+	}
+	m.ClearCache(clusterId)
+	this.Data["json"] = &map[string]interface{}{"code": code, "msg": msg}
+	this.ServeJSON()
+}

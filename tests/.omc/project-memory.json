@@ -1,0 +1,165 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1780413512145,
+  "projectRoot": "/root/xkube/tests",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "@playwright/test",
+        "version": "1.60.0",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "cd /root/xkube/frontend && npx tsc --noEmit --pretty 2>&1 | head -60",
+    "testCommand": "npm test",
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "test-results": {
+      "path": "test-results",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1780413512130,
+      "keyFiles": []
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "xkube.spec.ts",
+      "accessCount": 13,
+      "lastAccessed": 1780452117069,
+      "type": "file"
+    },
+    {
+      "path": "full-test.spec.ts",
+      "accessCount": 6,
+      "lastAccessed": 1780451369381,
+      "type": "file"
+    },
+    {
+      "path": "k8s-rbac-crud.spec.ts",
+      "accessCount": 6,
+      "lastAccessed": 1780458748249,
+      "type": "file"
+    },
+    {
+      "path": "prometheus.spec.ts",
+      "accessCount": 5,
+      "lastAccessed": 1780449693492,
+      "type": "file"
+    },
+    {
+      "path": "prometheus-debug.spec.ts",
+      "accessCount": 3,
+      "lastAccessed": 1780393942937,
+      "type": "file"
+    },
+    {
+      "path": "k8s-workloads.spec.ts",
+      "accessCount": 3,
+      "lastAccessed": 1780452360779,
+      "type": "file"
+    },
+    {
+      "path": "wiki-search-tools.spec.ts",
+      "accessCount": 2,
+      "lastAccessed": 1780451432383,
+      "type": "file"
+    },
+    {
+      "path": "rbac-mgmt.spec.ts",
+      "accessCount": 2,
+      "lastAccessed": 1780457957338,
+      "type": "file"
+    },
+    {
+      "path": "k8s-rbac.spec.ts",
+      "accessCount": 2,
+      "lastAccessed": 1780457957385,
+      "type": "file"
+    },
+    {
+      "path": "helpers.ts",
+      "accessCount": 2,
+      "lastAccessed": 1780457971062,
+      "type": "file"
+    },
+    {
+      "path": "k8s-network.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780449802316,
+      "type": "file"
+    },
+    {
+      "path": "k8s-config-storage.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780449802645,
+      "type": "file"
+    },
+    {
+      "path": "k8s-cluster-info.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780449803285,
+      "type": "file"
+    },
+    {
+      "path": "monitoring.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780449803647,
+      "type": "file"
+    },
+    {
+      "path": "logging.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780449803998,
+      "type": "file"
+    },
+    {
+      "path": "cicd.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780449804734,
+      "type": "file"
+    },
+    {
+      "path": "k8s-dialog-create.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780467056346,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

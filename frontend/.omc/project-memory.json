@@ -1,0 +1,468 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1780470003307,
+  "projectRoot": "/root/xkube/frontend",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "react",
+        "version": "19.2.6",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.2.6",
+        "category": "frontend"
+      },
+      {
+        "name": "vite",
+        "version": "8.0.12",
+        "category": "build"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build 2>&1 | tail -5",
+    "testCommand": null,
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vite",
+      "build": "tsc -b && vite build",
+      "lint": "eslint .",
+      "preview": "vite preview"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "public",
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 3,
+      "lastAccessed": 1780470003277,
+      "keyFiles": [
+        "favicon.svg",
+        "icons.svg",
+        "index.html"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 2,
+      "lastAccessed": 1780470003278,
+      "keyFiles": [
+        "favicon.svg",
+        "icons.svg"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 3,
+      "lastAccessed": 1780470003286,
+      "keyFiles": [
+        "App.tsx",
+        "index.css",
+        "main.tsx"
+      ]
+    },
+    "test-results": {
+      "path": "test-results",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1780470003287,
+      "keyFiles": []
+    },
+    "dist/assets": {
+      "path": "dist/assets",
+      "purpose": "Static assets",
+      "fileCount": 204,
+      "lastAccessed": 1780470003291,
+      "keyFiles": [
+        "AIChat-DX7QP5C-.js",
+        "AdminEdit-Ds5etcn8.js",
+        "AdminList-DuRorxNu.js"
+      ]
+    },
+    "src/assets": {
+      "path": "src/assets",
+      "purpose": "Static assets",
+      "fileCount": 3,
+      "lastAccessed": 1780470003295,
+      "keyFiles": [
+        "hero.png",
+        "react.svg",
+        "vite.svg"
+      ]
+    },
+    "src/components": {
+      "path": "src/components",
+      "purpose": "UI components",
+      "fileCount": 0,
+      "lastAccessed": 1780470003299,
+      "keyFiles": []
+    },
+    "src/lib": {
+      "path": "src/lib",
+      "purpose": "Library code",
+      "fileCount": 3,
+      "lastAccessed": 1780470003299,
+      "keyFiles": [
+        "api.ts",
+        "promql.ts",
+        "utils.ts"
+      ]
+    },
+    "src/pages": {
+      "path": "src/pages",
+      "purpose": "Page components",
+      "fileCount": 1,
+      "lastAccessed": 1780470003300,
+      "keyFiles": [
+        "HomePage.tsx"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src/App.tsx",
+      "accessCount": 23,
+      "lastAccessed": 1780497916870,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/cluster/ClusterAdd.tsx",
+      "accessCount": 18,
+      "lastAccessed": 1780470131463,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/deploy/DeployList.tsx",
+      "accessCount": 18,
+      "lastAccessed": 1780497860753,
+      "type": "file"
+    },
+    {
+      "path": "src/types/index.ts",
+      "accessCount": 14,
+      "lastAccessed": 1780469843739,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/rbac/NodeList.tsx",
+      "accessCount": 14,
+      "lastAccessed": 1780498260527,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/cluster/ClusterList.tsx",
+      "accessCount": 13,
+      "lastAccessed": 1780498260810,
+      "type": "file"
+    },
+    {
+      "path": "src/layouts/MainLayout.tsx",
+      "accessCount": 11,
+      "lastAccessed": 1780473384267,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/cluster/ClusterEdit.tsx",
+      "accessCount": 10,
+      "lastAccessed": 1780470042691,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/api.ts",
+      "accessCount": 9,
+      "lastAccessed": 1780473799133,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/rbac/AdminList.tsx",
+      "accessCount": 9,
+      "lastAccessed": 1780498259628,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/rbac/RoleList.tsx",
+      "accessCount": 9,
+      "lastAccessed": 1780498259903,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/rbac/GroupList.tsx",
+      "accessCount": 9,
+      "lastAccessed": 1780498260226,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/cicd/PipelinesAdd.tsx",
+      "accessCount": 7,
+      "lastAccessed": 1780309602887,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/cicd/PipelinesEdit.tsx",
+      "accessCount": 7,
+      "lastAccessed": 1780309604557,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/cicd/PipelinesIndex.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1780309605157,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/rbac/ClusterToUserList.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1780309642864,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/cicd/CICDList.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1780309601340,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/deploy/DeployDetail.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1780363552024,
+      "type": "file"
+    },
+    {
+      "path": "Dockerfile",
+      "accessCount": 5,
+      "lastAccessed": 1780495746872,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/select.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1780308891403,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/dialog.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1780362055705,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/tabs.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1780362055748,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/cicd/PipelinesDetail.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780309603149,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/rbac/AdminEdit.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780309641443,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/favorite/FavoriteList.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780322598447,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/app/AppNameList.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780368899446,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/button.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780497179761,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/table.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780497179796,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/rbac/RoleToNodeList.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1780309595782,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/search/SearchPage.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780308919895,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/wiki/WikiList.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780308975532,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/wiki/WikiDetail.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780308975824,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/wiki/WikiAdd.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780308976101,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/wiki/WikiEdit.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780308976367,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/wiki/ColumnList.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780308976637,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/rbac/RoleToUserList.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780309003279,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/app/AppNameAdd.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780309072673,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/app/AppNameEdit.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780309072932,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/app/AppDown.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780309073195,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/ai/AIChat.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780309073481,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/tools/ApplyYAML.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780309073803,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/tools/CloneResource.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780309074125,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/rbac/AuditLogList.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780309212955,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/rbac/LockList.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780309213209,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/rbac/MyInfo.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780309213498,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/rbac/ChangePassword.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780309213772,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/cicd/PipelinesLog.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780309300665,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/cicd/JenkinsList.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780309300928,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/cicd/JenkinsJobDetail.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780309301191,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/cicd/JenkinsLog.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1780309301471,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

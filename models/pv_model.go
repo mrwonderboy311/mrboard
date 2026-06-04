@@ -165,3 +165,7 @@ func GetPersistentVolumeYaml(kubeconfig, pvName string) (string, error) {
 	}
 	return string(yamlBytes), nil
 }
+
+func PersistentVolumeDelete(kubeconfig, pvName string) error {
+	return common.ClientSet(kubeconfig).CoreV1().PersistentVolumes().Delete(context.TODO(), pvName, metav1.DeleteOptions{})
+}

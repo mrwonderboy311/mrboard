@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"npx @playwright/test test k8s-rbac-crud.spec.ts --reporter=list 2>&1\",\"timeout\":300000,\"description\":\"Run fixed RBAC CRUD tests\"}",
+  "error": "Exit code 1\n\nRunning 34 tests using 1 worker\n\n  ✓   1 [chromium] › k8s-rbac-crud.spec.ts:8:7 › K8s RBAC CRUD Operations › ClusterRole: list page loads with new button (3.6s)\n  ✓   2 [chromium] › k8s-rbac-crud.spec.ts:15:7 › K8s RBAC CRUD Operations › ClusterRole: create dialog opens with form and yaml tabs (4.0s)\n  ✓   3 [chromium] › k8s-rbac-crud.spec.ts:29:7 › K8s RBAC CRUD Operations › ClusterRole: form tab validates required name (5.1s)\n  ✓   4 [chromium] › k8s-rbac-crud.spec.ts:48:7 › K8s R...",
+  "timestamp": "2026-06-03T03:52:09.755Z",
+  "retry_count": 1
+}

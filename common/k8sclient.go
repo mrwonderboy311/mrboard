@@ -43,17 +43,21 @@ func ClientSet(clusterid string) *kubernetes.Clientset {
 	// Get kubeconfig string by cluster ID
 	// 通过集群 ID 获取 kubeconfig 字符串
 	kubeconfigstr, err := GetKubeConfigByClusterId(clusterid)
+	if err != nil {
+		log.Printf("[ERROR] GetKubeConfigByClusterId err:%s, clusterid:%s\n", err, clusterid)
+		return nil
+	}
 	kubeconfigBytes := []byte(kubeconfigstr)
 	clientconfig, err := clientcmd.NewClientConfigFromBytes(kubeconfigBytes)
 	if err != nil {
-		//panic(err.Error())
 		log.Printf("[ERROR] NewClientConfigFromBytes err:%s\n", err)
+		return nil
 	}
 
 	config, err := clientconfig.ClientConfig()
 	if err != nil {
-		//panic(err.Error())
 		log.Printf("[ERROR] ClientSet ClientConfig err:%s\n", err)
+		return nil
 	}
 	// Set QPS and Burst limits for the client
 	// 设置客户端的 QPS 和 Burst 限制

@@ -3,6 +3,7 @@ package controllers
 import (
 	//"encoding/json"
 	"log"
+	"xkube/common"
 	m "xkube/models"
 
 	beego "github.com/beego/beego/v2/server/web"
@@ -45,4 +46,21 @@ func (this *PvController) Yaml() {
 	pvName := this.GetString("pvName")
 	yamlStr, _ := m.GetPersistentVolumeYaml(clusterId, pvName)
 	this.Ctx.WriteString(yamlStr)
+}
+
+func (this *PvController) Del() {
+	clusterId := this.GetString("clusterId")
+	pvName := this.GetString("pvName")
+	kubeconfig, _ := common.GetKubeConfigByClusterId(clusterId)
+	err := m.PersistentVolumeDelete(kubeconfig, pvName)
+	msg := "success"
+	code := 0
+	if err != nil {
+		log.Println(err)
+		msg = err.Error()
+		code = -1
+	}
+	m.ClearCache(clusterId)
+	this.Data["json"] = &map[string]interface{}{"code": code, "msg": msg}
+	this.ServeJSON()
 }

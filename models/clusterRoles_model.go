@@ -102,3 +102,8 @@ func GetClusterRolesYaml(kubeconfig, crName string) (string, error) {
 	}
 	return string(yamlBytes), nil
 }
+
+// ClusterRolesDelete 删除ClusterRole
+func ClusterRolesDelete(kubeconfig, crName string) error {
+	return common.ClientSet(kubeconfig).RbacV1().ClusterRoles().Delete(context.TODO(), crName, metav1.DeleteOptions{})
+}

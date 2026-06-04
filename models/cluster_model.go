@@ -56,6 +56,18 @@ type Xkb_cluster struct { //查询时会将大写以下划线分开
 	// Createtime cluster creation time
 	// Createtime 集群创建时间
 	Createtime string `json:"createtime"`
+	// LokiUrl Loki log service URL for the cluster
+	// LokiUrl 集群的Loki日志服务地址
+	LokiUrl string `json:"loki_url"`
+	// TempoUrl Tempo tracing service URL for the cluster
+	// TempoUrl 集群的Tempo链路追踪服务地址
+	TempoUrl string `json:"tempo_url"`
+	// PrometheusUrl Prometheus metrics service URL for the cluster
+	// PrometheusUrl 集群的 Prometheus 指标服务地址
+	PrometheusUrl string `json:"prometheus_url"`
+	// LokiConfig JSON config for Loki field mapping
+	// LokiConfig Loki 字段映射 JSON 配置
+	LokiConfig string `json:"loki_config"`
 }
 
 type ClusterCount struct {
@@ -127,7 +139,7 @@ func GetList_Cluster(id, clusterId string, page, page_size int64) (dps []Xkb_clu
 	}
 
 	qs = qs.SetCond(cond)
-	qs.Limit(page_size, offset).OrderBy("-id").All(&dps, "id", "cluster_id", "cluster_name", "idc_name", "status", "kube_version", "remarks", "lan_slbip", "wan_slbip", "createtime")
+	qs.Limit(page_size, offset).OrderBy("-id").All(&dps, "id", "cluster_id", "cluster_name", "idc_name", "status", "kube_version", "remarks", "lan_slbip", "wan_slbip", "loki_url", "tempo_url", "prometheus_url", "createtime")
 	//qs.All(&xfr)
 	count, _ = qs.Count()
 	return dps, count
@@ -177,6 +189,10 @@ func Add_Cluster(u *Xkb_cluster) (int64, error) {
 	Ds.Status = u.Status
 	Ds.Createtime = time.Now().Format("2006-01-02 15:04:05")
 	Ds.Remarks = u.Remarks
+	Ds.LokiUrl = u.LokiUrl
+	Ds.TempoUrl = u.TempoUrl
+	Ds.PrometheusUrl = u.PrometheusUrl
+	Ds.LokiConfig = u.LokiConfig
 	num, err := o.Insert(Ds)
 	if err != nil {
 		return 0, err
@@ -252,6 +268,10 @@ func Update_Cluster(u *Xkb_cluster) (int64, error) {
 	op["LanSlbip"] = u.LanSlbip
 	op["WanSlbip"] = u.WanSlbip
 	op["Remarks"] = u.Remarks
+	op["LokiUrl"] = u.LokiUrl
+	op["TempoUrl"] = u.TempoUrl
+	op["PrometheusUrl"] = u.PrometheusUrl
+	op["LokiConfig"] = u.LokiConfig
 	op["Status"] = u.Status
 	//op["Updatetime"] = time.Now().Format("2006-01-02 15:04:05")
 

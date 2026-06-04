@@ -1,0 +1,11 @@
+{
+  "active": true,
+  "started_at": "2026-06-03T01:21:11.572Z",
+  "original_prompt": "/oh-my-claudecode:ultrawork 使用playright-cli对每个界面进行功能测试，每个按钮也测试",
+  "session_id": "6e85be61-2be6-422b-a3a7-5c8d893a128f",
+  "project_path": "/root/xkube/tests",
+  "reinforcement_count": 32,
+  "awaiting_confirmation": true,
+  "awaiting_confirmation_set_at": "2026-06-03T01:21:11.572Z",
+  "last_checked_at": "2026-06-03T06:36:30.000Z"
+}

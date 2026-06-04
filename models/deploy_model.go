@@ -272,6 +272,9 @@ func DeployList(kubeconfig, namespace, deployName string, labelsKey, labelsValue
 
 	//通过kubeconfig集群认证文件生成一个客户端操作对象clientset
 	clientset := common.ClientSet(kubeconfig)
+	if clientset == nil {
+		return nil, fmt.Errorf("invalid clusterId or kubeconfig not found")
+	}
 
 	//创建一个deployment资源的接口对象DeploymentClient，用于操作指定名称空间的deployment资源
 	if namespace == "" {

@@ -106,3 +106,8 @@ func GetClusterRoleBindingYaml(kubeconfig, crbName string) (string, error) {
 	}
 	return string(yamlBytes), nil
 }
+
+// ClusterRoleBindingDelete 删除ClusterRoleBinding
+func ClusterRoleBindingDelete(kubeconfig, crbName string) error {
+	return common.ClientSet(kubeconfig).RbacV1().ClusterRoleBindings().Delete(context.TODO(), crbName, metav1.DeleteOptions{})
+}

@@ -1,0 +1,14 @@
+- generic [ref=e2]:
+  - generic [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e8]: MRBoard
+      - paragraph [ref=e9]: Kubernetes 多集群管理平台
+    - generic [ref=e11]:
+      - textbox "用户名" [ref=e12]: admin
+      - textbox "密码" [ref=e13]: "123456"
+      - button "登录" [ref=e14]
+  - region "Notifications alt+T":
+    - list:
+      - listitem [ref=e23]:
+        - img [ref=e25]
+        - generic [ref=e30]: 密码错误
