@@ -1,8 +1,8 @@
 .DS_Store
+
 # Editor directories and files
 .idea
 .vscode
-vproxy.json
 *.suo
 *.ntvs*
 *.njsproj
@@ -10,3 +10,40 @@ vproxy.json
 *.log
 *.zip
 *.exe
+
+# Go binaries
+main
+mrboard
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# Test artifacts
+test-results/
+tests/
+playwright-verify.sh
+test_debug.mjs
+test_debug2.mjs
+test_login.mjs
+test_menus.mjs
+test_screenshots.mjs
+
+# Screenshots (docs)
+screenshots/
+
+# Claude / OMC agent state
+.omc/
+.claude/
+
+# Specs (design docs, keep in repo but ignore local drafts)
+# specs/  # uncomment if you don't want specs tracked
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# Env / secrets
+.env
+.env.local
+vproxy.json
