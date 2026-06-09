@@ -157,6 +157,11 @@ func (a *Agent) Analyze(ctx context.Context, trigger AlertTrigger, onProgress Pr
 			var toolResultContent []map[string]interface{}
 			for _, r := range results {
 				content := r.Content
+				// Log tool result size for debugging
+				log.Printf("[AI] Tool %s result: %d bytes, error=%v", r.ToolUseId[:8], len(content), r.IsError)
+				if len(content) > 0 && len(content) < 500 {
+					log.Printf("[AI] Tool result content: %s", content)
+				}
 				// Truncate large tool results to prevent context overflow
 				if len(content) > 2000 {
 					content = content[:2000] + "\n...(truncated)"
@@ -198,36 +203,45 @@ func Fingerprint(alert AlertTrigger) string {
 }
 
 func buildSystemPrompt() string {
-	return `你是一个 Kubernetes 集群智能分析助手。你的任务是分析告警问题，找出根因，提供解决建议。
+	return `你是一个 Kubernetes 集群智能分析助手。你的任务是分析告警问题，找出根因，提供具体可执行的解决方案。
 
-你可以使用以下工具：
+## 可用工具
+- get_pod_status: 查看指定命名空间的 Pod 状态（必用！先看 Pod 在什么状态）
+- get_pod_logs: 查看 Pod 日志（必用！看容器为什么失败）
+- get_events: 查看集群事件（必用！看调度、拉镜像、启动等错误）
 - query_logs: 查询 Loki 日志
 - query_metrics: 查询 Prometheus 指标
-- query_traces: 查询 Tempo 链路
-- get_pod_status: 查看 Pod 状态
-- get_pod_logs: 查看 Pod 日志
-- get_events: 查看集群事件
 - search_memory: 搜索历史分析记忆
 - save_memory: 保存分析结论
 
-分析流程（最多调用 3-5 个工具，然后必须输出最终分析报告）：
-1. 先搜索记忆，看是否有类似告警的历史分析
-2. 根据告警类型，选择最关键的 1-2 个数据源查询（日志或指标，不要全部查）
-3. 如果需要，查看 Pod 状态或事件
-4. 立即综合已有信息，输出结构化分析报告
+## 分析流程（必须严格按顺序执行，每一步都要调用工具）
+1. 调用 search_memory(keyword="告警名称", fingerprint="指纹") — 搜索历史记忆（只调一次！）
+2. 调用 get_pod_status(namespace="告警中的命名空间") — 看 Pod 在什么状态
+3. 调用 get_events(namespace="告警中的命名空间") — 看事件中的错误原因
+4. 调用 get_pod_logs(namespace="告警中的命名空间") — 看容器日志
+5. 综合以上工具返回的实际数据，输出分析报告
 
-重要：不要过度收集数据。调用 3-5 个工具后，必须输出 JSON 格式的分析报告。不要继续调用工具。
+禁止：每个工具最多调一次。不要重复调用同一工具。
 
-输出格式（严格使用以下 JSON 结构，不要使用其他字段名）：
-{"summary":"问题一句话摘要","severity":"critical或warning或info","root_cause":"详细的根因分析","evidence":[{"type":"log或metric或k8s","content":"证据内容","source":"数据来源"}],"suggestions":[{"action":"建议操作","risk":"low或medium或high","command":"kubectl命令"}],"related_incidents":[]}
+## 核心规则
+- 你的分析必须基于工具返回的实际数据，不要凭空猜测
+- 如果工具返回了 "Back-off pulling image" 错误，root_cause 必须明确指出"镜像拉取失败"
+- 如果工具返回了 "Insufficient cpu/memory"，root_cause 必须指出"资源不足"
+- 如果工具返回了 "CrashLoopBackOff"，root_cause 必须包含具体的崩溃原因
+- suggestions 中的 command 必须是具体的、可直接执行的命令
+- 不要说"建议查看..."，而是直接把你看到的告诉用户
 
-请用中文回答。必须输出上述 JSON 格式，不要包裹在 markdown 代码块中。`
+## 输出格式（严格 JSON，不要包裹在 markdown 中）
+{"summary":"一句话根因","severity":"critical或warning或info","root_cause":"基于工具数据的详细根因分析","evidence":[{"type":"log或metric或k8s","content":"工具返回的关键证据","source":"数据来源"}],"suggestions":[{"action":"具体操作","risk":"low或medium或high","command":"可直接执行的kubectl命令"}],"related_incidents":[]}
+
+请用中文回答。`
 }
 
 func buildUserPrompt(trigger AlertTrigger) string {
+	fingerprint := Fingerprint(trigger)
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("## 告警信息\n\n- 告警名称: %s\n- 严重级别: %s\n- 命名空间: %s\n- 集群: %s\n- 触发时间: %s\n",
-		trigger.AlertName, trigger.Severity, trigger.Namespace, trigger.ClusterId, trigger.StartsAt))
+	sb.WriteString(fmt.Sprintf("## 告警信息\n\n- 告警名称: %s\n- 严重级别: %s\n- 命名空间: %s\n- 集群: %s\n- 触发时间: %s\n- 指纹: %s\n",
+		trigger.AlertName, trigger.Severity, trigger.Namespace, trigger.ClusterId, trigger.StartsAt, fingerprint))
 
 	if len(trigger.Labels) > 0 {
 		sb.WriteString("- Labels:\n")
@@ -302,6 +316,7 @@ func parseReport(text string) *AnalysisReport {
 						"alert_analysis.analysis_summary",
 						"告警分析.分析结论", "告警分析.告警名称",
 						"告警概述.告警名称", "告警概述.alert_name",
+						"alertName", "alert_name",
 						"总结", "conclusion")
 				}
 
@@ -318,7 +333,7 @@ func parseReport(text string) *AnalysisReport {
 				// Extract root cause (English + Chinese)
 				if report.RootCause == "" {
 					report.RootCause = extractString(alt, "root_cause",
-						"root_cause_analysis.primary_cause", "analysis.summary",
+						"rootCause", "root_cause_analysis.primary_cause", "analysis.summary",
 						"rootCauseAnalysis.summary", "conclusion",
 						"alert_analysis.root_cause_analysis.primary_cause",
 						"告警分析.分析结论",
@@ -337,7 +352,8 @@ func parseReport(text string) *AnalysisReport {
 				// Extract suggestions (English + Chinese)
 				if report.Suggestions == nil {
 					report.Suggestions = extractSuggestions(alt, "recommendations",
-						"resolution_recommendations", "immediate_actions",
+						"immediateActions", "immediate_actions",
+						"resolution_recommendations",
 						"recommendedActions.immediateSteps",
 						"recommendedActions.resolutionOptions",
 						"recommendedActions.furtherInvestigation",

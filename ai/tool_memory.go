@@ -17,13 +17,14 @@ func RegisterMemoryTools(registry *ToolRegistry) {
 				"properties": map[string]interface{}{
 					"fingerprint": map[string]interface{}{
 						"type":        "string",
-						"description": "告警指纹",
+						"description": "告警指纹（从告警信息中获取）",
 					},
 					"keyword": map[string]interface{}{
 						"type":        "string",
-						"description": "搜索关键词",
+						"description": "搜索关键词（告警名称）",
 					},
 				},
+				"required": []string{"keyword"},
 			},
 		},
 		Handler: handleSearchMemory,
