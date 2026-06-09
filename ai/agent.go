@@ -423,6 +423,8 @@ func parseReport(text string) *AnalysisReport {
 						"recommendedActions.immediateSteps",
 						"recommendedActions.resolutionOptions",
 						"recommendedActions.furtherInvestigation",
+						"alert_analysis.immediateActions",
+						"alert_analysis.recommendations",
 						"alert_analysis.recommended_actions.immediate_actions",
 						"alert_analysis.recommended_actions.short_term_fixes",
 						"alert_analysis.recommended_actions.long_term_optimizations",
@@ -529,6 +531,35 @@ func extractSuggestions(m map[string]interface{}, keys ...string) []Suggestion {
 			}
 		}
 		if !found {
+			continue
+		}
+
+		// Handle dict with sub-arrays (e.g., recommendations.immediate_actions)
+		if dict, ok := current.(map[string]interface{}); ok {
+			subKeys := []string{"immediate_actions", "immediateActions", "short_term_fixes", "preventive_measures", "follow_up", "steps", "actions"}
+			for _, subKey := range subKeys {
+				if subArr, ok := dict[subKey].([]interface{}); ok && len(subArr) > 0 {
+					var suggestions []Suggestion
+					for _, item := range subArr {
+						if s, ok := item.(string); ok {
+							suggestions = append(suggestions, Suggestion{Action: s, Risk: "medium"})
+						} else if m, ok := item.(map[string]interface{}); ok {
+							sug := Suggestion{Risk: "medium"}
+							sug.Action, _ = m["action"].(string)
+							sug.Command, _ = m["command"].(string)
+							if sug.Action == "" {
+								sug.Action, _ = m["description"].(string)
+							}
+							if sug.Action != "" {
+								suggestions = append(suggestions, sug)
+							}
+						}
+					}
+					if len(suggestions) > 0 {
+						return suggestions
+					}
+				}
+			}
 			continue
 		}
 
