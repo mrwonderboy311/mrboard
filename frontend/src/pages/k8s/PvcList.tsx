@@ -43,6 +43,7 @@ export default function PvcList() {
   const [filtered, setFiltered] = useState<PvcItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchName, setSearchName] = useState('')
+  const [nsFilter, setNsFilter] = useState('')
   const [page, setPage] = useState(1)
   const clusterId = localStorage.getItem('clusterId') || ''
 
@@ -65,8 +66,9 @@ export default function PvcList() {
     catch (err) { toast.error((err as Error).message) } finally { if (!silent) setLoading(false) }
   }
   useEffect(() => { fetchData() }, [clusterId])
-  useEffect(() => { setFiltered(searchName ? items.filter(i => i.pvcName.toLowerCase().includes(searchName.toLowerCase())) : items) }, [items, searchName])
-  useEffect(() => { setPage(1) }, [searchName])
+  const namespaces = useMemo(() => [...new Set(items.map(i => i.nameSpace).filter(Boolean))].sort(), [items])
+  useEffect(() => { setFiltered(items.filter(i => (!nsFilter || i.nameSpace === nsFilter) && (!searchName || i.pvcName.toLowerCase().includes(searchName.toLowerCase())))) }, [items, searchName, nsFilter])
+  useEffect(() => { setPage(1) }, [searchName, nsFilter])
 
   const paged = useMemo(() => {
     const start = (page - 1) * 20
@@ -161,7 +163,7 @@ ${formStorageClass ? '  storageClassName: ' + formStorageClass + '\n' : ''}  res
       <PageHeader title="存储声明" description="PersistentVolumeClaim 管理">
         <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />新增</Button>
       </PageHeader>
-      <Card><CardContent className="py-3"><div className="flex gap-3 items-center"><Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" /><Button variant="outline" size="sm" onClick={() => fetchData()}><Search size={14} className="mr-1" />刷新</Button></div></CardContent></Card>
+      <Card><CardContent className="py-3"><div className="flex gap-3 items-center"><Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" /><div className="flex items-center gap-2"><label className="text-sm text-muted-foreground whitespace-nowrap">命名空间</label><Select value={nsFilter || '__all__'} onValueChange={v => setNsFilter(v === '__all__' ? '' : (v ?? ''))}><SelectTrigger className="h-9 w-[180px]"><SelectValue placeholder="全部命名空间" /></SelectTrigger><SelectContent><SelectItem value="__all__">全部命名空间</SelectItem>{namespaces.map(ns => <SelectItem key={ns} value={ns}>{ns}</SelectItem>)}</SelectContent></Select></div><Button variant="outline" size="sm" onClick={() => fetchData()}><Search size={14} className="mr-1" />刷新</Button></div></CardContent></Card>
       <DataTable
         columns={columns as unknown as Column<Record<string, unknown>>[]}
         data={paged as unknown as Record<string, unknown>[]}

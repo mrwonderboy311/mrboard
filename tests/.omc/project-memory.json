@@ -24,7 +24,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd /root/xkube/frontend && npx tsc --noEmit --pretty 2>&1 | head -60",
+    "buildCommand": "cd /root/mrboard/frontend && npx tsc -b 2>&1",
     "testCommand": "npm test",
     "lintCommand": null,
     "devCommand": null,
@@ -95,6 +95,12 @@
       "type": "file"
     },
     {
+      "path": "test-ai-click.spec.ts",
+      "accessCount": 3,
+      "lastAccessed": 1780901464635,
+      "type": "file"
+    },
+    {
       "path": "wiki-search-tools.spec.ts",
       "accessCount": 2,
       "lastAccessed": 1780451432383,
@@ -158,6 +164,12 @@
       "path": "k8s-dialog-create.spec.ts",
       "accessCount": 1,
       "lastAccessed": 1780467056346,
+      "type": "file"
+    },
+    {
+      "path": "test-ai-full.spec.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780900718596,
       "type": "file"
     }
   ],
