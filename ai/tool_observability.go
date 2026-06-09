@@ -95,8 +95,8 @@ func handleQueryLogs(clusterId string, input json.RawMessage) (string, error) {
 	if err := json.Unmarshal(input, &params); err != nil {
 		return "", err
 	}
-	if params.Limit <= 0 {
-		params.Limit = 50
+	if params.Limit <= 0 || params.Limit > 20 {
+		params.Limit = 20
 	}
 
 	lokiUrl, err := m.GetLokiUrl(clusterId)

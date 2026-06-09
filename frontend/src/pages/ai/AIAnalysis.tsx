@@ -45,20 +45,10 @@ function buildQueries(alert: SelectedAlert) {
   return queries
 }
 
-// Animated loading progress — steps light up one by one
-function LoadingProgress({ alertName }: { alertName: string }) {
-  const steps = ['搜索历史记忆', '查询 Loki 日志', '查询 Prometheus 指标', '查看 K8S Pod 状态', '查看集群事件', '生成分析报告']
-  const [activeStep, setActiveStep] = useState(0)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveStep(prev => {
-        if (prev >= steps.length - 1) return prev
-        return prev + 1
-      })
-    }, 8000) // Each step takes ~8 seconds
-    return () => clearInterval(interval)
-  }, [])
+// Real-time progress from SSE tool call events
+function LoadingProgress({ alertName, events }: { alertName: string; events: string[] }) {
+  const defaultSteps = ['搜索历史记忆', '查询日志/指标', '查看 K8S 状态', '生成分析报告']
+  const steps = events.length > 0 ? events : defaultSteps
 
   return (
     <Card>
@@ -70,25 +60,27 @@ function LoadingProgress({ alertName }: { alertName: string }) {
           </div>
           <div>
             <div className="text-sm font-medium">AI 正在分析 "{alertName}"...</div>
-            <div className="text-xs text-muted-foreground mt-1">查询日志、指标、K8S 状态，通常需要 30-60 秒</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {events.length > 0 ? `已执行 ${events.length} 个工具调用` : '正在准备分析...'}
+            </div>
           </div>
         </div>
         <div className="space-y-2 pl-1">
           {steps.map((step, i) => {
-            const isActive = i === activeStep
-            const isDone = i < activeStep
+            const isLatest = i === steps.length - 1
+            const isDone = i < steps.length - 1
             return (
               <div
                 key={i}
                 className={`flex items-center gap-2.5 text-xs transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-                  isActive ? 'text-primary font-medium' : isDone ? 'text-foreground/60' : 'text-muted-foreground/40'
+                  isLatest ? 'text-primary font-medium' : 'text-foreground/60'
                 }`}
               >
-                <div className={`w-2 h-2 rounded-full shrink-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-                  isActive ? 'bg-primary animate-pulse scale-110' : isDone ? 'bg-primary/60' : 'bg-muted-foreground/20'
+                <div className={`w-2 h-2 rounded-full shrink-0 transition-all duration-500 ${
+                  isLatest ? 'bg-primary animate-pulse scale-110' : 'bg-primary/60'
                 }`} />
                 {step}
-                {isActive && (
+                {isLatest && (
                   <RefreshCw size={10} className="animate-spin text-primary ml-1" />
                 )}
                 {isDone && (
@@ -112,6 +104,7 @@ export default function AIAnalysis() {
   const [selectedAlert, setSelectedAlert] = useState<SelectedAlert | null>(null)
   const [autoAnalyze, setAutoAnalyze] = useState(false)
   const [autoFix, setAutoFix] = useState(false)
+  const [progressEvents, setProgressEvents] = useState<string[]>([])
 
   const fetchHistory = async () => {
     try {
@@ -161,15 +154,19 @@ export default function AIAnalysis() {
     }
   }
 
-  // Analyze
+  // Analyze with SSE progress
   const handleStartAnalysis = async () => {
     if (!selectedAlert) return
     setLoading(true)
     setReport(null)
+    setProgressEvents([])
 
     try {
-      await api<ApiResponse<{ id: number }>>('/mrboard/ai/v1/analyze?' + new URLSearchParams({ clusterId }), {
+      // Use SSE for real-time progress
+      const params = new URLSearchParams({ clusterId })
+      const resp = await fetch('/mrboard/ai/v1/analyze?' + params.toString(), {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           alert_name: selectedAlert.name,
           severity: selectedAlert.severity,
@@ -177,6 +174,34 @@ export default function AIAnalysis() {
           labels: selectedAlert.labels,
         }),
       })
+
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+
+      // Read SSE stream
+      const reader = resp.body?.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6))
+                if (data.step) {
+                  setProgressEvents(prev => [...prev, data.step])
+                }
+              } catch {}
+            }
+          }
+        }
+      }
 
       // Reload history and find the result
       await fetchHistory()
@@ -352,9 +377,9 @@ export default function AIAnalysis() {
             </div>
           )}
 
-          {/* State 3: Loading — animated step-by-step progress */}
+          {/* State 3: Loading — real-time tool call progress */}
           {loading && (
-            <LoadingProgress alertName={selectedAlert?.name || ''} />
+            <LoadingProgress alertName={selectedAlert?.name || ''} events={progressEvents} />
           )}
 
           {/* State 4: History item selected (no alert context) */}

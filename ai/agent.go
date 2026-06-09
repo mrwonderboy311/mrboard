@@ -95,6 +95,7 @@ func (a *Agent) Analyze(ctx context.Context, trigger AlertTrigger, onProgress Pr
 		}
 
 		totalTokens += resp.Usage.InputTokens + resp.Usage.OutputTokens
+		log.Printf("[AI] Round %d: stop_reason=%s, content_blocks=%d, tokens=%d+%d", round+1, resp.StopReason, len(resp.Content), resp.Usage.InputTokens, resp.Usage.OutputTokens)
 
 		// Force answer on second-to-last round
 		if resp.StopReason == "tool_use" && round == maxRounds-2 {
@@ -132,9 +133,23 @@ func (a *Agent) Analyze(ctx context.Context, trigger AlertTrigger, onProgress Pr
 
 			messages = append(messages, Message{Role: "assistant", Content: assistantContent})
 
-			// Report tool calls
+			// Report tool calls with human-readable names
+			toolNames := map[string]string{
+				"query_logs":     "查询 Loki 日志",
+				"query_metrics":  "查询 Prometheus 指标",
+				"query_traces":   "查询 Tempo 链路",
+				"get_pod_status": "查看 Pod 状态",
+				"get_pod_logs":   "查看 Pod 日志",
+				"get_events":     "查看集群事件",
+				"search_memory":  "搜索历史记忆",
+				"save_memory":    "保存分析结论",
+			}
 			for _, tc := range toolCalls {
-				onProgress(ProgressEvent{Type: "tool_call", Tool: tc.Name, Step: fmt.Sprintf("调用 %s ...", tc.Name), Round: round + 1})
+				name := toolNames[tc.Name]
+				if name == "" {
+					name = tc.Name
+				}
+				onProgress(ProgressEvent{Type: "tool_call", Tool: tc.Name, Step: name, Round: round + 1})
 			}
 
 			results := a.registry.Execute(trigger.ClusterId, toolCalls)
@@ -143,8 +158,8 @@ func (a *Agent) Analyze(ctx context.Context, trigger AlertTrigger, onProgress Pr
 			for _, r := range results {
 				content := r.Content
 				// Truncate large tool results to prevent context overflow
-				if len(content) > 4000 {
-					content = content[:4000] + "\n...(truncated)"
+				if len(content) > 2000 {
+					content = content[:2000] + "\n...(truncated)"
 				}
 				toolResultContent = append(toolResultContent, map[string]interface{}{
 					"type":       "tool_result",
