@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { api } from '@/lib/api'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -105,6 +105,14 @@ export default function AIAnalysis() {
   const [autoAnalyze, setAutoAnalyze] = useState(false)
   const [autoFix, setAutoFix] = useState(false)
   const [progressEvents, setProgressEvents] = useState<string[]>([])
+  const abortRef = useRef<AbortController | null>(null)
+
+  const cancelAnalysis = () => {
+    if (abortRef.current) {
+      abortRef.current.abort()
+      abortRef.current = null
+    }
+  }
 
   const fetchHistory = async () => {
     try {
@@ -141,6 +149,7 @@ export default function AIAnalysis() {
 
   // Click alert → check if analysis exists, show it directly
   const handleSelectAlert = (alertName: string, severity: string, namespace: string, labels: Record<string, string>) => {
+    cancelAnalysis()
     setSelectedAlert({ name: alertName, severity, namespace, labels })
     setLoading(false)
     setProgressEvents([])
@@ -159,6 +168,9 @@ export default function AIAnalysis() {
   // Analyze with SSE progress
   const handleStartAnalysis = async () => {
     if (!selectedAlert) return
+    cancelAnalysis()
+    const controller = new AbortController()
+    abortRef.current = controller
     setLoading(true)
     setReport(null)
     setProgressEvents([])
@@ -175,6 +187,7 @@ export default function AIAnalysis() {
           namespace: selectedAlert.namespace,
           labels: selectedAlert.labels,
         }),
+        signal: controller.signal,
       })
 
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
@@ -214,8 +227,11 @@ export default function AIAnalysis() {
         toast.success('分析完成')
       }
     } catch (err) {
-      toast.error((err as Error).message)
+      if ((err as Error).name !== 'AbortError') {
+        toast.error((err as Error).message)
+      }
     } finally {
+      abortRef.current = null
       setLoading(false)
     }
   }
@@ -229,6 +245,7 @@ export default function AIAnalysis() {
 
   // Load from history
   const loadDetail = async (id: number) => {
+    cancelAnalysis()
     setSelectedId(id)
     setSelectedAlert(null)
     setLoading(false)
