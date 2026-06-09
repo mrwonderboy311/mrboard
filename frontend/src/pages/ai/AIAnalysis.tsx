@@ -142,6 +142,8 @@ export default function AIAnalysis() {
   // Click alert → check if analysis exists, show it directly
   const handleSelectAlert = (alertName: string, severity: string, namespace: string, labels: Record<string, string>) => {
     setSelectedAlert({ name: alertName, severity, namespace, labels })
+    setLoading(false)
+    setProgressEvents([])
 
     // Check if we already have an analysis for this alert
     const existing = findAnalysis(alertName, namespace)
@@ -229,6 +231,8 @@ export default function AIAnalysis() {
   const loadDetail = async (id: number) => {
     setSelectedId(id)
     setSelectedAlert(null)
+    setLoading(false)
+    setProgressEvents([])
     const h = histories.find(h => h.id === id)
     if (h) {
       setReport(historyToReport(h))
