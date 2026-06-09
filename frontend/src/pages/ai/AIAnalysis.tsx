@@ -178,7 +178,7 @@ export default function AIAnalysis() {
     try {
       // Use SSE for real-time progress
       const params = new URLSearchParams({ clusterId })
-      const resp = await fetch('/mrboard/ai/v1/analyze?' + params.toString(), {
+      const resp = await fetch('/mrboard/ai/v1/analyze_stream?' + params.toString(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -197,7 +197,10 @@ export default function AIAnalysis() {
       const decoder = new TextDecoder()
       let buffer = ''
 
+      let resultReport: AnalysisReport | null = null
+
       if (reader) {
+        let eventType = ''
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
@@ -206,11 +209,27 @@ export default function AIAnalysis() {
           buffer = lines.pop() || ''
 
           for (const line of lines) {
+            if (line.startsWith('event: ')) {
+              eventType = line.slice(7).trim()
+            }
             if (line.startsWith('data: ')) {
               try {
                 const data = JSON.parse(line.slice(6))
-                if (data.step) {
+                if (eventType === 'progress' && data.step) {
                   setProgressEvents(prev => [...prev, data.step])
+                } else if (eventType === 'result') {
+                  // SSE result event has the full report
+                  resultReport = {
+                    summary: data.summary || '',
+                    severity: data.severity || 'warning',
+                    root_cause: data.root_cause || '',
+                    evidence: data.evidence || [],
+                    suggestions: data.suggestions || [],
+                    related_incidents: data.related_incidents || [],
+                    raw_response: data.raw_response || data.root_cause || '',
+                    tokens_used: data.tokens_used || 0,
+                    rounds: data.rounds || 0,
+                  }
                 }
               } catch {}
             }
@@ -218,13 +237,21 @@ export default function AIAnalysis() {
         }
       }
 
-      // Reload history and find the result
-      await fetchHistory()
-      const existing = findAnalysis(selectedAlert.name, selectedAlert.namespace)
-      if (existing) {
-        setReport(historyToReport(existing))
-        setSelectedId(existing.id)
+      // Use SSE result directly if available, otherwise reload history
+      if (resultReport) {
+        setReport(resultReport)
+        await fetchHistory()
+        const existing = findAnalysis(selectedAlert.name, selectedAlert.namespace)
+        if (existing) setSelectedId(existing.id)
         toast.success('分析完成')
+      } else {
+        await fetchHistory()
+        const existing = findAnalysis(selectedAlert.name, selectedAlert.namespace)
+        if (existing) {
+          setReport(historyToReport(existing))
+          setSelectedId(existing.id)
+          toast.success('分析完成')
+        }
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {

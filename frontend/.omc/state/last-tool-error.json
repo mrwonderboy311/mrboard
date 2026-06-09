@@ -1,7 +1,7 @@
 {
-  "tool_name": "Read",
-  "tool_input_preview": "{\"file_path\":\"/root/mrboard/frontend/src/pages/k8s/DeployList.tsx\"}",
-  "error": "File does not exist. Note: your current working directory is /root/mrboard/frontend.",
-  "timestamp": "2026-06-09T03:10:54.519Z",
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"kubectl rollout status deployment/xkube-frontend -n mrboard --timeout=60s 2>&1 && npx playwright test switch-test.spec.ts --reporter=line 2>&1\",\"timeout\":180000,\"description\":\"Test with SS...",
+  "error": "Exit code 1\ndeployment \"xkube-frontend\" successfully rolled out\nError: No tests found.\nMake sure that arguments are regular expressions matching test files.\nYou may need to escape symbols like \"$\" or \"*\" and quote the arguments.\n\n\u001b[1A\u001b[2K",
+  "timestamp": "2026-06-09T07:46:24.581Z",
   "retry_count": 1
 }
