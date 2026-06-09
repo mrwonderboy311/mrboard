@@ -336,9 +336,25 @@ func parseReport(text string) *AnalysisReport {
 						"rootCause", "root_cause_analysis.primary_cause", "analysis.summary",
 						"rootCauseAnalysis.summary", "conclusion",
 						"alert_analysis.root_cause_analysis.primary_cause",
+						"alert_analysis.rootCause",
 						"告警分析.分析结论",
 						"根因分析.直接原因", "根因分析.根本原因",
 						"根因分析.primary_cause", "根因分析.root_cause")
+					// Try nested detailedAnalysis if still empty
+					if report.RootCause == "" {
+						if da, ok := alt["detailedAnalysis"].(map[string]interface{}); ok {
+							if impact, ok := da["impact"].(string); ok {
+								report.RootCause = impact
+							}
+						}
+						if aa, ok := alt["alert_analysis"].(map[string]interface{}); ok {
+							if da, ok := aa["detailedAnalysis"].(map[string]interface{}); ok {
+								if impact, ok := da["impact"].(string); ok && report.RootCause == "" {
+									report.RootCause = impact
+								}
+							}
+						}
+					}
 					if report.RootCause == "" {
 						report.RootCause = extractStringArray(alt,
 							"analysis.possibleRootCauses", "possible_reasons",
