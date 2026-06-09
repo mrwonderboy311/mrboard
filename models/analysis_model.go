@@ -88,6 +88,23 @@ func GetAnalysisHistory(id int64) (*AnalysisHistory, error) {
 	return h, err
 }
 
+func DeleteAnalysisHistory(id int64) error {
+	o := orm.NewOrm()
+	_, err := o.Delete(&AnalysisHistory{Id: id})
+	return err
+}
+
+func CleanOldAnalysisHistory(clusterId string, days int) (int64, error) {
+	o := orm.NewOrm()
+	cutoff := time.Now().AddDate(0, 0, -days).Format("2006-01-02 15:04:05")
+	qs := o.QueryTable(new(AnalysisHistory)).Filter("created_at__lt", cutoff)
+	if clusterId != "" {
+		qs = qs.Filter("cluster_id", clusterId)
+	}
+	count, err := qs.Delete()
+	return count, err
+}
+
 func UpdateAnalysisFeedback(id int64, score int, note string) error {
 	o := orm.NewOrm()
 	h := &AnalysisHistory{Id: id}

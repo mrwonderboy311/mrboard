@@ -50,6 +50,16 @@ function cleanSummary(raw: string): string {
 export default function AlertList({ clusterId, histories, selectedId, onSelect, onSelectAlert, loading }: Props) {
   const [alerts, setAlerts] = useState<AlertItem[]>([])
   const [tab, setTab] = useState<'alerts' | 'history'>('alerts')
+  const [days, setDays] = useState(1)
+
+  // Filter histories by time range
+  const filteredHistories = histories.filter(h => {
+    if (days === 0) return true // "全部"
+    const created = new Date(h.created_at || '')
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - days)
+    return created >= cutoff
+  })
 
   useEffect(() => {
     if (!clusterId) return
@@ -100,7 +110,17 @@ export default function AlertList({ clusterId, histories, selectedId, onSelect, 
         </div>
       ) : (
         <div className="space-y-2">
-          {histories.map(h => (
+          <div className="flex gap-1">
+            {[{l:'1天',d:1},{l:'3天',d:3},{l:'7天',d:7},{l:'全部',d:0}].map(opt => (
+              <button key={opt.d} onClick={() => setDays(opt.d)}
+                className={`px-2 py-0.5 rounded text-[10px] transition-colors ${days === opt.d ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}>
+                {opt.l}
+              </button>
+            ))}
+          </div>
+          {filteredHistories.length === 0 ? (
+            <div className="text-center text-muted-foreground text-xs py-4">暂无历史分析</div>
+          ) : filteredHistories.map(h => (
             <div
               key={h.id}
               data-testid={`history-${h.id}`}

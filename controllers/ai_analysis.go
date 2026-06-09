@@ -205,6 +205,36 @@ func (this *AIAnalysisController) History() {
 	this.ServeJSON()
 }
 
+func (this *AIAnalysisController) DeleteHistory() {
+	idStr := this.Ctx.Input.Param(":id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		this.Data["json"] = &map[string]interface{}{"code": -1, "msg": "invalid id"}
+		this.ServeJSON()
+		return
+	}
+	if err := m.DeleteAnalysisHistory(id); err != nil {
+		this.Data["json"] = &map[string]interface{}{"code": -1, "msg": err.Error()}
+		this.ServeJSON()
+		return
+	}
+	this.Data["json"] = &map[string]interface{}{"code": 0, "msg": "success"}
+	this.ServeJSON()
+}
+
+func (this *AIAnalysisController) CleanHistory() {
+	clusterId := this.GetString("clusterId")
+	days, _ := this.GetInt("days", 1)
+	count, err := m.CleanOldAnalysisHistory(clusterId, days)
+	if err != nil {
+		this.Data["json"] = &map[string]interface{}{"code": -1, "msg": err.Error()}
+		this.ServeJSON()
+		return
+	}
+	this.Data["json"] = &map[string]interface{}{"code": 0, "msg": "success", "deleted": count}
+	this.ServeJSON()
+}
+
 func (this *AIAnalysisController) HistoryDetail() {
 	idStr := this.Ctx.Input.Param(":id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
