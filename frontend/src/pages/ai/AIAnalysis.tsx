@@ -265,9 +265,13 @@ export default function AIAnalysis() {
 
   // Re-analyze (force new analysis)
   const handleReanalyze = () => {
+    cancelAnalysis()
     setReport(null)
     setSelectedId(null)
-    handleStartAnalysis()
+    setProgressEvents([])
+    setLoading(false)
+    // Use setTimeout to ensure state is cleared before starting new analysis
+    setTimeout(() => handleStartAnalysis(), 50)
   }
 
   // Load from history

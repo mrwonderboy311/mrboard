@@ -231,8 +231,22 @@ func buildSystemPrompt() string {
 - suggestions 中的 command 必须是具体的、可直接执行的命令
 - 不要说"建议查看..."，而是直接把你看到的告诉用户
 
-## 输出格式（严格 JSON，不要包裹在 markdown 中）
-{"summary":"一句话根因","severity":"critical或warning或info","root_cause":"基于工具数据的详细根因分析","evidence":[{"type":"log或metric或k8s","content":"工具返回的关键证据","source":"数据来源"}],"suggestions":[{"action":"具体操作","risk":"low或medium或high","command":"可直接执行的kubectl命令"}],"related_incidents":[]}
+## 输出格式（必须严格遵守，不要添加其他字段，不要包裹在 markdown 代码块中）
+你的最终输出必须是且仅是以下 JSON，不要在 JSON 前后添加任何文字或 markdown 标记：
+
+{"summary":"一句话说明什么问题导致了什么现象","severity":"critical或warning或info","root_cause":"详细根因：基于工具返回的具体数据说明为什么会触发这个告警","evidence":[{"type":"log或metric或k8s","content":"工具返回的关键数据片段","source":"数据来源"}],"suggestions":[{"action":"具体操作步骤","risk":"low或medium或high","command":"可直接复制执行的kubectl命令"}],"related_incidents":[]}
+
+## 根因分析要求
+root_cause 必须包含：
+1. 告警触发的直接原因（如：Pod 处于 Pending 状态）
+2. 根本原因（如：节点资源不足导致调度失败，或镜像拉取失败）
+3. 影响范围（如：导致 xxx 服务不可用）
+
+## 建议操作要求
+suggestions 中每个条目必须包含可直接执行的 command，如：
+- kubectl describe pod xxx -n yyy
+- kubectl logs xxx -n yyy --previous
+- kubectl rollout restart deployment/xxx -n yyy
 
 请用中文回答。`
 }
@@ -340,6 +354,42 @@ func parseReport(text string) *AnalysisReport {
 						"告警分析.分析结论",
 						"根因分析.直接原因", "根因分析.根本原因",
 						"根因分析.primary_cause", "根因分析.root_cause")
+					// Handle rootCause as object with category+summary
+					if report.RootCause == "" {
+						keys := []string{"rootCause", "root_cause"}
+						// Also check inside alert_analysis wrapper
+						if aa, ok := alt["alert_analysis"].(map[string]interface{}); ok {
+							for _, key := range keys {
+								if rc, ok := aa[key].(map[string]interface{}); ok {
+									cat, _ := rc["category"].(string)
+									sum, _ := rc["summary"].(string)
+									if cat != "" && sum != "" {
+										report.RootCause = cat + "：" + sum
+									} else if sum != "" {
+										report.RootCause = sum
+									} else if cat != "" {
+										report.RootCause = cat
+									}
+								}
+							}
+						}
+						for _, key := range keys {
+							if report.RootCause != "" {
+								break
+							}
+							if rc, ok := alt[key].(map[string]interface{}); ok {
+								cat, _ := rc["category"].(string)
+								sum, _ := rc["summary"].(string)
+								if cat != "" && sum != "" {
+									report.RootCause = cat + "：" + sum
+								} else if sum != "" {
+									report.RootCause = sum
+								} else if cat != "" {
+									report.RootCause = cat
+								}
+							}
+						}
+					}
 					// Try nested detailedAnalysis if still empty
 					if report.RootCause == "" {
 						if da, ok := alt["detailedAnalysis"].(map[string]interface{}); ok {

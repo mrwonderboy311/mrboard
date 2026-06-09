@@ -151,11 +151,11 @@ function extractFields(parsed: Record<string, unknown> | null, report: AnalysisR
         }))
       }
     }
-    // Nested recommended actions
+    // Nested recommended/immediate actions
     if (suggestions.length === 0) {
-      const nested = getNested(p, 'recommendedActions') || getNested(p, 'recommended_actions')
+      const nested = getNested(p, 'recommendedActions') || getNested(p, 'recommended_actions') || getNested(p, 'alert_analysis')
       if (nested) {
-        const steps = (nested['immediateSteps'] || nested['immediate_actions'] || nested['short_term_fixes'] || nested['resolutionOptions'] || []) as Array<Record<string, string>>
+        const steps = (nested['immediateSteps'] || nested['immediate_actions'] || nested['immediateActions'] || nested['short_term_fixes'] || nested['resolutionOptions'] || nested['recommendations'] || []) as Array<Record<string, string>>
         if (Array.isArray(steps)) {
           suggestions = steps.map(s => ({
             action: s.action || s.description || s.step || String(s),
