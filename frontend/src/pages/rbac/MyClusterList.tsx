@@ -2,8 +2,8 @@ import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
-import { Star } from 'lucide-react'
+
+import { Star, Server } from 'lucide-react'
 import { toast } from 'sonner'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -21,9 +21,22 @@ export default function MyClusterList() {
   const currentClusterId = localStorage.getItem('clusterId') || ''
 
   const columns: Column<MyCluster>[] = useMemo(() => [
-    { key: 'cluster_id', header: '集群ID', render: (c) => <span className="font-mono text-sm">{c.cluster_id}</span> },
-    { key: 'cluster_name', header: '名称', render: (c) => <span className="font-medium">{c.cluster_name}</span> },
-    { key: 'kube_version', header: '版本', render: (c) => c.kube_version },
+    {
+      key: 'cluster_name', header: '名称', className: 'font-medium', render: (c) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <Server size={14} className="text-primary" />
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-sm truncate">{c.cluster_name}</div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[10px] text-muted-foreground font-mono truncate">{c.cluster_id}</span>
+              <span className="text-[10px] text-muted-foreground truncate">{c.kube_version}</span>
+            </div>
+          </div>
+        </div>
+      ),
+    },
     {
       key: 'default', header: '默认集群', render: (c) => (
         c.cluster_id === currentClusterId
@@ -32,10 +45,13 @@ export default function MyClusterList() {
       ),
     },
     {
-      key: 'actions', header: '操作', render: (c) => (
-        <Button variant="outline" size="sm" onClick={() => handleSetDefault(c)}>
-          <Star size={14} className="mr-1" />设为常用集群
-        </Button>
+      key: 'actions', header: '', render: (c) => (
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="设为常用集群"
+            onClick={() => handleSetDefault(c)}>
+            <Star size={15} />
+          </Button>
+        </div>
       ),
     },
   ], [currentClusterId])
@@ -61,16 +77,12 @@ export default function MyClusterList() {
   }
 
   return (
-    <div className="space-y-4">
-      <PageHeader title="我的集群" />
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
+      <PageHeader title="我的集群" eyebrow="RBAC" />
       <blockquote className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-50 text-sm text-muted-foreground">
         注:需要在权限管理--集群授权,将集群授权到用户以后,这里才会显示。
       </blockquote>
-      <Card>
-        <CardContent className="p-0">
-          <DataTable columns={columns} data={items} loading={loading} emptyMessage="暂无授权集群" />
-        </CardContent>
-      </Card>
+      <DataTable columns={columns} data={items} loading={loading} emptyMessage="暂无授权集群" variant="cards" />
     </div>
   )
 }

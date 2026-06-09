@@ -3,13 +3,14 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+
 import { Input } from '@/components/ui/input'
 import { Plus, Pencil, Eye, Trash2, Lock, BookOpen, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Article, ApiResponse } from '@/types'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 export default function WikiList() {
   const [searchParams] = useSearchParams()
@@ -18,41 +19,46 @@ export default function WikiList() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; title: string } | null>(null)
 
   const columns: Column<Article>[] = useMemo(() => [
-    { key: 'id', header: 'ID', className: 'w-16', render: (a) => a.id },
     {
-      key: 'xcolumn', header: '栏目', className: 'w-28', render: (a) => (
-        <Badge variant="outline">{a.xcolumn}</Badge>
+      key: 'title', header: '标题', className: 'font-medium', render: (a) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <BookOpen size={14} className="text-primary" />
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-sm truncate">{a.title}</div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <Badge variant="secondary" className="text-[10px]">{a.xcolumn}</Badge>
+              <span className="text-[10px] text-muted-foreground truncate">{a.author}</span>
+            </div>
+          </div>
+        </div>
       ),
     },
+    { key: 'updatetime', header: '更新时间', className: 'text-xs text-muted-foreground', render: (a) => a.updatetime },
     {
-      key: 'title', header: '标题', render: (a) => (
-        <Link to={`/wiki/detail/${a.id}`} className="text-blue-600 hover:underline font-medium">
-          {a.title}
-        </Link>
-      ),
-    },
-    { key: 'author', header: '作者', className: 'w-24', render: (a) => a.author },
-    { key: 'updatetime', header: '更新时间', className: 'w-40', render: (a) => <span className="text-sm text-muted-foreground">{a.updatetime}</span> },
-    {
-      key: 'authkey', header: '加密', className: 'w-16', render: (a) => (
+      key: 'authkey', header: '加密', render: (a) => (
         a.authkey === 'true'
           ? <Lock size={16} className="text-red-500" />
           : <BookOpen size={16} className="text-green-600" />
       ),
     },
     {
-      key: 'actions', header: '操作', className: 'w-44', render: (a) => (
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" render={<Link to={`/wiki/edit/${a.id}`} />}>
-            <Pencil size={14} />
+      key: 'actions', header: '', render: (a) => (
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="编辑" render={<Link to={`/wiki/edit/${a.id}`} />}>
+            <Pencil size={15} />
           </Button>
-          <Button variant="outline" size="sm" render={<Link to={`/wiki/detail/${a.id}`} />}>
-            <Eye size={14} />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="查看" render={<Link to={`/wiki/detail/${a.id}`} />}>
+            <Eye size={15} />
           </Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(a.id, a.title) }}>
-            <Trash2 size={14} />
+          <div className="w-px h-4 bg-border mx-0.5" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" title="删除"
+            onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: a.id, title: a.title }) }}>
+            <Trash2 size={15} />
           </Button>
         </div>
       ),
@@ -77,10 +83,10 @@ export default function WikiList() {
 
   useEffect(() => { fetchArticles() }, [xcolumnFilter])
 
-  const handleDelete = async (id: number, title: string) => {
-    if (!confirm(`确定删除 "${title}" ？`)) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
     try {
-      await api(`/wiki/v1/Del?id=${id}`)
+      await api(`/wiki/v1/Del?id=${deleteTarget.id}`)
       toast.success('删除成功')
       fetchArticles()
     } catch (err) {
@@ -100,8 +106,8 @@ export default function WikiList() {
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
-    <div className="space-y-4">
-      <PageHeader title={xcolumnFilter ? `栏目: ${xcolumnFilter}` : '文档中心'}>
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
+      <PageHeader title={xcolumnFilter ? `栏目: ${xcolumnFilter}` : '文档中心'} eyebrow="Knowledge">
         <Button render={<Link to={`/wiki/add${xcolumnFilter ? `?xcolumn=${xcolumnFilter}` : ''}`} />}>
           <Plus size={16} className="mr-2" />添加文档
         </Button>
@@ -116,18 +122,23 @@ export default function WikiList() {
         />
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <DataTable
-            columns={columns}
-            data={paged}
-            loading={loading}
-            emptyMessage="暂无文档"
-            pagination={{ page, limit: PAGE_SIZE, total: filtered.length }}
-            onPageChange={setPage}
-          />
-        </CardContent>
-      </Card>
+      <DataTable
+        columns={columns}
+        data={paged}
+        loading={loading}
+        emptyMessage="暂无文档"
+        pagination={{ page, limit: PAGE_SIZE, total: filtered.length }}
+        onPageChange={setPage}
+        variant="cards"
+      />
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}
+        title="确认操作"
+        description={`确定删除 "${deleteTarget?.title}" ？`}
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

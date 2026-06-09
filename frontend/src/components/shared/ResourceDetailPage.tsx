@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import YamlViewer from '@/components/shared/YamlViewer'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import { PageHeader } from '@/components/shared/PageHeader'
 import { Trash2, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -80,10 +81,9 @@ export default function ResourceDetailPage({ config }: { config: ResourceDetailC
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{name}</h1>
+      <PageHeader title={name}>
         <Button variant="outline" onClick={() => navigate(-1)}><ArrowLeft size={14} className="mr-1" />返回</Button>
-      </div>
+      </PageHeader>
       {config.deleteApi && (
         <div className="flex flex-wrap gap-2">
           <ConfirmDialog
@@ -93,16 +93,16 @@ export default function ResourceDetailPage({ config }: { config: ResourceDetailC
         </div>
       )}
       <Card><CardHeader><CardTitle>基本信息</CardTitle></CardHeader><CardContent>
-        <table className="w-full text-sm"><tbody>
+        <Table><TableBody>
           {config.infoFields.map((row, i) => (
-            <tr key={i} className="border-b last:border-0">
-              <td className="py-2 pr-4 text-muted-foreground w-28 whitespace-nowrap">{row[0]}</td>
-              <td className="py-2 pr-8 font-mono text-xs break-all">{detail[row[1]] ?? '-'}</td>
-              <td className="py-2 pr-4 text-muted-foreground w-28 whitespace-nowrap">{row[2]}</td>
-              <td className="py-2 font-mono text-xs break-all">{detail[row[3]] ?? '-'}</td>
-            </tr>
+            <TableRow key={i}>
+              <TableCell className="py-2 pr-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-28 whitespace-nowrap">{row[0]}</TableCell>
+              <TableCell className="py-2 pr-8 font-mono text-xs break-all">{detail[row[1]] ?? '-'}</TableCell>
+              <TableCell className="py-2 pr-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-28 whitespace-nowrap">{row[2]}</TableCell>
+              <TableCell className="py-2 font-mono text-xs break-all">{detail[row[3]] ?? '-'}</TableCell>
+            </TableRow>
           ))}
-        </tbody></table>
+        </TableBody></Table>
       </CardContent></Card>
       <Tabs defaultValue="yaml" onValueChange={handleTabChange}>
         <TabsList variant="line">

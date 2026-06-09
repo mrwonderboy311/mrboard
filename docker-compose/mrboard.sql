@@ -4,7 +4,7 @@ Navicat MySQL Data Transfer
 Source Server         : mysql8
 Source Server Version : 80043
 Source Host           : localhost:3307
-Source Database       : db_xkube
+Source Database       : mrboard
 
 Target Server Type    : MYSQL
 Target Server Version : 80043

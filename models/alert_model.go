@@ -64,6 +64,8 @@ func GetAlertRule(id int64) (*AlertRule, error) {
 
 // CreateAlertRule 创建告警规则 / Create alert rule
 func CreateAlertRule(rule *AlertRule) error {
+	rule.CreatedAt = time.Now().Format("2006-01-02 15:04:05")
+	rule.UpdatedAt = rule.CreatedAt
 	o := orm.NewOrm()
 	_, err := o.Insert(rule)
 	return err
@@ -104,10 +106,16 @@ func GetEnabledLokiRules() ([]AlertRule, error) {
 }
 
 // ActiveAlert 活跃告警 / Active alert from Alertmanager
+type AlertStatus struct {
+	State      string   `json:"state"`
+	SilencedBy []string `json:"silencedBy"`
+	InhibitedBy []string `json:"inhibitedBy"`
+}
+
 type ActiveAlert struct {
 	Labels      map[string]string `json:"labels"`
 	Annotations map[string]string `json:"annotations"`
-	Status      string            `json:"status"`
+	Status      AlertStatus       `json:"status"`
 	StartsAt    string            `json:"startsAt"`
 	EndsAt      string            `json:"endsAt"`
 	Fingerprint string            `json:"fingerprint"`
@@ -283,7 +291,7 @@ func evaluateLokiRule(rule AlertRule) error {
 		alert := ActiveAlert{
 			Labels:      map[string]string{"alertname": rule.Name, "severity": rule.Severity},
 			Annotations: map[string]string{"summary": fmt.Sprintf("Loki rule %s triggered", rule.Name)},
-			Status:      "firing",
+			Status:      AlertStatus{State: "firing"},
 			StartsAt:    time.Now().Format(time.RFC3339),
 		}
 		ForwardToChannels([]ActiveAlert{alert}, rule.Severity)

@@ -12,6 +12,7 @@ import {
 import { Plus, Pencil, Trash2, KeyRound } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ApiResponse, AliyunAK, AliyunOrganization } from '@/types'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 const emptyForm = {
   aliyun_id: '', accesskey_id: '', accesskey_secret: '', organization_id: '', remarks: '',
@@ -25,6 +26,7 @@ export default function AliyunAKList() {
   const [editId, setEditId] = useState<number | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [verifying, setVerifying] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<AliyunAK | null>(null)
 
   const fetchList = async () => {
     setLoading(true)
@@ -114,10 +116,10 @@ export default function AliyunAKList() {
     }
   }
 
-  const handleDelete = async (item: AliyunAK) => {
-    if (!confirm(`确定删除 ${item.aliyun_id}？`)) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
     try {
-      await api<ApiResponse<unknown>>(`/cicd/v1/AkDel?id=${item.id}&aliyunId=${item.aliyun_id}`)
+      await api<ApiResponse<unknown>>(`/cicd/v1/AkDel?id=${deleteTarget.id}&aliyunId=${deleteTarget.aliyun_id}`)
       toast.success('删除成功')
       fetchList()
     } catch (err) {
@@ -168,7 +170,7 @@ export default function AliyunAKList() {
                       <Button variant="outline" size="sm" onClick={() => openEdit(item)}>
                         <Pencil size={14} />
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(item)}>
+                      <Button variant="outline" size="sm" onClick={() => setDeleteTarget(item)}>
                         <Trash2 size={14} />
                       </Button>
                     </div>
@@ -223,6 +225,14 @@ export default function AliyunAKList() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}
+        title="确认操作"
+        description={`确定删除 ${deleteTarget?.aliyun_id}？`}
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

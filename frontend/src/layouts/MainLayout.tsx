@@ -18,7 +18,7 @@ import {
   Search, Menu, LogOut, User, ChevronDown,
   ChevronRight, Settings, Cpu,
   Network, Database, HardDrive, Globe,
-  Shield, Zap, MonitorDot, BarChart3,
+  Shield, Zap, MonitorDot, BarChart3, Brain,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -94,11 +94,7 @@ const navItems: NavItem[] = [
   ]},
   // 可观测性
   { label: '可观测性', icon: <BarChart3 size={18} />, children: [
-    { label: '监控面板', icon: <ChevronRight size={14} />, path: '/monitor/dashboard' },
-    { label: '指标查看', icon: <ChevronRight size={14} />, path: '/monitor/prometheus' },
-    { label: '服务健康', icon: <ChevronRight size={14} />, path: '/monitor/service-health' },
-    { label: '日志查询', icon: <ChevronRight size={14} />, path: '/log/loki' },
-    { label: '链路追踪', icon: <ChevronRight size={14} />, path: '/log/trace' },
+    { label: 'Grafana', icon: <ChevronRight size={14} />, path: '/monitor/dashboard' },
     { label: '告警管理', icon: <ChevronRight size={14} />, path: '/alerts' },
   ]},
   { label: '权限管理', icon: <Shield size={18} />, children: [
@@ -112,6 +108,7 @@ const navItems: NavItem[] = [
   ]},
   // 工具
   { label: '搜索', icon: <Search size={18} />, path: '/search' },
+  { label: 'AI 分析', icon: <Brain size={18} />, path: '/ai/analysis' },
   { label: 'AI助手', icon: <Zap size={18} />, path: '/ai/chat' },
 ]
 
@@ -155,7 +152,7 @@ function SidebarNav({ onItemClick }: { onItemClick?: () => void }) {
   }
 
   return (
-    <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+    <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
       {navItems.map(item => {
         if (item.path) {
           const active = location.pathname === item.path
@@ -165,14 +162,14 @@ function SidebarNav({ onItemClick }: { onItemClick?: () => void }) {
               key={item.label}
               to={item.path}
               onClick={onItemClick}
-              className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+              className={`relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
                 active
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                  ? 'bg-sidebar-primary/15 text-sidebar-primary font-medium shadow-sm shadow-sidebar-primary/10'
+                  : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
               }`}
             >
               {active && (
-                <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-blue-400" />
+                <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-sidebar-primary" />
               )}
               {item.icon}
               <span className="flex-1">{item.label}</span>
@@ -190,10 +187,10 @@ function SidebarNav({ onItemClick }: { onItemClick?: () => void }) {
           <div key={item.label}>
             <button
               onClick={() => toggle(item.label)}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-all duration-150"
             >
               {item.icon}
-              <span className="flex-1 text-left tracking-wide text-[13px] text-slate-400 font-medium uppercase">
+              <span className="flex-1 text-left tracking-wider text-[11px] text-slate-500 font-semibold uppercase">
                 {item.label}
               </span>
               <ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
@@ -208,14 +205,14 @@ function SidebarNav({ onItemClick }: { onItemClick?: () => void }) {
                         key={child.label}
                         to={child.path!}
                         onClick={onItemClick}
-                        className={`relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        className={`relative flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] transition-all duration-150 ${
                           childActive
-                            ? 'bg-blue-600 text-white'
-                            : 'text-slate-400 hover:bg-white/10 hover:text-white'
+                            ? 'bg-sidebar-primary/15 text-sidebar-primary font-medium'
+                            : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'
                         }`}
                       >
                         {childActive && (
-                          <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-blue-400" />
+                          <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-sidebar-primary" />
                         )}
                         {child.icon}
                         {child.label}
@@ -260,15 +257,18 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   const userInitial = (user?.username || 'U').charAt(0).toUpperCase()
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="flex h-screen bg-background">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:flex-col w-64 bg-gradient-to-b from-slate-900 to-slate-950 text-white">
-        <div className="h-14 flex items-center px-5 font-bold text-lg tracking-wide">
-          MRBoard
+      <aside className="hidden lg:flex lg:flex-col w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+        <div className="h-14 flex items-center gap-2.5 px-5">
+          <div className="w-7 h-7 rounded-lg bg-sidebar-primary/20 flex items-center justify-center">
+            <Server size={15} className="text-sidebar-primary" />
+          </div>
+          <span className="font-bold text-[15px] tracking-tight">MRBoard</span>
         </div>
-        <Separator className="bg-white/10" />
+        <Separator className="bg-sidebar-border" />
         <SidebarNav />
-        <Separator className="bg-white/10" />
+        <Separator className="bg-sidebar-border" />
         <div className="p-3">
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -297,7 +297,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
       <Sheet>
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
-          <header className="h-14 bg-white border-b flex items-center px-4 lg:px-6 gap-4">
+          <header className="h-14 bg-card border-b flex items-center px-4 lg:px-6 gap-4">
             <SheetTrigger
               render={<Button variant="ghost" size="icon" className="lg:hidden" />}
             >
@@ -321,7 +321,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           </header>
 
           {/* Content */}
-          <main className="flex-1 overflow-auto p-4 lg:p-6">
+          <main className="flex-1 overflow-auto p-4 lg:p-6 animate-[fadeInUp_0.3s_ease-out]">
             {children}
           </main>
         </div>
@@ -330,7 +330,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           <div className="h-14 flex items-center px-5 font-bold text-lg text-white tracking-wide">
             MRBoard
           </div>
-          <Separator className="bg-white/10" />
+          <Separator className="bg-sidebar-border" />
           <SidebarNav />
         </SheetContent>
       </Sheet>

@@ -34,11 +34,10 @@ const AppNameAdd = lazy(() => import('@/pages/app/AppNameAdd'))
 const AppNameEdit = lazy(() => import('@/pages/app/AppNameEdit'))
 const AppDown = lazy(() => import('@/pages/app/AppDown'))
 const AIChat = lazy(() => import('@/pages/ai/AIChat'))
+const AIAnalysis = lazy(() => import('@/pages/ai/AIAnalysis'))
 const ApplyYAML = lazy(() => import('@/pages/tools/ApplyYAML'))
 const CloneResource = lazy(() => import('@/pages/tools/CloneResource'))
-const MonitorDashboard = lazy(() => import('@/pages/monitor/MonitorDashboard'))
-const PrometheusMetrics = lazy(() => import('@/pages/monitor/PrometheusMetrics'))
-const ServiceHealth = lazy(() => import('@/pages/monitor/ServiceHealth'))
+const GrafanaDashboard = lazy(() => import('@/pages/monitor/GrafanaDashboard'))
 const CICDList = lazy(() => import('@/pages/cicd/CICDList'))
 const PipelinesIndex = lazy(() => import('@/pages/cicd/PipelinesIndex'))
 const PipelinesAdd = lazy(() => import('@/pages/cicd/PipelinesAdd'))
@@ -169,10 +168,7 @@ const NamespaceResLimit = lazy(() => import('@/pages/k8s/NamespaceResLimit'))
 // Ops
 const BackupList = lazy(() => import('@/pages/ops/BackupList'))
 
-// Log
-const LogDrilldown = lazy(() => import('@/pages/log/LogDrilldown'))
-const TraceViewer = lazy(() => import('@/pages/log/TraceViewer'))
-const TraceDetail = lazy(() => import('@/pages/log/TraceDetail'))
+// Log/Trace — now via Grafana
 
 // Alert
 const AlertDashboard = lazy(() => import('@/pages/alerts/AlertDashboard'))
@@ -307,6 +303,9 @@ function AppRoutes() {
         <Route path="/ai/chat" element={
           <ProtectedRoute><MainLayout><AIChat /></MainLayout></ProtectedRoute>
         } />
+        <Route path="/ai/analysis" element={
+          <ProtectedRoute><MainLayout><AIAnalysis /></MainLayout></ProtectedRoute>
+        } />
 
         {/* Tools */}
         <Route path="/tools/apply-yaml" element={
@@ -316,15 +315,15 @@ function AppRoutes() {
           <ProtectedRoute><MainLayout><CloneResource /></MainLayout></ProtectedRoute>
         } />
 
-        {/* Monitor */}
+        {/* Monitor — Grafana embedded */}
         <Route path="/monitor/dashboard" element={
-          <ProtectedRoute><MainLayout><MonitorDashboard /></MainLayout></ProtectedRoute>
+          <ProtectedRoute><MainLayout><GrafanaDashboard /></MainLayout></ProtectedRoute>
         } />
         <Route path="/monitor/prometheus" element={
-          <ProtectedRoute><MainLayout><PrometheusMetrics /></MainLayout></ProtectedRoute>
+          <ProtectedRoute><MainLayout><GrafanaDashboard /></MainLayout></ProtectedRoute>
         } />
         <Route path="/monitor/service-health" element={
-          <ProtectedRoute><MainLayout><ServiceHealth /></MainLayout></ProtectedRoute>
+          <ProtectedRoute><MainLayout><GrafanaDashboard /></MainLayout></ProtectedRoute>
         } />
 
         {/* CI/CD */}
@@ -695,15 +694,15 @@ function AppRoutes() {
           <ProtectedRoute><MainLayout><AlertDashboard /></MainLayout></ProtectedRoute>
         } />
 
-        {/* Log */}
+        {/* Log — Grafana embedded */}
         <Route path="/log/loki" element={
-          <ProtectedRoute><MainLayout><LogDrilldown /></MainLayout></ProtectedRoute>
+          <ProtectedRoute><MainLayout><GrafanaDashboard /></MainLayout></ProtectedRoute>
         } />
         <Route path="/log/trace" element={
-          <ProtectedRoute><MainLayout><TraceViewer /></MainLayout></ProtectedRoute>
+          <ProtectedRoute><MainLayout><GrafanaDashboard /></MainLayout></ProtectedRoute>
         } />
         <Route path="/log/trace/detail" element={
-          <ProtectedRoute><MainLayout><TraceDetail /></MainLayout></ProtectedRoute>
+          <ProtectedRoute><MainLayout><GrafanaDashboard /></MainLayout></ProtectedRoute>
         } />
 
         {/* Catch-all */}

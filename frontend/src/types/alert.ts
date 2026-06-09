@@ -5,7 +5,7 @@ export interface AlertRule {
   cluster_id: string
   name: string
   expr: string
-  source: 'prometheus' | 'loki'
+  source: 'prometheus' | 'loki' | 'mrboard'
   duration: string
   severity: 'critical' | 'warning' | 'info'
   labels: string

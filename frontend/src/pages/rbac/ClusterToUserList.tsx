@@ -8,10 +8,11 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Link2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 interface ClusterUser {
   id: number
@@ -37,17 +38,35 @@ export default function ClusterToUserList() {
   const [form, setForm] = useState({ username: '', clusterId: '' })
   const [searchUser, setSearchUser] = useState('')
   const [searchCluster, setSearchCluster] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<ClusterUser | null>(null)
+  const [addLoading, setAddLoading] = useState(false)
 
   const columns: Column<ClusterUser>[] = useMemo(() => [
-    { key: 'id', header: 'ID', className: 'w-16', render: (item) => item.id },
-    { key: 'clusterId', header: '集群', render: (item) => <span className="font-medium">{item.clusterId}</span> },
-    { key: 'username', header: '用户', render: (item) => item.username },
-    { key: 'createtime', header: '创建时间', render: (item) => item.createtime },
     {
-      key: 'actions', header: '操作', render: (item) => (
-        <Button variant="outline" size="sm" onClick={() => handleDelete(item)}>
-          <Trash2 size={14} className="mr-1" />取消授权
-        </Button>
+      key: 'clusterId', header: '集群', className: 'font-medium', render: (item) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <Link2 size={14} className="text-primary" />
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-sm truncate">{item.clusterId}</div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[10px] text-muted-foreground truncate">{item.username}</span>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    { key: 'createtime', header: '创建时间', className: 'text-xs text-muted-foreground', render: (item) => item.createtime },
+    {
+      key: 'actions', header: '', render: (item) => (
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
+          <div className="w-px h-4 bg-border mx-0.5" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" title="取消授权"
+            onClick={(e) => { e.stopPropagation(); setDeleteTarget(item) }}>
+            <Trash2 size={15} />
+          </Button>
+        </div>
       ),
     },
   ], [])
@@ -87,6 +106,7 @@ export default function ClusterToUserList() {
       toast.error('请选择用户和集群')
       return
     }
+    setAddLoading(true)
     try {
       await api('/rbac/cluster/Add', {
         method: 'POST',
@@ -98,13 +118,15 @@ export default function ClusterToUserList() {
       fetchItems()
     } catch (err) {
       toast.error((err as Error).message)
+    } finally {
+      setAddLoading(false)
     }
   }
 
-  const handleDelete = async (item: ClusterUser) => {
-    if (!confirm('确定取消授权？')) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
     try {
-      await api(`/rbac/cluster/Delete?id=${item.id}`)
+      await api(`/rbac/cluster/Delete?id=${deleteTarget.id}`)
       toast.success('删除成功')
       fetchItems()
     } catch (err) {
@@ -128,8 +150,8 @@ export default function ClusterToUserList() {
   }
 
   return (
-    <div className="space-y-4">
-      <PageHeader title="集群授权">
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
+      <PageHeader title="集群授权" eyebrow="RBAC">
         <Button onClick={() => { setForm({ username: '', clusterId: '' }); setDialogOpen(true) }}>
           <Plus size={16} className="mr-2" />添加
         </Button>
@@ -166,7 +188,7 @@ export default function ClusterToUserList() {
             <Button onClick={handleSearch}>搜索</Button>
           </div>
 
-          <DataTable columns={columns} data={items} loading={loading} emptyMessage="暂无数据" />
+          <DataTable columns={columns} data={items} loading={loading} emptyMessage="暂无数据" variant="cards" />
         </CardContent>
       </Card>
 
@@ -201,11 +223,19 @@ export default function ClusterToUserList() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>取消</Button>
-            <Button onClick={handleAdd}>确认添加</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={addLoading}>取消</Button>
+            <Button onClick={handleAdd} disabled={addLoading}>{addLoading ? <><Loader2 size={14} className="animate-spin mr-1.5" />处理中...</> : '确认添加'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}
+        title="确认操作"
+        description="确定取消授权？"
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

@@ -12,6 +12,7 @@ import { DataTable } from '@/components/shared/DataTable'
 import YamlViewer from '@/components/shared/YamlViewer'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { Trash2, Droplets, FileCode } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import type { Pod, KubeEvent } from '@/types'
 import type { Column } from '@/components/shared/DataTable'
@@ -110,7 +111,14 @@ export default function NodeDetail() {
     catch (err) { toast.error((err as Error).message) }
   }
 
-  if (loading) return <div className="flex items-center justify-center py-16 text-muted-foreground">加载中...</div>
+  if (loading) return (
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
+      <div className="flex items-center gap-3"><Skeleton className="h-8 w-8 rounded-lg" /><Skeleton className="h-7 w-40" /></div>
+      <div className="flex gap-2"><Skeleton className="h-9 w-20" /><Skeleton className="h-9 w-20" /><Skeleton className="h-9 w-20" /></div>
+      <Skeleton className="h-48 w-full rounded-lg" />
+      <Skeleton className="h-32 w-full rounded-lg" />
+    </div>
+  )
   if (!detail) return <div className="flex items-center justify-center py-16 text-muted-foreground">未找到节点详情</div>
 
   const cpuPercent = parsePercent(detail.cpuAllocated)
@@ -119,8 +127,8 @@ export default function NodeDetail() {
   const yamlContent = typeof yaml === 'string' ? yaml : JSON.stringify(yaml, null, 2)
 
   return (
-    <div className="space-y-4">
-      <PageHeader title={detail.nodeName}>
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
+      <PageHeader title={detail.nodeName} eyebrow="Node">
         <StatusBadge status={detail.status} />
         <Button variant="outline" size="sm" onClick={() => navigate('/k8s/node/yaml?' + baseQuery)}>
           <FileCode size={14} className="mr-1" />YAML
@@ -174,7 +182,7 @@ export default function NodeDetail() {
               <CardHeader><CardTitle>资源分配</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 {subLoading.allocated ? (
-                  <div className="text-muted-foreground">加载中...</div>
+                  <div className="space-y-3"><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /></div>
                 ) : (
                   <>
                     <div className="space-y-2">
@@ -204,7 +212,7 @@ export default function NodeDetail() {
               <CardHeader><CardTitle>标签</CardTitle></CardHeader>
               <CardContent>
                 {subLoading.labels ? (
-                  <div className="text-muted-foreground">加载中...</div>
+                  <div className="flex gap-2"><Skeleton className="h-6 w-24" /><Skeleton className="h-6 w-32" /><Skeleton className="h-6 w-20" /></div>
                 ) : labelEntries.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {labelEntries.map(([k, v]) => (
@@ -224,7 +232,7 @@ export default function NodeDetail() {
               <CardHeader><CardTitle>污点</CardTitle></CardHeader>
               <CardContent>
                 {subLoading.taints ? (
-                  <div className="text-muted-foreground">加载中...</div>
+                  <div className="flex gap-2"><Skeleton className="h-6 w-28" /><Skeleton className="h-6 w-24" /></div>
                 ) : taints.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {taints.map((t: any, i: number) => (
@@ -258,7 +266,7 @@ export default function NodeDetail() {
         <TabsContent value="events">
           <Card><CardContent className="p-0">
             {subLoading.events ? (
-              <div className="flex items-center justify-center py-12 text-muted-foreground">加载中...</div>
+              <div className="p-4 space-y-3"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div>
             ) : events.length === 0 ? (
               <div className="flex items-center justify-center py-12 text-muted-foreground">暂无事件</div>
             ) : (
@@ -291,7 +299,7 @@ export default function NodeDetail() {
         {/* YAML Tab */}
         <TabsContent value="yaml">
           <Card><CardContent className="py-4">
-            {subLoading.yaml ? <div className="text-muted-foreground">加载中...</div> : (
+            {subLoading.yaml ? <Skeleton className="h-64 w-full" /> : (
               <YamlViewer yaml={yamlContent} />
             )}
           </CardContent></Card>

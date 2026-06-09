@@ -71,6 +71,9 @@ type Xkb_cluster struct { //查询时会将大写以下划线分开
 	// AlertmanagerUrl Alertmanager service URL for the cluster
 	// AlertmanagerUrl 集群的 Alertmanager 服务地址
 	AlertmanagerUrl string `json:"alertmanager_url"`
+	// GrafanaUrl Grafana service URL for the cluster
+	// GrafanaUrl 集群的 Grafana 服务地址
+	GrafanaUrl string `json:"grafana_url"`
 }
 
 type ClusterCount struct {
@@ -142,8 +145,7 @@ func GetList_Cluster(id, clusterId string, page, page_size int64) (dps []Xkb_clu
 	}
 
 	qs = qs.SetCond(cond)
-	qs.Limit(page_size, offset).OrderBy("-id").All(&dps, "id", "cluster_id", "cluster_name", "idc_name", "status", "kube_version", "remarks", "lan_slbip", "wan_slbip", "loki_url", "tempo_url", "prometheus_url", "alertmanager_url", "createtime")
-	//qs.All(&xfr)
+	qs.Limit(page_size, offset).OrderBy("-id").All(&dps, "id", "cluster_id", "cluster_name", "idc_name", "status", "kube_version", "remarks", "lan_slbip", "wan_slbip", "loki_url", "tempo_url", "prometheus_url", "grafana_url", "createtime")
 	count, _ = qs.Count()
 	return dps, count
 }
@@ -197,6 +199,7 @@ func Add_Cluster(u *Xkb_cluster) (int64, error) {
 	Ds.PrometheusUrl = u.PrometheusUrl
 	Ds.LokiConfig = u.LokiConfig
 	Ds.AlertmanagerUrl = u.AlertmanagerUrl
+	Ds.GrafanaUrl = u.GrafanaUrl
 	num, err := o.Insert(Ds)
 	if err != nil {
 		return 0, err
@@ -277,6 +280,7 @@ func Update_Cluster(u *Xkb_cluster) (int64, error) {
 	op["PrometheusUrl"] = u.PrometheusUrl
 	op["LokiConfig"] = u.LokiConfig
 	op["AlertmanagerUrl"] = u.AlertmanagerUrl
+	op["GrafanaUrl"] = u.GrafanaUrl
 	op["Status"] = u.Status
 	//op["Updatetime"] = time.Now().Format("2006-01-02 15:04:05")
 

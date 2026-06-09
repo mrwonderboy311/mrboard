@@ -177,12 +177,10 @@ func (this *MainController) Login() {
 		this.Ctx.Redirect(302, "/index")
 	}
 
-	var loginTpl = "/login_code.html"
-	if MobileVerifyCode {
-		loginTpl = "/login_telcode.html"
-	}
-
-	this.TplName = this.GetTemplatetype() + loginTpl
+	// Frontend handles login page — return 401 JSON for non-ajax requests
+	this.Ctx.Output.SetStatus(401)
+	this.Data["json"] = &map[string]interface{}{"code": 401, "msg": "未登录"}
+	this.ServeJSON()
 }
 
 // app登录
@@ -262,12 +260,13 @@ func (this *MainController) Logout() {
 	isajax := this.GetString("isajax")
 
 	userinfo := this.GetSession("userinfo")
-	//log record start
 	userip := this.Ctx.Request.Header.Get("x-forwarded-for")
 	if userip == "" {
 		userip = this.Ctx.Request.RemoteAddr
 	}
-	_ = m.InsertLogAudit(userip, userinfo.(m.User).Username, "Logout", "success", "")
+	if userinfo != nil {
+		_ = m.InsertLogAudit(userip, userinfo.(m.User).Username, "Logout", "success", "")
+	}
 	this.DelSession("userinfo")
 	if isajax == "1" {
 		this.Rsp(true, "success")
@@ -323,8 +322,10 @@ func (this *MainController) Changepwd() {
 func (this *MainController) MyInfo() {
 	userinfo := this.GetSession("userinfo")
 	if userinfo == nil {
-		authGateway, _ := beego.AppConfig.String("rbac_auth_gateway")
-		this.Ctx.Redirect(302, authGateway)
+		this.Ctx.Output.SetStatus(401)
+		this.Data["json"] = &map[string]interface{}{"code": 401, "msg": "未登录"}
+		this.ServeJSON()
+		return
 	}
 	if this.IsAjax() {
 		user, _ := m.GetUserById(userinfo.(m.User).Id)

@@ -14,6 +14,7 @@ import {
 import { Plus, Play, Pencil, Trash2, Eye, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import type { CicdItem, ApiResponse, CicdPipelineConfig } from '@/types'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 const cicdTypeLabel: Record<number, string> = { 1: '阿里云流水线', 2: 'Jenkins' }
 const statusLabel: Record<number, { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
@@ -28,6 +29,8 @@ export default function CICDList() {
   const [searchName, setSearchName] = useState('')
   const [searchApp, setSearchApp] = useState('')
   const [appNames, setAppNames] = useState<string[]>([])
+  const [runTarget, setRunTarget] = useState<CicdItem | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<CicdItem | null>(null)
 
   const fetchList = async (params?: { cicdName?: string; appname?: string }) => {
     setLoading(true)
@@ -61,8 +64,9 @@ export default function CICDList() {
     fetchList({ cicdName: searchName, appname: searchApp })
   }
 
-  const handleRun = async (item: CicdItem) => {
-    if (!confirm(`确定运行 ${item.cicd_name}？`)) return
+  const handleRun = async () => {
+    if (!runTarget) return
+    const item = runTarget
     try {
       const pipelineResp = await api<ApiResponse<CicdPipelineConfig>>(`/cicd/v1/GetPipelines?cicdId=${item.id}`)
       if (item.cicd_type === 1) {
@@ -93,10 +97,10 @@ export default function CICDList() {
     }
   }
 
-  const handleDelete = async (item: CicdItem) => {
-    if (!confirm(`确定删除 ${item.cicd_name}？`)) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
     try {
-      await api<ApiResponse<unknown>>(`/cicd/v1/Del?id=${item.id}`)
+      await api<ApiResponse<unknown>>(`/cicd/v1/Del?id=${deleteTarget.id}`)
       toast.success('删除成功')
       fetchList()
     } catch (err) {
@@ -179,13 +183,13 @@ export default function CICDList() {
                       <Button variant="outline" size="sm" render={<Link to={`/cicd/pipelines?cicdName=${item.cicd_name}&cicdId=${item.id}`} />}>
                         <Eye size={14} />
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleRun(item)}>
+                      <Button variant="outline" size="sm" onClick={() => setRunTarget(item)}>
                         <Play size={14} />
                       </Button>
                       <Button variant="outline" size="sm" render={<Link to={`/cicd/pipelines/edit?cicdName=${item.cicd_name}&cicdId=${item.id}`} />}>
                         <Pencil size={14} />
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(item)}>
+                      <Button variant="outline" size="sm" onClick={() => setDeleteTarget(item)}>
                         <Trash2 size={14} />
                       </Button>
                     </div>
@@ -196,6 +200,21 @@ export default function CICDList() {
           </Table>
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={!!runTarget}
+        onOpenChange={(v) => { if (!v) setRunTarget(null) }}
+        title="确认操作"
+        description={`确定运行 ${runTarget?.cicd_name}？`}
+        onConfirm={handleRun}
+      />
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}
+        title="确认操作"
+        description={`确定删除 ${deleteTarget?.cicd_name}？`}
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

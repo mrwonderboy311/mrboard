@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -64,16 +65,24 @@ export default function PodTerminal() {
   }, [])
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
       <div className="flex items-center gap-4">
         <Button variant="outline" onClick={() => navigate(-1)}><ArrowLeft size={14} className="mr-1" />返回</Button>
-        <h1 className="text-2xl font-bold">终端 - {podName}</h1>
+        <div>
+          <span className="inline-block rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-medium bg-primary/5 text-primary border border-primary/10 mb-1">K8s</span>
+          <h1 className="text-2xl font-bold">终端 - {podName}</h1>
+        </div>
       </div>
       <div className="flex gap-3 items-center">
         {containers.length > 1 && (
-          <select value={container} onChange={e => setContainer(e.target.value)} disabled={connected} className="h-9 rounded-md border border-input bg-transparent px-3 text-sm">
-            {containers.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <Select value={container} onValueChange={v => { if (v) setContainer(v) }} disabled={connected}>
+            <SelectTrigger className="h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {containers.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
         )}
         {connected ? (
           <Button variant="destructive" onClick={disconnect}>断开连接</Button>

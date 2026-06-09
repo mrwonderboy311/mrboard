@@ -16,6 +16,7 @@ export interface Cluster {
   loki_url: string
   tempo_url: string
   loki_config: string
+  grafana_url: string
 }
 
 // Deployment
@@ -84,6 +85,8 @@ export interface Pod {
   nodeName: string
   memUsage: number
   cpuUsage: number
+  cpu?: number
+  mem?: number
   createTime: string
 }
 
@@ -273,4 +276,61 @@ export interface LoginResponse {
   info?: string
   sessionId?: string
   role?: string
+}
+
+// AI Analysis
+export interface AnalysisReport {
+  summary: string
+  severity: 'critical' | 'warning' | 'info'
+  root_cause: string
+  evidence: Evidence[]
+  suggestions: Suggestion[]
+  related_incidents: string[]
+  raw_response: string
+  tokens_used: number
+  rounds: number
+}
+
+export interface Evidence {
+  type: 'log' | 'metric' | 'trace' | 'k8s'
+  content: string
+  source: string
+}
+
+export interface Suggestion {
+  action: string
+  risk: 'low' | 'medium' | 'high'
+  command: string
+}
+
+export interface AnalysisHistory {
+  id: number
+  cluster_id: string
+  trigger_type: string
+  trigger_id: string
+  alert_name: string
+  severity: string
+  namespace: string
+  summary: string
+  root_cause: string
+  evidence_json: string
+  suggestions_json: string
+  model_used: string
+  tokens_used: number
+  rounds: number
+  feedback_score: number
+  feedback_note: string
+  created_at: string
+}
+
+export interface LlmConfig {
+  id: number
+  name: string
+  provider: string
+  api_url: string
+  api_key: string
+  model: string
+  max_tokens: number
+  temperature: number
+  is_default: boolean
 }

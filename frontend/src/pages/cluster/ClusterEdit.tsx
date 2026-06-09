@@ -32,13 +32,14 @@ export default function ClusterEdit() {
   const [fetching, setFetching] = useState(true)
   const [form, setForm] = useState({
     cluster_name: '', cluster_type: '', api_server: '',
-    token: '', prometheus_url: '', loki_url: '', tempo_url: '', loki_config: '',
+    token: '', prometheus_url: '', loki_url: '', tempo_url: '', loki_config: '', grafana_url: '',
   })
 
   useEffect(() => {
     if (!id) return
-    api<Cluster>(`/cluster/get?cluster_id=${id}`)
-      .then(data => {
+    api<{ code: number; data: Cluster }>(`/mrboard/cluster/v1/Detail?id=${id}`)
+      .then(resp => {
+        const data = resp.data || resp as any
         setForm({
           cluster_name: data.cluster_name || '',
           cluster_type: data.cluster_type || '',
@@ -48,6 +49,7 @@ export default function ClusterEdit() {
           loki_url: data.loki_url || '',
           tempo_url: data.tempo_url || '',
           loki_config: data.loki_config || '',
+          grafana_url: data.grafana_url || '',
         })
       })
       .catch(err => toast.error((err as Error).message))
@@ -121,6 +123,11 @@ export default function ClusterEdit() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Tempo URL</label>
               <Input value={form.tempo_url} onChange={e => update('tempo_url', e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Grafana URL</label>
+              <Input value={form.grafana_url} onChange={e => update('grafana_url', e.target.value)} placeholder="https://grafana.xx-xx.xyz" />
+              <p className="text-xs text-muted-foreground">配置后可观测性页面将使用 Grafana 嵌入视图</p>
             </div>
             <div className="flex gap-2">
               <Button type="submit" disabled={loading}>{loading ? '保存中...' : '保存'}</Button>

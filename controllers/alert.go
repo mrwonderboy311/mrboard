@@ -2,13 +2,21 @@
 package controllers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
+	"strings"
 
+	"mrboard/common"
 	m "mrboard/models"
 
 	beego "github.com/beego/beego/v2/server/web"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 )
 
 type AlertController struct {
@@ -64,15 +72,14 @@ func (this *AlertController) History() {
 
 // AddRule 创建告警规则 / Create alert rule
 func (this *AlertController) AddRule() {
-	gp := this.Ctx.Input
-	clusterId := gp.Param("clusterId")
-	name := gp.Param("name")
-	expr := gp.Param("expr")
-	source := gp.Param("source")
-	duration := gp.Param("duration")
-	severity := gp.Param("severity")
-	labels := gp.Param("labels")
-	annotations := gp.Param("annotations")
+	clusterId := this.GetString("clusterId")
+	name := this.GetString("name")
+	expr := this.GetString("expr")
+	source := this.GetString("source")
+	duration := this.GetString("duration")
+	severity := this.GetString("severity")
+	labels := this.GetString("labels")
+	annotations := this.GetString("annotations")
 
 	if clusterId == "" || name == "" || expr == "" {
 		this.Data["json"] = &map[string]interface{}{"code": -1, "msg": "clusterId, name, expr are required"}
@@ -80,7 +87,7 @@ func (this *AlertController) AddRule() {
 		return
 	}
 	if source == "" {
-		source = "prometheus"
+		source = "mrboard"
 	}
 	if duration == "" {
 		duration = "5m"
@@ -107,6 +114,11 @@ func (this *AlertController) AddRule() {
 		return
 	}
 
+	// Sync to PrometheusRule CRD
+	if err := SyncPrometheusRule(clusterId); err != nil {
+		log.Printf("[Alert] SyncPrometheusRule error: %v", err)
+	}
+
 	this.Data["json"] = &map[string]interface{}{"code": 0, "msg": "success", "data": rule}
 	this.ServeJSON()
 }
@@ -128,26 +140,25 @@ func (this *AlertController) UpdateRule() {
 		return
 	}
 
-	gp := this.Ctx.Input
-	if v := gp.Param("name"); v != "" {
+	if v := this.GetString("name"); v != "" {
 		rule.Name = v
 	}
-	if v := gp.Param("expr"); v != "" {
+	if v := this.GetString("expr"); v != "" {
 		rule.Expr = v
 	}
-	if v := gp.Param("source"); v != "" {
+	if v := this.GetString("source"); v != "" {
 		rule.Source = v
 	}
-	if v := gp.Param("duration"); v != "" {
+	if v := this.GetString("duration"); v != "" {
 		rule.Duration = v
 	}
-	if v := gp.Param("severity"); v != "" {
+	if v := this.GetString("severity"); v != "" {
 		rule.Severity = v
 	}
-	if v := gp.Param("labels"); v != "" {
+	if v := this.GetString("labels"); v != "" {
 		rule.Labels = v
 	}
-	if v := gp.Param("annotations"); v != "" {
+	if v := this.GetString("annotations"); v != "" {
 		rule.Annotations = v
 	}
 
@@ -155,6 +166,10 @@ func (this *AlertController) UpdateRule() {
 		this.Data["json"] = &map[string]interface{}{"code": -1, "msg": err.Error()}
 		this.ServeJSON()
 		return
+	}
+
+	if err := SyncPrometheusRule(rule.ClusterId); err != nil {
+		log.Printf("[Alert] SyncPrometheusRule error: %v", err)
 	}
 
 	this.Data["json"] = &map[string]interface{}{"code": 0, "msg": "success", "data": rule}
@@ -171,10 +186,19 @@ func (this *AlertController) DelRule() {
 		return
 	}
 
+	// Get rule before deleting to know the clusterId
+	rule, _ := m.GetAlertRule(id)
+
 	if err := m.DeleteAlertRule(id); err != nil {
 		this.Data["json"] = &map[string]interface{}{"code": -1, "msg": err.Error()}
 		this.ServeJSON()
 		return
+	}
+
+	if rule != nil {
+		if err := SyncPrometheusRule(rule.ClusterId); err != nil {
+			log.Printf("[Alert] SyncPrometheusRule error: %v", err)
+		}
 	}
 
 	this.Data["json"] = &map[string]interface{}{"code": 0, "msg": "success"}
@@ -191,10 +215,18 @@ func (this *AlertController) ToggleRule() {
 		return
 	}
 
+	rule, _ := m.GetAlertRule(id)
+
 	if err := m.ToggleAlertRule(id); err != nil {
 		this.Data["json"] = &map[string]interface{}{"code": -1, "msg": err.Error()}
 		this.ServeJSON()
 		return
+	}
+
+	if rule != nil {
+		if err := SyncPrometheusRule(rule.ClusterId); err != nil {
+			log.Printf("[Alert] SyncPrometheusRule error: %v", err)
+		}
 	}
 
 	this.Data["json"] = &map[string]interface{}{"code": 0, "msg": "success"}
@@ -217,7 +249,7 @@ func (this *AlertController) Webhook() {
 			ClusterId:   alert.Labels["cluster_id"],
 			RuleName:    alert.Labels["alertname"],
 			Severity:    alert.Labels["severity"],
-			Status:      alert.Status,
+			Status:      alert.Status.State,
 			Labels:      string(labelsJson),
 			Annotations: string(annotationsJson),
 			Notified:    false,
@@ -229,6 +261,114 @@ func (this *AlertController) Webhook() {
 
 	this.Data["json"] = &map[string]interface{}{"code": 0, "msg": "success"}
 	this.ServeJSON()
+}
+
+// SyncPrometheusRule syncs all enabled MRBoard rules to a PrometheusRule CRD
+func SyncPrometheusRule(clusterId string) error {
+	clientset := common.ClientSet(clusterId)
+	if clientset == nil {
+		return fmt.Errorf("clientset is nil for cluster %s", clusterId)
+	}
+
+	// Get all enabled rules for this cluster
+	rules, _, err := m.GetAlertRules(clusterId, 1, 1000)
+	if err != nil {
+		return fmt.Errorf("get rules: %v", err)
+	}
+
+	// Build PrometheusRule spec — only sync MRBoard-created rules
+	var promRules []interface{}
+	for _, r := range rules {
+		if !r.Enabled || r.Source != "mrboard" {
+			continue
+		}
+		rule := map[string]interface{}{
+			"alert":  r.Name,
+			"expr":   r.Expr,
+			"for":    r.Duration,
+			"labels": parseKV(r.Labels, "severity", r.Severity),
+		}
+		if r.Annotations != "" {
+			rule["annotations"] = parseKV(r.Annotations, "", "")
+		}
+		promRules = append(promRules, rule)
+	}
+
+	_, config := common.ClientSetConfig(clusterId)
+	dynamicClient := dynamic.NewForConfigOrDie(config)
+
+	// If no MRBoard rules, delete the PrometheusRule CRD if it exists
+	if len(promRules) == 0 {
+		gvr := schema.GroupVersionResource{Group: "monitoring.coreos.com", Version: "v1", Resource: "prometheusrules"}
+		err := dynamicClient.Resource(gvr).Namespace("observability").Delete(context.Background(), "mrboard-rules", metav1.DeleteOptions{})
+		if err != nil && !strings.Contains(err.Error(), "not found") {
+			log.Printf("[Alert] Delete empty PrometheusRule error: %v", err)
+		}
+		return nil
+	}
+	gvr := schema.GroupVersionResource{
+		Group:    "monitoring.coreos.com",
+		Version:  "v1",
+		Resource: "prometheusrules",
+	}
+
+	crName := "mrboard-rules"
+	ns := "observability"
+
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "monitoring.coreos.com/v1",
+			"kind":       "PrometheusRule",
+			"metadata": map[string]interface{}{
+				"name":      crName,
+				"namespace": ns,
+				"labels": map[string]interface{}{
+					"app.kubernetes.io/name":    "mrboard",
+					"app.kubernetes.io/part-of": "mrboard",
+					"release":                   "kps",
+				},
+			},
+			"spec": map[string]interface{}{
+				"groups": []interface{}{
+					map[string]interface{}{
+						"name":  "mrboard.rules",
+						"rules": promRules,
+					},
+				},
+			},
+		},
+	}
+
+	ctx := context.Background()
+	_, err = dynamicClient.Resource(gvr).Namespace(ns).Update(ctx, obj, metav1.UpdateOptions{})
+	if err != nil {
+		// Try create if not exists
+		_, err = dynamicClient.Resource(gvr).Namespace(ns).Create(ctx, obj, metav1.CreateOptions{})
+		if err != nil {
+			return fmt.Errorf("create/update PrometheusRule: %v", err)
+		}
+	}
+
+	log.Printf("[Alert] Synced %d rules to PrometheusRule/%s in %s", len(promRules), crName, ns)
+	return nil
+}
+
+// parseKV parses "key1=val1,key2=val2" into map[string]interface{}
+func parseKV(s string, defaultKey, defaultVal string) map[string]interface{} {
+	result := make(map[string]interface{})
+	if defaultKey != "" && defaultVal != "" {
+		result[defaultKey] = defaultVal
+	}
+	if s == "" {
+		return result
+	}
+	for _, part := range strings.Split(s, ",") {
+		kv := strings.SplitN(strings.TrimSpace(part), "=", 2)
+		if len(kv) == 2 {
+			result[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
+		}
+	}
+	return result
 }
 
 // AlertChannelController 告警通知渠道控制器 / Alert channel controller

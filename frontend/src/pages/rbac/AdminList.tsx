@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+
 import { Input } from '@/components/ui/input'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -10,7 +10,8 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+
+import { Plus, Pencil, Trash2, UserCog, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -49,25 +50,40 @@ export default function AdminList() {
   })
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const columns: Column<AdminUser>[] = useMemo(() => [
-    { key: 'Id', header: 'ID', className: 'w-16', render: (u) => u.Id },
-    { key: 'Username', header: '用户名', render: (u) => <span className="font-medium">{u.Username}</span> },
-    { key: 'Telphone', header: '电话', render: (u) => u.Telphone },
-    { key: 'Nickname', header: '名字', render: (u) => u.Nickname },
-    { key: 'Department', header: '部门', render: (u) => u.Department },
-    { key: 'Lastlogintime', header: '上次登录', render: (u) => u.Lastlogintime },
-    { key: 'Lastloginip', header: '登录IP', render: (u) => u.Lastloginip },
-    { key: 'Status', header: '状态', render: (u) => <StatusBadge status={u.Status === '1' ? 'Active' : 'Inactive'} /> },
-    { key: 'Remark', header: '备注', render: (u) => u.Remark },
     {
-      key: 'actions', header: '操作', render: (u) => (
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" render={<Link to={`/rbac/admin/edit/${u.Id}`} />}>
-            <Pencil size={14} />
+      key: 'Username', header: '用户名', className: 'font-medium', render: (u) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <UserCog size={14} className="text-primary" />
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-sm truncate">{u.Username}</div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[10px] text-muted-foreground truncate">{u.Nickname}</span>
+              <span className="text-[10px] text-muted-foreground truncate">{u.Department}</span>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    { key: 'Telphone', header: '电话', className: 'text-xs', render: (u) => u.Telphone },
+    { key: 'Email', header: '邮箱', className: 'text-xs', render: (u) => u.Email },
+    { key: 'Lastlogintime', header: '上次登录', className: 'text-xs text-muted-foreground', render: (u) => u.Lastlogintime },
+    { key: 'Status', header: '状态', render: (u) => <StatusBadge status={u.Status === '1' ? 'Active' : 'Inactive'} /> },
+    {
+      key: 'actions', header: '', render: (u) => (
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]" title="编辑" render={<Link to={`/rbac/admin/edit/${u.Id}`} />}>
+            <Pencil size={15} />
           </Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteTarget(u) }}>
-            <Trash2 size={14} />
+          <div className="w-px h-4 bg-border mx-0.5" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]" title="删除"
+            onClick={(e) => { e.stopPropagation(); setDeleteTarget(u) }}>
+            <Trash2 size={15} />
           </Button>
         </div>
       ),
@@ -126,6 +142,7 @@ export default function AdminList() {
       toast.error('两次密码不一致')
       return
     }
+    setSaving(true)
     try {
       await api('/rbac/user/Add', {
         method: 'POST',
@@ -137,11 +154,14 @@ export default function AdminList() {
       fetchUsers()
     } catch (err) {
       toast.error((err as Error).message)
+    } finally {
+      setSaving(false)
     }
   }
 
   const handleDelete = async () => {
     if (!deleteTarget) return
+    setDeleting(true)
     try {
       await api('/rbac/user/Delete', {
         method: 'POST',
@@ -152,22 +172,20 @@ export default function AdminList() {
       fetchUsers()
     } catch (err) {
       toast.error((err as Error).message)
+    } finally {
+      setDeleting(false)
     }
   }
 
   return (
-    <div className="space-y-4">
-      <PageHeader title="管理员">
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
+      <PageHeader title="管理员" eyebrow="RBAC">
         <Button onClick={() => { resetForm(); setDialogOpen(true) }}>
           <Plus size={16} className="mr-2" />添加
         </Button>
       </PageHeader>
 
-      <Card>
-        <CardContent className="p-0">
-          <DataTable columns={columns} data={users} loading={loading} emptyMessage="暂无数据" />
-        </CardContent>
-      </Card>
+      <DataTable columns={columns} data={users} loading={loading} emptyMessage="暂无数据" variant="cards" />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-lg">
@@ -243,7 +261,10 @@ export default function AdminList() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>取消</Button>
-            <Button onClick={handleAdd}>确认添加</Button>
+            <Button onClick={handleAdd} disabled={saving}>
+              {saving ? <Loader2 size={14} className="animate-spin mr-1.5" /> : null}
+              {saving ? '添加中...' : '确认添加'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -256,7 +277,10 @@ export default function AdminList() {
           <p>确定删除用户 {deleteTarget?.Username}？</p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>取消</Button>
-            <Button variant="destructive" onClick={handleDelete}>确认删除</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? <Loader2 size={14} className="animate-spin mr-1.5" /> : null}
+              {deleting ? '删除中...' : '确认删除'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

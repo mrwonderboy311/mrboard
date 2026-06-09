@@ -8,6 +8,7 @@ import { Plus, Trash2, Layers } from 'lucide-react'
 import { toast } from 'sonner'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 interface AppName {
   id: string
@@ -20,29 +21,39 @@ export default function AppNameList() {
   const [apps, setApps] = useState<AppName[]>([])
   const [loading, setLoading] = useState(true)
   const [searchName, setSearchName] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<AppName | null>(null)
 
   const columns: Column<AppName>[] = useMemo(() => [
     {
-      key: 'appname', header: '名称', render: (a) => (
-        <Link to={`/resource/list?appname=${a.appname}`} className="text-blue-500 hover:underline flex items-center gap-1">
-          <Layers size={14} />{a.appname}
-        </Link>
+      key: 'appname', header: '名称', className: 'font-medium', render: (a) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <Layers size={14} className="text-primary" />
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-sm truncate">{a.appname}</div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[10px] text-muted-foreground truncate">{a.createtime}</span>
+            </div>
+          </div>
+        </div>
       ),
     },
-    { key: 'createtime', header: '创建时间', render: (a) => a.createtime },
     {
-      key: 'remarks', header: '备注', render: (a) => (
+      key: 'remarks', header: '备注', className: 'text-xs', render: (a) => (
         <InlineEdit value={a.remarks} onSave={(val) => handleInlineEdit(a, 'remarks', val)} />
       ),
     },
     {
-      key: 'actions', header: '操作', render: (a) => (
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" render={<Link to={`/resource/list?appname=${a.appname}`} />}>
-            资源集合
+      key: 'actions', header: '', render: (a) => (
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="资源集合" render={<Link to={`/resource/list?appname=${a.appname}`} />}>
+            <Layers size={15} />
           </Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(a) }}>
-            <Trash2 size={14} />
+          <div className="w-px h-4 bg-border mx-0.5" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" title="删除"
+            onClick={(e) => { e.stopPropagation(); setDeleteTarget(a) }}>
+            <Trash2 size={15} />
           </Button>
         </div>
       ),
@@ -81,10 +92,10 @@ export default function AppNameList() {
     }
   }
 
-  const handleDelete = async (app: AppName) => {
-    if (!confirm(`确定删除 ${app.appname}？`)) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
     try {
-      await api(`/mrboard/appname/v1/Del?id=${app.id}`)
+      await api(`/mrboard/appname/v1/Del?id=${deleteTarget.id}`)
       toast.success('删除成功')
       fetchApps(searchName)
     } catch (err) {
@@ -93,8 +104,8 @@ export default function AppNameList() {
   }
 
   return (
-    <div className="space-y-4">
-      <PageHeader title="应用集">
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
+      <PageHeader title="应用集" eyebrow="应用">
         <Button render={<Link to="/app/add" />}>
           <Plus size={16} className="mr-2" />添加
         </Button>
@@ -117,11 +128,15 @@ export default function AppNameList() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="p-0">
-          <DataTable columns={columns} data={apps} loading={loading} emptyMessage="暂无应用" />
-        </CardContent>
-      </Card>
+      <DataTable columns={columns} data={apps} loading={loading} emptyMessage="暂无应用" variant="cards" />
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}
+        title="确认操作"
+        description={`确定删除 ${deleteTarget?.appname}？`}
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

@@ -344,6 +344,7 @@ func init() {
 
 	//WebSocket终端相关路由 | WebSocket terminal related routes
 	beego.Handler("/public/pod/terminal/ws", &controllers.TerminalSockjs{}, true)
+	beego.Router("/ws/pod/terminal", &controllers.TerminalWsController{}, "get:Get")
 
 	//集群角色绑定管理相关路由 | Cluster role binding management related routes
 	beego.Router("/mrboard/clusterrolebinding/v1/List", &controllers.ClusterRoleBindingController{}, "*:List")         //集群角色绑定列表 | Cluster role binding list
@@ -377,7 +378,8 @@ func init() {
 	beego.Router("/mrboard/metrics/v1/PodList", &controllers.MetricsController{}, "*:PodList")   //Pod指标列表 | Pod metrics list
 	beego.Router("/mrboard/metrics/PodUsage", &controllers.MetricsController{}, "*:PodUsage")    //Pod使用情况 | Pod usage
 	beego.Router("/mrboard/metrics/NodeUsage", &controllers.MetricsController{}, "*:NodeUsage")  //节点使用情况 | Node usage
-	beego.Router("/mrboard/metrics/v1/NodeList", &controllers.MetricsController{}, "*:NodeList") //节点指标列表 | Node metrics list
+	beego.Router("/mrboard/metrics/v1/NodeList", &controllers.MetricsController{}, "*:NodeList")         //节点指标列表 | Node metrics list
+	beego.Router("/mrboard/metrics/v1/InstallMetrics", &controllers.MetricsController{}, "post:InstallMetrics") //一键安装metrics-server
 
 	//CICD相关路由 | CICD related routes
 	beego.Router("/cicd/v1/List", &controllers.CicdController{}, "*:List")     //CICD列表 | CICD list
@@ -459,4 +461,15 @@ func init() {
 	beego.Router("/mrboard/alert/v1/channels", &controllers.AlertChannelController{}, "get:List;post:Add")
 	beego.Router("/mrboard/alert/v1/channels/:id", &controllers.AlertChannelController{}, "put:Update;delete:Del")
 	beego.Router("/mrboard/alert/v1/channels/:id/test", &controllers.AlertChannelController{}, "post:Test")
+
+	// AI 智能分析相关路由 | AI analysis related routes
+	beego.Router("/mrboard/ai/v1/analyze", &controllers.AIAnalysisController{}, "post:Analyze")
+	beego.Router("/mrboard/ai/v1/analyze_stream", &controllers.AIAnalysisController{}, "post:AnalyzeStream")
+	beego.Router("/mrboard/ai/v1/history", &controllers.AIAnalysisController{}, "get:History")
+	beego.Router("/mrboard/ai/v1/history/:id", &controllers.AIAnalysisController{}, "get:HistoryDetail")
+	beego.Router("/mrboard/ai/v1/chat", &controllers.AIAnalysisController{}, "post:Chat")
+	beego.Router("/mrboard/ai/v1/feedback", &controllers.AIAnalysisController{}, "post:Feedback")
+	beego.Router("/mrboard/ai/v1/models", &controllers.AIModelController{}, "get:List;post:Add")
+	beego.Router("/mrboard/ai/v1/models/:id", &controllers.AIModelController{}, "put:Update;delete:Delete")
+	beego.Router("/public/ai/alert_webhook", &controllers.AIAnalysisController{}, "post:AlertWebhook")
 }

@@ -21,7 +21,7 @@ data:
     db_port = 3306
     db_user = root
     db_pass = xkube_DB_123456
-    db_name = db_xkube
+    db_name = mrboard
     db_type = mysql
 
     #redis配置信息

@@ -3,6 +3,7 @@ import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CheckCircle } from 'lucide-react'
 import type { AlertRule } from '@/types/alert'
 
 interface Props {
@@ -15,7 +16,7 @@ interface Props {
 export function AlertRuleForm({ clusterId, rule, onSaved, onCancel }: Props) {
   const [name, setName] = useState(rule?.name || '')
   const [expr, setExpr] = useState(rule?.expr || '')
-  const [source, setSource] = useState(rule?.source || 'prometheus')
+  const [source, setSource] = useState(rule?.source || 'mrboard')
   const [duration, setDuration] = useState(rule?.duration || '5m')
   const [severity, setSeverity] = useState(rule?.severity || 'warning')
   const [summary, setSummary] = useState('')
@@ -60,8 +61,9 @@ export function AlertRuleForm({ clusterId, rule, onSaved, onCancel }: Props) {
           <Select value={source} onValueChange={v => setSource(v as 'prometheus' | 'loki')}>
             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="prometheus" className="text-xs">Prometheus</SelectItem>
-              <SelectItem value="loki" className="text-xs">Loki</SelectItem>
+              <SelectItem value="mrboard" className="text-xs">MRBoard（自动同步 Prometheus）</SelectItem>
+              <SelectItem value="prometheus" className="text-xs">Prometheus（仅查看）</SelectItem>
+              <SelectItem value="loki" className="text-xs">Loki（仅查看）</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -91,10 +93,16 @@ export function AlertRuleForm({ clusterId, rule, onSaved, onCancel }: Props) {
         <label className="text-xs text-muted-foreground">摘要</label>
         <Input value={summary} onChange={e => setSummary(e.target.value)} placeholder="告警描述" className="h-8 text-xs" />
       </div>
+      {source === 'mrboard' && (
+        <div className="flex items-start gap-2 text-xs text-muted-foreground bg-primary/5 rounded-lg p-2.5 border border-primary/10">
+          <CheckCircle size={14} className="text-primary shrink-0 mt-0.5" />
+          <span>此规则将自动同步到 Prometheus（PrometheusRule CRD），Prometheus Operator 会自动加载并执行。</span>
+        </div>
+      )}
       <div className="flex justify-end gap-2">
         <Button variant="outline" size="sm" onClick={onCancel} className="h-7 text-xs">取消</Button>
         <Button size="sm" onClick={handleSave} disabled={saving || !name || !expr} className="h-7 text-xs">
-          {saving ? '保存中...' : rule ? '更新' : '创建'}
+          {saving ? '保存中...' : rule ? '更新' : '创建并同步'}
         </Button>
       </div>
     </div>

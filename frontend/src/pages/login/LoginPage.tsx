@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
+import { Server, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const [username, setUsername] = useState('')
@@ -32,49 +33,60 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_60%)]" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-indigo-600/5 rounded-full blur-3xl" />
+    <div className="min-h-[100dvh] flex items-center justify-center bg-background relative">
+      {/* Subtle grid pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:24px_24px]" />
 
-      <Card className="w-full max-w-md mx-4 shadow-2xl shadow-blue-950/20 border-white/10 bg-white/95 backdrop-blur-sm relative z-10">
-        <CardHeader className="text-center pt-8 pb-4 space-y-3">
-          {/* Brand section */}
-          <div className="mx-auto w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-600/25 mb-2">
-            <span className="text-white font-bold text-xl tracking-tighter">MR</span>
+      <div className="w-full max-w-sm mx-4 relative z-10 animate-[fadeInUp_0.3s_ease-out]">
+        {/* Brand */}
+        <div className="text-center mb-8">
+          <span className="inline-block rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-medium bg-primary/5 text-primary border border-primary/10 mb-4">
+            Platform
+          </span>
+          <div className="inline-flex items-center gap-2.5 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+              <Server size={20} className="text-primary-foreground" />
+            </div>
+            <span className="text-xl font-bold tracking-tight">MRBoard</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">MRBoard</h1>
           <p className="text-sm text-muted-foreground">K8s 集群管理平台</p>
-        </CardHeader>
-        <CardContent className="px-8 pb-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">用户名</label>
-              <Input
-                placeholder="请输入用户名"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                autoFocus
-                className="h-10"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">密码</label>
-              <Input
-                type="password"
-                placeholder="请输入密码"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="h-10"
-              />
-            </div>
-            <Button type="submit" className="w-full h-10 font-medium" disabled={loading}>
-              {loading ? '登录中...' : '登录'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Login card */}
+        <Card className="transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
+          <CardContent className="pt-6 pb-6 px-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">用户名</label>
+                <Input
+                  placeholder="请输入用户名"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">密码</label>
+                <Input
+                  type="password"
+                  placeholder="请输入密码"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? <Loader2 size={14} className="animate-spin mr-1.5" /> : null}
+                {loading ? '登录中...' : '登录'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-muted-foreground mt-6">
+          MRBoard &copy; {new Date().getFullYear()}
+        </p>
+      </div>
     </div>
   )
 }

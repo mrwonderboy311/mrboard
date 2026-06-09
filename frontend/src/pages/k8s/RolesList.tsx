@@ -1,14 +1,16 @@
 import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Search, FileCode, Trash2, Plus } from 'lucide-react'
+import { Search, FileCode, Trash2, Plus, Shield, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 interface RoleRule { verbs: string; apiGroups: string; resources: string }
 interface RoleItem { rolesName: string; nameSpace: string; rules: RoleRule[]; createTime: string }
@@ -41,6 +43,9 @@ export default function RolesList() {
   const [formApiGroups, setFormApiGroups] = useState('')
   const [formResources, setFormResources] = useState('')
   const [formVerbs, setFormVerbs] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<RoleItem | null>(null)
+  const [operatingName, setOperatingName] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const fetchData = async () => {
     setLoading(true)
@@ -56,13 +61,17 @@ export default function RolesList() {
     return filtered.slice(start, start + 20)
   }, [filtered, page])
 
-  const handleDelete = async (ns: string, name: string) => {
-    if (!confirm('确定删除 Role ' + name + '？')) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    setOperatingName(deleteTarget.rolesName)
     try {
-      await api('/mrboard/roles/v1/Del?clusterId=' + clusterId + '&nameSpace=' + ns + '&rolesName=' + name)
+      await api('/mrboard/roles/v1/Del?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace + '&rolesName=' + deleteTarget.rolesName)
       toast.success('删除成功')
+      setDeleteTarget(null)
       fetchData()
     } catch (err) { toast.error((err as Error).message) }
+    finally { setDeleting(false); setOperatingName(null) }
   }
 
   const handleCreate = async () => {
@@ -90,15 +99,35 @@ rules:
   }
 
   const columns: Column<RoleItem>[] = [
-    { key: 'rolesName', header: '名称', className: 'font-medium', render: (d) => d.rolesName },
-    { key: 'nameSpace', header: '命名空间', render: (d) => d.nameSpace },
-    { key: 'rules', header: '规则数', render: (d) => d.rules?.length || 0 },
-    { key: 'createTime', header: '创建时间', className: 'text-sm text-muted-foreground whitespace-nowrap', render: (d) => d.createTime },
     {
-      key: 'actions', header: '操作', render: (d) => (
-        <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/roles/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&name=' + d.rolesName) }}><FileCode size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(d.nameSpace, d.rolesName) }}><Trash2 size={14} className="text-destructive" /></Button>
+      key: 'rolesName', header: '名称', className: 'font-medium', render: (d) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <Shield size={14} className="text-primary" />
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-sm truncate">{d.rolesName}</div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <Badge variant="secondary" className="text-[10px] font-mono">{d.nameSpace}</Badge>
+              <span className="text-[10px] text-muted-foreground truncate">{d.rules?.length || 0} 规则</span>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    { key: 'createTime', header: '创建时间', className: 'text-xs text-muted-foreground whitespace-nowrap', render: (d) => d.createTime },
+    {
+      key: 'actions', header: '', render: (d) => (
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="YAML"
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/roles/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&name=' + d.rolesName) }}>
+            <FileCode size={15} />
+          </Button>
+          <div className="w-px h-4 bg-border mx-0.5" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" title="删除"
+            onClick={(e) => { e.stopPropagation(); setDeleteTarget(d) }}>
+            <Trash2 size={15} />
+          </Button>
         </div>
       ),
     },
@@ -110,16 +139,15 @@ rules:
         <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />新增</Button>
       </PageHeader>
       <Card><CardContent className="py-3"><div className="flex gap-3 items-center"><Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" /><Button variant="outline" size="sm" onClick={fetchData}><Search size={14} className="mr-1" />刷新</Button></div></CardContent></Card>
-      <Card><CardContent className="p-0">
-        <DataTable
-          columns={columns as unknown as Column<Record<string, unknown>>[]}
-          data={paged as unknown as Record<string, unknown>[]}
-          loading={loading}
-          pagination={{ page, limit: 20, total: filtered.length }}
-          onPageChange={setPage}
-          emptyMessage="暂无数据"
-        />
-      </CardContent></Card>
+      <DataTable
+        columns={columns as unknown as Column<Record<string, unknown>>[]}
+        data={paged as unknown as Record<string, unknown>[]}
+        loading={loading}
+        pagination={{ page, limit: 20, total: filtered.length }}
+        onPageChange={setPage}
+        emptyMessage="暂无数据"
+        variant="cards"
+      />
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-2xl">
@@ -144,6 +172,23 @@ rules:
           <DialogFooter><Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button><Button onClick={handleCreate} disabled={submitting}>{submitting ? '创建中...' : '创建'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+      {operatingName && deleting && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-xl bg-card border shadow-lg animate-[fadeInUp_0.3s_ease-out]">
+          <Loader2 size={18} className="animate-spin text-primary" />
+          <div>
+            <div className="text-sm font-medium">{operatingName} 删除中...</div>
+            <div className="text-xs text-muted-foreground">正在删除资源</div>
+          </div>
+        </div>
+      )}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}
+        title="确认操作"
+        description={`确定删除 Role ${deleteTarget?.rolesName}？`}
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

@@ -10,6 +10,7 @@ import {
 import { UserPlus, UserMinus } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/PageHeader'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 interface User {
   Id: number
@@ -28,6 +29,7 @@ export default function RoleToUserList() {
   const [loadingRole, setLoadingRole] = useState(true)
   const [selectedAll, setSelectedAll] = useState<number[]>([])
   const [selectedRole, setSelectedRole] = useState<number[]>([])
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const fetchAllUsers = async () => {
     setLoadingAll(true)
@@ -84,12 +86,15 @@ export default function RoleToUserList() {
     }
   }
 
-  const handleRemoveFromRole = async () => {
+  const handleRemoveFromRole = () => {
     if (selectedRole.length === 0) {
       toast.error('请先选择用户')
       return
     }
-    if (!confirm('确定从角色中删除选中用户？')) return
+    setConfirmOpen(true)
+  }
+
+  const doRemoveFromRole = async () => {
     try {
       await api('/rbac/role/DelRoleToUser', {
         method: 'POST',
@@ -188,6 +193,14 @@ export default function RoleToUserList() {
           </CardContent>
         </Card>
       </div>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={(v) => { if (!v) setConfirmOpen(false) }}
+        title="确认操作"
+        description="确定从角色中删除选中用户？"
+        variant="destructive"
+        onConfirm={doRemoveFromRole}
+      />
     </div>
   )
 }

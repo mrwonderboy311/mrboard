@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
 
 export default function ChangePassword() {
   const [loading, setLoading] = useState(false)
@@ -41,8 +42,11 @@ export default function ChangePassword() {
   }
 
   return (
-    <div className="space-y-4 max-w-lg">
-      <h1 className="text-2xl font-bold">修改密码</h1>
+    <div className="space-y-4 max-w-lg animate-[fadeInUp_0.3s_ease-out]">
+      <div>
+        <span className="inline-block rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-medium bg-primary/5 text-primary border border-primary/10 mb-3">RBAC</span>
+        <h1 className="text-2xl font-bold">修改密码</h1>
+      </div>
       <Card>
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -75,7 +79,7 @@ export default function ChangePassword() {
               />
             </div>
             <div className="flex gap-2">
-              <Button type="submit" disabled={loading}>{loading ? '提交中...' : '确认保存'}</Button>
+              <Button type="submit" disabled={loading}>{loading ? <><Loader2 size={14} className="animate-spin mr-1.5" />处理中...</> : '确认保存'}</Button>
             </div>
           </form>
         </CardContent>

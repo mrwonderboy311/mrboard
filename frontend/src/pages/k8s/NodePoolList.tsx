@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Search } from 'lucide-react'
+import { Search, Server } from 'lucide-react'
 import { toast } from 'sonner'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -44,15 +45,28 @@ export default function NodePoolList() {
   }, [filtered, page])
 
   const columns: Column<NodePool>[] = [
-    { key: 'name', header: '名称', className: 'font-medium', render: (n) => n.name },
-    { key: 'nodeCount', header: '节点数', render: (n) => n.nodeCount },
-    { key: 'labels', header: '标签', className: 'font-mono text-xs', render: (n) => n.labels },
-    { key: 'status', header: '状态', render: (n) => n.status },
+    {
+      key: 'name', header: '名称', className: 'font-medium', render: (n) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <Server size={14} className="text-primary" />
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-sm truncate">{n.name}</div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[10px] text-muted-foreground font-mono truncate">{n.labels}</span>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    { key: 'nodeCount', header: '节点数', render: (n) => <Badge variant="secondary" className="tabular-nums text-xs">{n.nodeCount}</Badge> },
+    { key: 'status', header: '状态', render: (n) => <Badge variant="outline" className="text-xs">{n.status}</Badge> },
   ]
 
   return (
-    <div className="space-y-4">
-      <PageHeader title="节点池" description="Node Pool 管理" />
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
+      <PageHeader title="节点池" description="Node Pool 管理" eyebrow="K8s" />
       <Card>
         <CardContent className="py-3">
           <div className="flex gap-3 items-center">
@@ -61,18 +75,15 @@ export default function NodePoolList() {
           </div>
         </CardContent>
       </Card>
-      <Card>
-        <CardContent className="p-0">
-          <DataTable
-            columns={columns as unknown as Column<Record<string, unknown>>[]}
-            data={paged as unknown as Record<string, unknown>[]}
-            loading={loading}
-            pagination={{ page, limit: 20, total: filtered.length }}
-            onPageChange={setPage}
-            emptyMessage="暂无数据"
-          />
-        </CardContent>
-      </Card>
+      <DataTable
+        columns={columns as unknown as Column<Record<string, unknown>>[]}
+        data={paged as unknown as Record<string, unknown>[]}
+        loading={loading}
+        pagination={{ page, limit: 20, total: filtered.length }}
+        onPageChange={setPage}
+        emptyMessage="暂无数据"
+        variant="cards"
+      />
     </div>
   )
 }

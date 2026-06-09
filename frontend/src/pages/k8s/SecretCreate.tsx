@@ -4,6 +4,7 @@ import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 
 interface KeyValue { key: string; value: string }
@@ -60,16 +61,17 @@ export default function SecretCreate() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">类型</label>
-              <select
-                value={secretType}
-                onChange={e => setSecretType(e.target.value)}
-                className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-              >
-                <option value="Opaque">Opaque</option>
-                <option value="kubernetes.io/tls">kubernetes.io/tls</option>
-                <option value="kubernetes.io/dockerconfigjson">kubernetes.io/dockerconfigjson</option>
-                <option value="kubernetes.io/basic-auth">kubernetes.io/basic-auth</option>
-              </select>
+              <Select value={secretType} onValueChange={v => { if (v) setSecretType(v) }}>
+                <SelectTrigger className="h-9 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Opaque">Opaque</SelectItem>
+                  <SelectItem value="kubernetes.io/tls">kubernetes.io/tls</SelectItem>
+                  <SelectItem value="kubernetes.io/dockerconfigjson">kubernetes.io/dockerconfigjson</SelectItem>
+                  <SelectItem value="kubernetes.io/basic-auth">kubernetes.io/basic-auth</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">键值对</label>

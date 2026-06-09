@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
-  Search, Eye, Scale, RotateCcw, Trash2, FileCode, Plus, X,
+  Search, Eye, Scale, RotateCcw, Trash2, FileCode, Plus, X, Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -14,7 +14,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import type { DeployListItem, Namespace, ApiResponse } from '@/types'
-
 const defaultYaml = `apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -33,7 +32,6 @@ spec:
       containers:
       - name: my-container
         image: nginx:latest`
-
 export default function DeployList() {
   const navigate = useNavigate()
   const [deploys, setDeploys] = useState<DeployListItem[]>([])
@@ -47,9 +45,7 @@ export default function DeployList() {
   const [scaleTarget, setScaleTarget] = useState<DeployListItem | null>(null)
   const [scaleValue, setScaleValue] = useState('')
   const [page, setPage] = useState(1)
-
   const [clusterId, setClusterId] = useState(localStorage.getItem('clusterId') || '')
-
   // Create dialog state
   const [createOpen, setCreateOpen] = useState(false)
   const [createTab, setCreateTab] = useState<'form' | 'yaml'>('form')
@@ -63,7 +59,6 @@ export default function DeployList() {
   const [formLabels, setFormLabels] = useState<Array<{ key: string; value: string }>>([])
   const [formPorts, setFormPorts] = useState<Array<{ containerPort: string; protocol: string }>>([])
   const [formEnv, setFormEnv] = useState<Array<{ key: string; value: string }>>([])
-
   // Re-read clusterId from localStorage when it changes
   useEffect(() => {
     if (clusterId) return
@@ -73,7 +68,6 @@ export default function DeployList() {
     }, 500)
     return () => clearInterval(timer)
   }, [clusterId])
-
   const fetchNamespaces = async () => {
     if (!clusterId) return
     try {
@@ -82,91 +76,153 @@ export default function DeployList() {
       setNamespaces(list.map(n => typeof n === 'string' ? n : n.name))
     } catch { /* optional */ }
   }
-
-  const fetchDeploys = async () => {
+  const fetchDeploys = async (silent = false) => {
     if (!clusterId) { setLoading(false); return }
-    setLoading(true)
+    if (!silent) setLoading(true)
     try {
       const nsParam = namespace ? '&nameSpace=' + namespace : ''
       const data = await api<ApiResponse<DeployListItem[]>>('/mrboard/deploy/v1/List?clusterId=' + clusterId + nsParam)
       setDeploys(data.data || [])
-    } catch (err) { toast.error((err as Error).message) } finally { setLoading(false) }
+    } catch (err) { toast.error((err as Error).message) } finally { if (!silent) setLoading(false) }
   }
-
   useEffect(() => { if (clusterId) fetchNamespaces() }, [clusterId])
   useEffect(() => { if (clusterId) fetchDeploys() }, [clusterId, namespace])
-
   useEffect(() => {
     if (!searchName) { setFiltered(deploys) }
     else { setFiltered(deploys.filter(d => d.deployName.toLowerCase().includes(searchName.toLowerCase()))) }
   }, [deploys, searchName])
-
   // Reset page when filters change
   useEffect(() => { setPage(1) }, [searchName, namespace])
-
   const paged = useMemo(() => {
     const start = (page - 1) * 20
     return filtered.slice(start, start + 20)
   }, [filtered, page])
-
+  // Inline operation state — tracks which deploy is being operated on
+  const [operatingDeploy, setOperatingDeploy] = useState<string | null>(null)
+  const [operationProgress, setOperationProgress] = useState('')
   const handleRestart = async () => {
     if (!restartTarget) return
+    const name = restartTarget.deployName
+    setOperatingDeploy(name)
+    
+    setOperationProgress('正在重启...')
+    setRestartTarget(null)
     try {
-      await api('/mrboard/deploy/v1/Restart?clusterId=' + clusterId + '&nameSpace=' + restartTarget.nameSpace + '&deployName=' + restartTarget.deployName)
-      toast.success('重启成功')
-      setRestartTarget(null)
-    } catch (err) { toast.error((err as Error).message) }
+      await api('/mrboard/deploy/v1/Restart?clusterId=' + clusterId + '&nameSpace=' + restartTarget.nameSpace + '&deployName=' + name)
+      setOperationProgress('等待 Pod 就绪...')
+      // Poll until rollout is complete
+      let retries = 0
+      const poll = setInterval(async () => {
+        retries++
+        try {
+          const res = await api<ApiResponse<DeployListItem[]>>(`/mrboard/deploy/v1/List?clusterId=${clusterId}`)
+          const deploy = (res.data || []).find(d => d.deployName === name)
+          if (deploy && deploy.replicas === deploy.availableReplicas) {
+            clearInterval(poll)
+            setOperationProgress('重启完成 ✓')
+            setTimeout(() => {
+              setOperatingDeploy(null)
+              
+              setOperationProgress('')
+              fetchDeploys(true)
+            }, 1500)
+          } else if (retries > 30) {
+            clearInterval(poll)
+            setOperationProgress('滚动更新中...')
+            setTimeout(() => {
+              setOperatingDeploy(null)
+              
+              setOperationProgress('')
+              fetchDeploys(true)
+            }, 2000)
+          }
+        } catch {
+          if (retries > 30) {
+            clearInterval(poll)
+            setOperatingDeploy(null)
+            
+            setOperationProgress('')
+          }
+        }
+      }, 2000)
+    } catch (err) {
+      toast.error((err as Error).message)
+      setOperatingDeploy(null)
+      
+      setOperationProgress('')
+    }
   }
-
   const handleDelete = async () => {
     if (!deleteTarget) return
+    const name = deleteTarget.deployName
+    setOperatingDeploy(name)
+    
+    setOperationProgress('删除中...')
+    setDeleteTarget(null)
     try {
-      await api('/mrboard/deploy/v1/Del?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace + '&deployName=' + deleteTarget.deployName)
-      toast.success('删除成功')
-      setDeleteTarget(null)
-      fetchDeploys()
-    } catch (err) { toast.error((err as Error).message) }
+      await api('/mrboard/deploy/v1/Del?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace + '&deployName=' + name)
+      setOperationProgress('已删除 ✓')
+      setTimeout(() => {
+        setOperatingDeploy(null)
+        
+        setOperationProgress('')
+        fetchDeploys(true)
+      }, 1000)
+    } catch (err) {
+      toast.error((err as Error).message)
+      setOperatingDeploy(null)
+      
+      setOperationProgress('')
+    }
   }
-
   const handleScale = async () => {
     if (!scaleTarget) return
     const num = parseInt(scaleValue, 10)
     if (isNaN(num) || num < 0) { toast.error('请输入有效的副本数量'); return }
+    const name = scaleTarget.deployName
+    setOperatingDeploy(name)
+    
+    setOperationProgress('调整副本数...')
+    setScaleTarget(null)
     try {
-      await api('/mrboard/deploy/v1/Replicas?clusterId=' + clusterId + '&nameSpace=' + scaleTarget.nameSpace + '&deployName=' + scaleTarget.deployName, {
+      await api('/mrboard/deploy/v1/Replicas?clusterId=' + clusterId + '&nameSpace=' + scaleTarget.nameSpace + '&deployName=' + name, {
         method: 'POST', body: JSON.stringify({ podNumber: num }),
       })
-      toast.success('伸缩成功')
-      setScaleTarget(null)
-      fetchDeploys()
-    } catch (err) { toast.error((err as Error).message) }
+      setOperationProgress('伸缩完成 ✓')
+      setTimeout(() => {
+        setOperatingDeploy(null)
+        
+        setOperationProgress('')
+        fetchDeploys(true)
+      }, 1000)
+    } catch (err) {
+      toast.error((err as Error).message)
+      setOperatingDeploy(null)
+      
+      setOperationProgress('')
+    }
   }
-
   // Create helpers
   const addLabel = () => setFormLabels([...formLabels, { key: '', value: '' }])
   const removeLabel = (i: number) => setFormLabels(formLabels.filter((_, idx) => idx !== i))
   const updateLabel = (i: number, field: 'key' | 'value', val: string) => {
     const next = [...formLabels]; next[i] = { ...next[i], [field]: val }; setFormLabels(next)
   }
-
   const addPort = () => setFormPorts([...formPorts, { containerPort: '', protocol: 'TCP' }])
   const removePort = (i: number) => setFormPorts(formPorts.filter((_, idx) => idx !== i))
   const updatePort = (i: number, field: 'containerPort' | 'protocol', val: string) => {
     const next = [...formPorts]; next[i] = { ...next[i], [field]: val }; setFormPorts(next)
   }
-
   const addEnv = () => setFormEnv([...formEnv, { key: '', value: '' }])
   const removeEnv = (i: number) => setFormEnv(formEnv.filter((_, idx) => idx !== i))
   const updateEnv = (i: number, field: 'key' | 'value', val: string) => {
     const next = [...formEnv]; next[i] = { ...next[i], [field]: val }; setFormEnv(next)
   }
-
   const resetCreateForm = () => {
     setFormNamespace('default'); setFormName(''); setFormImage(''); setFormReplicas('1')
     setFormImagePullPolicy('IfNotPresent'); setFormLabels([]); setFormPorts([]); setFormEnv([])
     setYamlContent(defaultYaml)
   }
-
   const buildYaml = () => {
     const labels = formLabels.filter(l => l.key)
     const labelsYaml = labels.length > 0 ? labels.map(l => `        ${l.key}: "${l.value}"`).join('\n') : '        app: "my-app"'
@@ -174,7 +230,6 @@ export default function DeployList() {
     const portsYaml = ports.length > 0 ? ports.map(p => `          - containerPort: ${p.containerPort}\n            protocol: ${p.protocol}`).join('\n') : ''
     const env = formEnv.filter(e => e.key)
     const envYaml = env.length > 0 ? env.map(e => `            - name: ${e.key}\n              value: "${e.value}"`).join('\n') : ''
-
     return `apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -197,12 +252,10 @@ ${labelsYaml}
 ${portsYaml ? '        ports:\n' + portsYaml : ''}
 ${envYaml ? '        env:\n' + envYaml : ''}`
   }
-
   const handleTabSwitch = (tab: 'form' | 'yaml') => {
     if (tab === 'yaml') setYamlContent(buildYaml())
     setCreateTab(tab)
   }
-
   const handleCreate = async () => {
     setSubmitting(true)
     try {
@@ -229,84 +282,111 @@ ${envYaml ? '        env:\n' + envYaml : ''}`
       toast.success('创建成功')
       setCreateOpen(false)
       resetCreateForm()
-      fetchDeploys()
+      fetchDeploys(true)
     } catch (err) { toast.error((err as Error).message) } finally { setSubmitting(false) }
   }
-
   const columns: Column<DeployListItem>[] = [
     {
       key: 'deployName',
       header: '名称',
-      className: 'font-medium',
-      render: (d) => d.deployName,
-    },
-    {
-      key: 'nameSpace',
-      header: '命名空间',
-      render: (d) => d.nameSpace,
+      className: 'font-semibold',
+      render: (d) => {
+        const isOperating = operatingDeploy === d.deployName
+        return (
+          <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-300 ${
+              isOperating ? 'bg-primary/20' : 'bg-primary/10'
+            }`}>
+              {isOperating ? (
+                <Loader2 size={14} className="text-primary animate-spin" />
+              ) : (
+                <Scale size={14} className="text-primary" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-sm truncate">{d.deployName}</span>
+                {isOperating && (
+                  <span className="text-[11px] text-primary font-medium animate-pulse">{operationProgress}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-0.5">
+                <Badge variant="secondary" className="text-[10px] font-mono">{d.nameSpace}</Badge>
+                <span className="text-[10px] text-muted-foreground font-mono truncate" title={d.imageUrl}>{d.imageUrl}</span>
+              </div>
+            </div>
+          </div>
+        )
+      },
     },
     {
       key: 'podNumber',
       header: '容器',
-      className: 'w-20',
+      className: 'w-24',
       render: (d) => (
-        <Badge variant={d.replicas === d.availableReplicas ? 'default' : 'destructive'}>{d.podNumber}</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant={d.replicas === d.availableReplicas ? 'default' : 'destructive'} className="tabular-nums text-xs">
+            {d.podNumber}
+          </Badge>
+          <span className="text-[10px] text-muted-foreground">Pods</span>
+        </div>
       ),
-    },
-    {
-      key: 'imageUrl',
-      header: '镜像',
-      className: 'font-mono text-xs max-w-xs truncate',
-      render: (d) => <span title={d.imageUrl}>{d.imageUrl}</span>,
     },
     {
       key: 'labels',
       header: '标签',
       render: (d) => (
         <div className="flex flex-wrap gap-1">
-          {d.labels ? d.labels.split(',').map((label, i) => (
-            <Badge key={i} variant="outline" className="text-xs">{label.trim()}</Badge>
-          )) : '-'}
+          {d.labels ? d.labels.split(',').slice(0, 3).map((label, i) => (
+            <Badge key={i} variant="outline" className="text-[10px]">{label.trim()}</Badge>
+          )) : <span className="text-muted-foreground text-xs">-</span>}
+          {d.labels && d.labels.split(',').length > 3 && (
+            <Badge variant="outline" className="text-[10px]">+{d.labels.split(',').length - 3}</Badge>
+          )}
         </div>
       ),
     },
     {
       key: 'createTime',
       header: '创建时间',
-      className: 'text-sm text-muted-foreground whitespace-nowrap',
+      className: 'text-xs text-muted-foreground whitespace-nowrap',
       render: (d) => d.createTime,
     },
     {
       key: 'actions',
-      header: '操作',
+      header: '',
       render: (d) => (
-        <div className="flex gap-1 flex-wrap">
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/deploy/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&deployName=' + d.deployName) }}>
-            <Eye size={14} className="mr-1" />详情
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="详情"
+            onClick={(e) => { e.stopPropagation(); navigate('/deploy/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&deployName=' + d.deployName) }}>
+            <Eye size={15} />
           </Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setScaleTarget(d); setScaleValue(String(d.replicas)) }}>
-            <Scale size={14} className="mr-1" />伸缩
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="伸缩"
+            onClick={(e) => { e.stopPropagation(); setScaleTarget(d); setScaleValue(String(d.replicas)) }}>
+            <Scale size={15} />
           </Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setRestartTarget(d) }}>
-            <RotateCcw size={14} className="mr-1" />重启
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="重启"
+            onClick={(e) => { e.stopPropagation(); setRestartTarget(d) }}>
+            <RotateCcw size={15} />
           </Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/deploy/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&deployName=' + d.deployName) }}>
-            <FileCode size={14} className="mr-1" />YAML
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="YAML"
+            onClick={(e) => { e.stopPropagation(); navigate('/deploy/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&deployName=' + d.deployName) }}>
+            <FileCode size={15} />
           </Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteTarget(d) }}>
-            <Trash2 size={14} className="text-destructive" />
+          <div className="w-px h-4 bg-border mx-0.5" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" title="删除"
+            onClick={(e) => { e.stopPropagation(); setDeleteTarget(d) }}>
+            <Trash2 size={15} />
           </Button>
         </div>
       ),
     },
   ]
-
   return (
     <div className="space-y-4">
       <PageHeader title="应用列表" description="Deployment 管理">
         <Button onClick={() => setCreateOpen(true)}><Plus size={14} className="mr-1" />创建</Button>
       </PageHeader>
-
       {/* Search & Filter */}
       <Card>
         <CardContent className="py-3">
@@ -325,27 +405,22 @@ ${envYaml ? '        env:\n' + envYaml : ''}`
                 </SelectContent>
               </Select>
             </div>
-            <Button variant="outline" size="sm" onClick={fetchDeploys}>
+            <Button variant="outline" size="sm" onClick={() => fetchDeploys()}>
               <Search size={14} className="mr-1" />搜索
             </Button>
           </div>
         </CardContent>
       </Card>
-
       {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          <DataTable
-            columns={columns as unknown as Column<Record<string, unknown>>[]}
-            data={paged as unknown as Record<string, unknown>[]}
-            loading={loading}
-            pagination={{ page, limit: 20, total: filtered.length }}
-            onPageChange={setPage}
-            emptyMessage="暂无应用"
-          />
-        </CardContent>
-      </Card>
-
+      <DataTable
+        columns={columns as unknown as Column<Record<string, unknown>>[]}
+        data={paged as unknown as Record<string, unknown>[]}
+        loading={loading}
+        pagination={{ page, limit: 20, total: filtered.length }}
+        onPageChange={setPage}
+        emptyMessage="暂无应用"
+        variant="cards"
+      />
       {/* Create Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
@@ -386,7 +461,6 @@ ${envYaml ? '        env:\n' + envYaml : ''}`
                   </Select>
                 </div>
               </div>
-
               {/* Labels */}
               <div className="rounded-lg border p-3 space-y-3">
                 <div className="flex items-center justify-between">
@@ -402,7 +476,6 @@ ${envYaml ? '        env:\n' + envYaml : ''}`
                   </div>
                 ))}
               </div>
-
               {/* Ports */}
               <div className="rounded-lg border p-3 space-y-3">
                 <div className="flex items-center justify-between">
@@ -424,7 +497,6 @@ ${envYaml ? '        env:\n' + envYaml : ''}`
                   </div>
                 ))}
               </div>
-
               {/* Env Vars */}
               <div className="rounded-lg border p-3 space-y-3">
                 <div className="flex items-center justify-between">
@@ -455,11 +527,10 @@ ${envYaml ? '        env:\n' + envYaml : ''}`
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Delete Dialog */}
+      {/* Simple confirmation dialogs — operations happen inline on the row */}
       <Dialog open={!!deleteTarget} onOpenChange={open => { if (!open) setDeleteTarget(null) }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>确认删除</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="text-destructive">确认删除</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">确定删除应用 <span className="font-mono font-medium text-foreground">{deleteTarget?.deployName}</span>？此操作不可撤销。</p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>取消</Button>
@@ -467,20 +538,16 @@ ${envYaml ? '        env:\n' + envYaml : ''}`
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Restart Dialog */}
       <Dialog open={!!restartTarget} onOpenChange={open => { if (!open) setRestartTarget(null) }}>
         <DialogContent>
           <DialogHeader><DialogTitle>确认重启</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">确定重启应用 <span className="font-mono font-medium text-foreground">{restartTarget?.deployName}</span>？</p>
+          <p className="text-sm text-muted-foreground">确定重启应用 <span className="font-mono font-medium text-foreground">{restartTarget?.deployName}</span>？将触发滚动更新。</p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRestartTarget(null)}>取消</Button>
-            <Button onClick={handleRestart}>重启</Button>
+            <Button onClick={handleRestart}>确认重启</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Scale Dialog */}
       <Dialog open={!!scaleTarget} onOpenChange={open => { if (!open) setScaleTarget(null) }}>
         <DialogContent>
           <DialogHeader><DialogTitle>调整副本数</DialogTitle></DialogHeader>

@@ -4,8 +4,9 @@ import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 import type { ApiResponse } from '@/types'
 
 interface ClusterOption {
@@ -16,7 +17,7 @@ interface ClusterOption {
 export default function CreateBackup() {
   const navigate = useNavigate()
   const [clusters, setClusters] = useState<ClusterOption[]>([])
-  const [clusterId, setClusterId] = useState('')
+  const [clusterId, setClusterId] = useState('__placeholder__')
   const [backupName, setBackupName] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -30,13 +31,15 @@ export default function CreateBackup() {
           setClusterId(saved)
         } else if (data.length > 0) {
           setClusterId(data[0].cluster_id)
+        } else {
+          setClusterId('__placeholder__')
         }
       })
       .catch(err => toast.error((err as Error).message))
   }, [])
 
   const handleSubmit = async () => {
-    if (!clusterId) {
+    if (!clusterId || clusterId === '__placeholder__') {
       toast.error('请选择集群')
       return
     }
@@ -61,28 +64,31 @@ export default function CreateBackup() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => navigate('/ops/backup')}>
           <ArrowLeft size={16} className="mr-1" />返回
         </Button>
-        <h1 className="text-2xl font-bold">创建备份</h1>
+        <div>
+          <span className="inline-block rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-medium bg-primary/5 text-primary border border-primary/10 mb-1">运维</span>
+          <h1 className="text-2xl font-bold">创建备份</h1>
+        </div>
       </div>
 
       <Card>
         <CardContent className="pt-6 space-y-4">
           <div className="flex items-center gap-4">
             <label className="text-sm font-medium whitespace-nowrap">选择集群</label>
-            <select
-              value={clusterId}
-              onChange={e => setClusterId(e.target.value)}
-              className="h-9 rounded-md border border-input bg-transparent px-3 text-sm w-64"
-            >
-              <option value="">请选择集群</option>
-              {clusters.map(c => (
-                <option key={c.cluster_id} value={c.cluster_id}>{c.cluster_name}</option>
-              ))}
-            </select>
+            <Select value={clusterId} onValueChange={v => { if (v) setClusterId(v) }}>
+              <SelectTrigger className="h-9 w-64">
+                <SelectValue placeholder="请选择集群" />
+              </SelectTrigger>
+              <SelectContent>
+                {clusters.map(c => (
+                  <SelectItem key={c.cluster_id} value={c.cluster_id}>{c.cluster_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex items-center gap-4">
@@ -96,7 +102,7 @@ export default function CreateBackup() {
           </div>
 
           <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? '创建中...' : '创建备份'}
+            {loading ? <><Loader2 size={14} className="animate-spin mr-1.5" />处理中...</> : '创建备份'}
           </Button>
         </CardContent>
       </Card>

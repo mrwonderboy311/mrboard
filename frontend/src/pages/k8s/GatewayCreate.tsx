@@ -4,6 +4,7 @@ import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 
 export default function GatewayCreate() {
@@ -58,16 +59,17 @@ export default function GatewayCreate() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">协议</label>
-              <select
-                value={form.protocol}
-                onChange={e => update('protocol', e.target.value)}
-                className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-              >
-                <option value="HTTP">HTTP</option>
-                <option value="HTTPS">HTTPS</option>
-                <option value="TCP">TCP</option>
-                <option value="UDP">UDP</option>
-              </select>
+              <Select value={form.protocol} onValueChange={val => { if (val) update('protocol', val) }}>
+                <SelectTrigger className="h-9 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="HTTP">HTTP</SelectItem>
+                  <SelectItem value="HTTPS">HTTPS</SelectItem>
+                  <SelectItem value="TCP">TCP</SelectItem>
+                  <SelectItem value="UDP">UDP</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">端口</label>

@@ -12,6 +12,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { FileCode, RefreshCw, RotateCcw, Trash2 } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import type { DeployDetail as DeployDetailType, Pod, KubeEvent, DeployReplicaSet, ApiResponse } from '@/types'
 
@@ -120,12 +121,19 @@ export default function DeployDetail() {
     },
   ]
 
-  if (loading) return <div className="flex items-center justify-center py-16 text-muted-foreground">加载中...</div>
+  if (loading) return (
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
+      <div className="flex items-center gap-3"><Skeleton className="h-8 w-8 rounded-lg" /><Skeleton className="h-7 w-48" /></div>
+      <div className="flex gap-2"><Skeleton className="h-9 w-20" /><Skeleton className="h-9 w-20" /><Skeleton className="h-9 w-20" /></div>
+      <Skeleton className="h-48 w-full rounded-lg" />
+      <Skeleton className="h-32 w-full rounded-lg" />
+    </div>
+  )
   if (!detail) return <div className="flex items-center justify-center py-16 text-muted-foreground">未找到应用详情</div>
 
   return (
-    <div className="space-y-4">
-      <PageHeader title={deployName}>
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
+      <PageHeader title={deployName} eyebrow="Deployment">
         <StatusBadge status={detail.status} />
         <Button variant="outline" onClick={() => navigate('/deploy/yaml?' + baseQuery)}>
           <FileCode size={14} className="mr-1" />编辑YAML
@@ -203,7 +211,7 @@ export default function DeployDetail() {
                       <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">资源限制</td>
                       <td className="py-2 font-mono text-xs">
                         {subLoading.resource ? (
-                          <span className="text-muted-foreground">加载中...</span>
+                          <Skeleton className="h-20 w-full" />
                         ) : resourceData ? (
                           <pre className="text-xs font-mono bg-muted p-3 rounded-lg overflow-auto max-h-[200px]">{JSON.stringify(resourceData, null, 2)}</pre>
                         ) : (

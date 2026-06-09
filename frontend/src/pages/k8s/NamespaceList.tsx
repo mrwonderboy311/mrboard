@@ -1,14 +1,15 @@
 import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { FileCode, Trash2, Plus, X } from 'lucide-react'
+import { FileCode, Trash2, Plus, X, FolderOpen, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable, type Column } from '@/components/shared/DataTable'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 
 interface NsItem {
@@ -37,6 +38,8 @@ export default function NamespaceList() {
   const [formName, setFormName] = useState('')
   const [formLabels, setFormLabels] = useState<{ key: string; value: string }[]>([{ key: '', value: '' }])
   const [deleteTarget, setDeleteTarget] = useState<NsItem | null>(null)
+  const [operatingDeploy, setOperatingDeploy] = useState<string | null>(null)
+  const [operationProgress, setOperationProgress] = useState('')
 
   const addLabel = () => setFormLabels([...formLabels, { key: '', value: '' }])
   const removeLabel = (idx: number) => setFormLabels(formLabels.filter((_, i) => i !== idx))
@@ -46,8 +49,8 @@ export default function NamespaceList() {
     setFormLabels(next)
   }
 
-  const fetchData = async () => {
-    setLoading(true)
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const res = await api<{ code: number; data: NsItem[] } | NsItem[]>('/mrboard/ns/v1/List?clusterId=' + clusterId)
       const list = Array.isArray(res) ? res : (res as { code: number; data: NsItem[] }).data || []
@@ -55,7 +58,7 @@ export default function NamespaceList() {
     } catch (err) {
       toast.error((err as Error).message)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -68,12 +71,15 @@ export default function NamespaceList() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return
+    setOperatingDeploy(deleteTarget.nameSpace)
+    setOperationProgress('删除中...')
     try {
       await api('/mrboard/ns/v1/Del?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace)
       toast.success('删除成功')
       setDeleteTarget(null)
-      fetchData()
+      fetchData(true)
     } catch (err) { toast.error((err as Error).message) }
+    finally { setOperationProgress('完成 ✓'); setTimeout(() => { setOperatingDeploy(null); setOperationProgress(''); fetchData(true) }, 600) }
   }
 
   const handleCreate = async () => {
@@ -90,41 +96,49 @@ export default function NamespaceList() {
       setFormName('')
       setFormLabels([{ key: '', value: '' }])
       setYamlContent(defaultYaml)
-      fetchData()
+      fetchData(true)
     } catch (err) { toast.error((err as Error).message) } finally { setSubmitting(false) }
   }
 
   const columns: Column<NsItem>[] = [
     {
-      key: 'nameSpace',
-      header: '名称',
-      className: 'font-medium',
-      render: (n) => n.nameSpace,
+      key: 'nameSpace', header: '名称', className: 'font-medium', render: (n) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            {operatingDeploy === n.nameSpace ? <Loader2 size={14} className="text-primary animate-spin" /> : <FolderOpen size={14} className="text-primary" />}
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-sm truncate">{n.nameSpace}</div>
+            {operatingDeploy === n.nameSpace && <span className="text-[11px] text-primary font-medium animate-pulse">{operationProgress}</span>}
+            <div className="flex items-center gap-2 mt-0.5">
+              <StatusBadge status={n.status} />
+              <span className="text-[10px] text-muted-foreground font-mono truncate">{n.labels || '-'}</span>
+            </div>
+          </div>
+        </div>
+      ),
     },
     {
-      key: 'status',
-      header: '状态',
-      render: (n) => <StatusBadge status={n.status} />,
+      key: 'status', header: '状态', render: (n) => <StatusBadge status={n.status} />,
     },
     {
-      key: 'labels',
-      header: '标签',
-      className: 'font-mono text-xs',
-      render: (n) => n.labels || '-',
+      key: 'labels', header: '标签', className: 'font-mono text-xs', render: (n) => n.labels || '-',
     },
     {
-      key: 'createTime',
-      header: '创建时间',
-      className: 'text-sm text-muted-foreground',
-      render: (n) => n.createTime,
+      key: 'createTime', header: '创建时间', className: 'text-xs text-muted-foreground whitespace-nowrap', render: (n) => n.createTime,
     },
     {
-      key: 'actions',
-      header: '操作',
-      render: (n) => (
-        <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/namespace/yaml?clusterId=' + clusterId + '&nameSpace=' + n.nameSpace) }}><FileCode size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteTarget(n) }}><Trash2 size={14} className="text-destructive" /></Button>
+      key: 'actions', header: '', render: (n) => (
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="YAML"
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/namespace/yaml?clusterId=' + clusterId + '&nameSpace=' + n.nameSpace) }}>
+            <FileCode size={15} />
+          </Button>
+          <div className="w-px h-4 bg-border mx-0.5" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" title="删除"
+            onClick={(e) => { e.stopPropagation(); setDeleteTarget(n) }}>
+            <Trash2 size={15} />
+          </Button>
         </div>
       ),
     },
@@ -136,18 +150,15 @@ export default function NamespaceList() {
         <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />新增</Button>
       </PageHeader>
 
-      <Card>
-        <CardContent className="p-0">
-          <DataTable
-            columns={columns as unknown as Column<Record<string, unknown>>[]}
-            data={paged as unknown as Record<string, unknown>[]}
-            loading={loading}
-            pagination={{ page, limit: 20, total: items.length }}
-            onPageChange={setPage}
-            emptyMessage="暂无命名空间"
-          />
-        </CardContent>
-      </Card>
+      <DataTable
+        columns={columns as unknown as Column<Record<string, unknown>>[]}
+        data={paged as unknown as Record<string, unknown>[]}
+        loading={loading}
+        pagination={{ page, limit: 20, total: items.length }}
+        onPageChange={setPage}
+        emptyMessage="暂无命名空间"
+        variant="cards"
+      />
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
@@ -183,18 +194,14 @@ export default function NamespaceList() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>确认删除</DialogTitle>
-          </DialogHeader>
-          <p>确定删除命名空间 {deleteTarget?.nameSpace}？</p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>取消</Button>
-            <Button variant="destructive" onClick={handleDelete}>确认删除</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}
+        title="确认删除"
+        description={`确定删除 ${deleteTarget?.nameSpace}？`}
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

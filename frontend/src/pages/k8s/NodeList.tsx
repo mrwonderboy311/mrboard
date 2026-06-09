@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
-import { Search, FileCode, Trash2, Eye } from 'lucide-react'
+import { Search, FileCode, Trash2, Eye, Server, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 interface NodeItem {
   nodeName: string
@@ -35,16 +36,19 @@ export default function NodeK8sList() {
   const [page, setPage] = useState(1)
   const clusterId = localStorage.getItem('clusterId') || ''
   const pageSize = 20
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [operatingDeploy, setOperatingDeploy] = useState<string | null>(null)
+  const [operationProgress, setOperationProgress] = useState('')
 
-  const fetchData = async () => {
-    setLoading(true)
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const res = await api<{ code: number; data: NodeItem[] }>('/mrboard/node/v1/List?clusterId=' + clusterId)
       setItems(res.data || [])
     } catch (err) {
       toast.error((err as Error).message)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -57,31 +61,62 @@ export default function NodeK8sList() {
 
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize)
 
-  const handleDelete = async (name: string) => {
-    if (!confirm('确定删除节点 ' + name + '？')) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setOperatingDeploy(deleteTarget)
+    setOperationProgress('删除中...')
     try {
-      await api('/mrboard/node/v1/Del?clusterId=' + clusterId + '&nodeName=' + name)
+      await api('/mrboard/node/v1/Del?clusterId=' + clusterId + '&nodeName=' + deleteTarget)
       toast.success('删除成功')
-      fetchData()
+      setDeleteTarget(null)
+      fetchData(true)
     } catch (err) { toast.error((err as Error).message) }
+    finally { setOperationProgress('完成 ✓'); setTimeout(() => { setOperatingDeploy(null); setOperationProgress(''); fetchData(true) }, 600) }
   }
 
   const columns: Column<NodeItem>[] = [
-    { key: 'name', header: '名称', render: n => <span className="font-medium">{n.nodeName}</span> },
-    { key: 'state', header: '状态', render: n => <StatusBadge status={n.nodeState} /> },
-    { key: 'role', header: '角色', render: n => n.nodeRole },
-    { key: 'ip', header: 'IP', className: 'font-mono text-sm', render: n => n.nodeIp },
+    {
+      key: 'name',
+      header: '名称',
+      className: 'font-semibold',
+      render: n => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            {operatingDeploy === n.nodeName ? <Loader2 size={14} className="text-primary animate-spin" /> : <Server size={14} className="text-primary" />}
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-sm truncate">{n.nodeName}</div>
+            {operatingDeploy === n.nodeName && <span className="text-[11px] text-primary font-medium animate-pulse">{operationProgress}</span>}
+            <div className="flex items-center gap-2 mt-0.5">
+              <StatusBadge status={n.nodeState} />
+              <span className="text-[10px] text-muted-foreground">{n.nodeRole}</span>
+              <span className="text-[10px] text-muted-foreground font-mono">{n.nodeIp}</span>
+            </div>
+          </div>
+        </div>
+      ),
+    },
     { key: 'info', header: '节点信息', className: 'text-xs', render: n => n.nodeInfo || '-' },
     { key: 'cpu', header: 'CPU', render: n => n.cpuUsage },
     { key: 'mem', header: '内存', render: n => n.memUsage },
     {
       key: 'actions',
-      header: '操作',
+      header: '',
       render: n => (
-        <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={() => navigate('/node/detail?clusterId=' + clusterId + '&nodeName=' + n.nodeName)}><Eye size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={() => navigate('/node/yaml?clusterId=' + clusterId + '&nodeName=' + n.nodeName)}><FileCode size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={() => handleDelete(n.nodeName)}><Trash2 size={14} className="text-destructive" /></Button>
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="详情"
+            onClick={(e) => { e.stopPropagation(); navigate('/node/detail?clusterId=' + clusterId + '&nodeName=' + n.nodeName) }}>
+            <Eye size={15} />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="YAML"
+            onClick={(e) => { e.stopPropagation(); navigate('/node/yaml?clusterId=' + clusterId + '&nodeName=' + n.nodeName) }}>
+            <FileCode size={15} />
+          </Button>
+          <div className="w-px h-4 bg-border mx-0.5" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" title="删除"
+            onClick={(e) => { e.stopPropagation(); setDeleteTarget(n.nodeName) }}>
+            <Trash2 size={15} />
+          </Button>
         </div>
       ),
     },
@@ -94,21 +129,26 @@ export default function NodeK8sList() {
         <CardContent className="py-3">
           <div className="flex gap-3 items-center">
             <Input placeholder="搜索节点名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" />
-            <Button variant="outline" size="sm" onClick={fetchData}><Search size={14} className="mr-1" />刷新</Button>
+            <Button variant="outline" size="sm" onClick={() => fetchData()}><Search size={14} className="mr-1" />刷新</Button>
           </div>
         </CardContent>
       </Card>
-      <Card>
-        <CardContent className="p-0">
-          <DataTable
-            columns={columns}
-            data={paged}
-            loading={loading}
-            pagination={{ page, limit: pageSize, total: filtered.length }}
-            onPageChange={setPage}
-          />
-        </CardContent>
-      </Card>
+      <DataTable
+        columns={columns}
+        data={paged}
+        loading={loading}
+        pagination={{ page, limit: pageSize, total: filtered.length }}
+        onPageChange={setPage}
+        variant="cards"
+      />
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}
+        title="确认操作"
+        description={`确定删除节点 ${deleteTarget}？`}
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

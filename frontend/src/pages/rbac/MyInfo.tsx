@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
 
 interface UserInfo {
   Id: string
@@ -63,8 +64,11 @@ export default function MyInfo() {
   }
 
   return (
-    <div className="space-y-4 max-w-2xl">
-      <h1 className="text-2xl font-bold">基本资料</h1>
+    <div className="space-y-4 max-w-2xl animate-[fadeInUp_0.3s_ease-out]">
+      <div>
+        <span className="inline-block rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-medium bg-primary/5 text-primary border border-primary/10 mb-3">RBAC</span>
+        <h1 className="text-2xl font-bold">基本资料</h1>
+      </div>
       <Card>
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -106,7 +110,7 @@ export default function MyInfo() {
               />
             </div>
             <div className="flex gap-2">
-              <Button type="submit" disabled={loading}>{loading ? '保存中...' : '确认保存'}</Button>
+              <Button type="submit" disabled={loading}>{loading ? <><Loader2 size={14} className="animate-spin mr-1.5" />处理中...</> : '确认保存'}</Button>
             </div>
           </form>
         </CardContent>

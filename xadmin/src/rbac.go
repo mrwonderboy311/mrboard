@@ -31,7 +31,6 @@ func AccessRegister() {
 	var Check = func(ctx *context.Context) {
 		authType, _ := beego.AppConfig.String("user_auth_type")
 		user_auth_type, _ := strconv.Atoi(authType)
-		rbac_auth_gateway, _ := beego.AppConfig.String("rbac_auth_gateway")
 		var accesslist map[string]bool
 		var clusterlist map[string]bool
 		if user_auth_type > 0 {
@@ -52,8 +51,8 @@ func AccessRegister() {
 				uinfo := ctx.Input.Session("userinfo")
 				//fmt.Println(uinfo)
 				if uinfo == nil {
-					//fmt.Println(uinfo)
-					ctx.Redirect(302, rbac_auth_gateway)
+					ctx.Output.SetStatus(401)
+					ctx.Output.JSON(&map[string]interface{}{"code": 401, "msg": "未登录"}, true, false)
 					return
 				}
 				//admin用户不用认证权限

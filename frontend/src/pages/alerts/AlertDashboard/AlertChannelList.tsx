@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Plus, Trash2, Edit, Send } from 'lucide-react'
 import type { AlertChannel } from '@/types/alert'
 import { toast } from 'sonner'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 interface Props {
   onAdd: () => void
@@ -13,6 +14,7 @@ interface Props {
 
 export function AlertChannelList({ onAdd, onEdit }: Props) {
   const [channels, setChannels] = useState<AlertChannel[]>([])
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
 
   const fetchChannels = useCallback(async () => {
     try {
@@ -32,10 +34,10 @@ export function AlertChannelList({ onAdd, onEdit }: Props) {
     }
   }
 
-  const deleteChannel = async (id: number) => {
-    if (!confirm('确定删除此渠道？')) return
+  const deleteChannel = async () => {
+    if (deleteTarget === null) return
     try {
-      await api(`/mrboard/alert/v1/channels/${id}`, { method: 'DELETE' })
+      await api(`/mrboard/alert/v1/channels/${deleteTarget}`, { method: 'DELETE' })
       fetchChannels()
     } catch { /* optional */ }
   }
@@ -80,7 +82,7 @@ export function AlertChannelList({ onAdd, onEdit }: Props) {
                     <Button variant="ghost" size="sm" onClick={() => onEdit(ch)} className="h-6 w-6 p-0">
                       <Edit size={12} />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => deleteChannel(ch.id)} className="h-6 w-6 p-0 text-destructive">
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(ch.id)} className="h-6 w-6 p-0 text-destructive">
                       <Trash2 size={12} />
                     </Button>
                   </td>
@@ -90,6 +92,14 @@ export function AlertChannelList({ onAdd, onEdit }: Props) {
           </table>
         </div>
       )}
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}
+        title="确认操作"
+        description="确定删除此渠道？"
+        variant="destructive"
+        onConfirm={deleteChannel}
+      />
     </div>
   )
 }

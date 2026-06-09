@@ -11,6 +11,7 @@ import {
 import { MinusSquare, Search, ChevronsUpDown, Maximize2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/PageHeader'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 interface TreeNode {
   Id: number
@@ -33,6 +34,7 @@ export default function RoleToNodeList() {
   const [selected, setSelected] = useState<number[]>([])
   const [searchText, setSearchText] = useState('')
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const fetchNodes = async () => {
     setLoading(true)
@@ -53,12 +55,15 @@ export default function RoleToNodeList() {
     setSelected(prev => prev.includes(nodeId) ? prev.filter(i => i !== nodeId) : [...prev, nodeId])
   }
 
-  const handleCancelAuth = async () => {
+  const handleCancelAuth = () => {
     if (selected.length === 0) {
       toast.error('请先选择节点')
       return
     }
-    if (!confirm('确定取消选中节点的授权？')) return
+    setConfirmOpen(true)
+  }
+
+  const doCancelAuth = async () => {
     try {
       await api('/rbac/role/DelRoleToNode', {
         method: 'POST',
@@ -224,6 +229,14 @@ export default function RoleToNodeList() {
           </div>
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={(v) => { if (!v) setConfirmOpen(false) }}
+        title="确认操作"
+        description="确定取消选中节点的授权？"
+        variant="destructive"
+        onConfirm={doCancelAuth}
+      />
     </div>
   )
 }

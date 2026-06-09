@@ -4,7 +4,7 @@ services:
     container_name: mysql_server
     environment:
       MYSQL_ROOT_PASSWORD: xkube_DB_123456
-      MYSQL_DATABASE: db_xkube
+      MYSQL_DATABASE: mrboard
       MYSQL_CHARACTER_SET_SERVER: utf8mb4
       MYSQL_COLLATION_SERVER: utf8mb4_general_ci
       MYSQL_TIME_ZONE: Asia/Shanghai
@@ -17,7 +17,7 @@ services:
       - "23306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./db_xkube.sql:/docker-entrypoint-initdb.d/db_xkube.sql
+      - ./mrboard.sql:/docker-entrypoint-initdb.d/mrboard.sql
     restart: always
     networks:
       - app_network
@@ -57,7 +57,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      DB_URL: "mysql://root:xkube_DB_123456@mysql_server:3306/db_xkube"
+      DB_URL: "mysql://root:xkube_DB_123456@mysql_server:3306/mrboard"
       REDIS_URL: "redis://:Redis_123456@redis_server:6379"
     restart: always
     networks:

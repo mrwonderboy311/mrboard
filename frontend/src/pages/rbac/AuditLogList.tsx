@@ -3,7 +3,7 @@ import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Search } from 'lucide-react'
+import { Search, ScrollText, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -27,17 +27,29 @@ export default function AuditLogList() {
   const [endTime, setEndTime] = useState('')
 
   const columns: Column<AuditLog>[] = useMemo(() => [
-    { key: 'id', header: 'ID', className: 'w-16', render: (l) => l.id },
-    { key: 'login_user', header: '帐号', render: (l) => <span className="font-medium">{l.login_user}</span> },
-    { key: 'user_ip', header: '用户IP', render: (l) => l.user_ip },
     {
-      key: 'status', header: '状态', className: 'w-20', render: (l) => (
+      key: 'login_user', header: '帐号', className: 'font-medium', render: (l) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <ScrollText size={14} className="text-primary" />
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-sm truncate">{l.login_user}</div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[10px] text-muted-foreground font-mono truncate">{l.user_ip}</span>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'status', header: '状态', render: (l) => (
         <StatusBadge status={l.status === 'success' || l.status === '0' ? 'Active' : 'Failed'} />
       ),
     },
-    { key: 'action', header: '动作', render: (l) => l.action },
-    { key: 'message', header: '消息', render: (l) => l.message },
-    { key: 'createtime', header: '登录时间', render: (l) => l.createtime },
+    { key: 'action', header: '动作', className: 'text-xs', render: (l) => l.action },
+    { key: 'message', header: '消息', className: 'text-xs max-w-xs truncate', render: (l) => l.message },
+    { key: 'createtime', header: '登录时间', className: 'text-xs text-muted-foreground', render: (l) => l.createtime },
   ], [])
 
   const fetchLogs = async (params?: Record<string, string>) => {
@@ -66,8 +78,8 @@ export default function AuditLogList() {
   }
 
   return (
-    <div className="space-y-4">
-      <PageHeader title="审计日志" />
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
+      <PageHeader title="审计日志" eyebrow="RBAC" />
 
       <Card>
         <CardContent className="p-4">
@@ -99,12 +111,12 @@ export default function AuditLogList() {
                 className="w-52"
               />
             </div>
-            <Button onClick={handleSearch}>
-              <Search size={14} className="mr-1" />搜索
+            <Button onClick={handleSearch} disabled={loading}>
+              {loading ? <><Loader2 size={14} className="animate-spin mr-1" />处理中...</> : <><Search size={14} className="mr-1" />搜索</>}
             </Button>
           </div>
 
-          <DataTable columns={columns} data={logs} loading={loading} emptyMessage="暂无数据" />
+          <DataTable columns={columns} data={logs} loading={loading} emptyMessage="暂无数据" variant="cards" />
         </CardContent>
       </Card>
     </div>

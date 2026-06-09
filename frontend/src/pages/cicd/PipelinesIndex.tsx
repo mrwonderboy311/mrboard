@@ -11,6 +11,7 @@ import {
 import { Play, Square, Pencil, Eye, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ApiResponse, PipelineRun, PipelineRunListResponse, PipelineRunResponse } from '@/types'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 const triggerModeLabel: Record<number, string> = {
   1: '人工触发', 2: '定时触发', 3: '代码提交触发', 4: '流水线触发', 5: '流水线触发', 6: 'WEBHOOK触发',
@@ -88,6 +89,8 @@ export default function PipelinesIndex() {
   const [currentRun, setCurrentRun] = useState<PipelineRun | null>(null)
   const [loading, setLoading] = useState(true)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [stopConfirmOpen, setStopConfirmOpen] = useState(false)
+  const [retryTarget, setRetryTarget] = useState<{ jobId: number; pipelineRunId: string } | null>(null)
 
   const postStatus = async (status: string, lastRunTime?: string) => {
     let state = 1
@@ -164,8 +167,11 @@ export default function PipelinesIndex() {
     }
   }
 
-  const handleStop = async () => {
-    if (!confirm('确定停止？')) return
+  const handleStop = () => {
+    setStopConfirmOpen(true)
+  }
+
+  const doStop = async () => {
     try {
       const runResp = await api<PipelineRunResponse>(`/cicd/pipeline/GetRun?cicdId=${cicdId}`)
       if (runResp.pipelineRun?.status === 'RUNNING') {
@@ -184,8 +190,9 @@ export default function PipelinesIndex() {
     }
   }
 
-  const handleRetry = async (jobId: number, pipelineRunId: string) => {
-    if (!confirm('确定重试？')) return
+  const handleRetry = async () => {
+    if (!retryTarget) return
+    const { jobId, pipelineRunId } = retryTarget
     try {
       const resp = await api<ApiResponse<unknown>>(`/cicd/pipeline/Retry?cicdId=${cicdId}&pipelineRunId=${pipelineRunId}&jobId=${jobId}`, { method: 'POST' })
       if (resp.code === 0) {
@@ -249,7 +256,7 @@ export default function PipelinesIndex() {
       )
     }
     if (block.actionType === 'RetryPipelineJobRun') {
-      return <Button size="sm" variant="destructive" className="mt-1" onClick={() => handleRetry(block.id, pipelineRunId)}>重试</Button>
+      return <Button size="sm" variant="destructive" className="mt-1" onClick={(e) => { e.stopPropagation(); setRetryTarget({ jobId: block.id, pipelineRunId }) }}>重试</Button>
     }
     if (block.actionType === 'StopPipelineJobRun') {
       return <Button size="sm" variant="destructive" className="mt-1" onClick={() => handleStopJob(block.id, pipelineRunId)}>取消</Button>
@@ -258,7 +265,7 @@ export default function PipelinesIndex() {
       return <Button size="sm" variant="destructive" className="mt-1" onClick={() => handleSkip(block.id, pipelineRunId)}>跳过</Button>
     }
     if (block.status === 'FAIL') {
-      return <Button size="sm" variant="destructive" className="mt-1" onClick={() => handleRetry(block.id, pipelineRunId)}>重试</Button>
+      return <Button size="sm" variant="destructive" className="mt-1" onClick={(e) => { e.stopPropagation(); setRetryTarget({ jobId: block.id, pipelineRunId }) }}>重试</Button>
     }
     return null
   }
@@ -392,6 +399,21 @@ export default function PipelinesIndex() {
           </Card>
         </TabsContent>
       </Tabs>
+      <ConfirmDialog
+        open={stopConfirmOpen}
+        onOpenChange={(v) => { if (!v) setStopConfirmOpen(false) }}
+        title="确认操作"
+        description="确定停止？"
+        variant="destructive"
+        onConfirm={doStop}
+      />
+      <ConfirmDialog
+        open={!!retryTarget}
+        onOpenChange={(v) => { if (!v) setRetryTarget(null) }}
+        title="确认操作"
+        description="确定重试？"
+        onConfirm={handleRetry}
+      />
     </div>
   )
 }

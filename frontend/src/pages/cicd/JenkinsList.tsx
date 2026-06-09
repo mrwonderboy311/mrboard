@@ -12,6 +12,7 @@ import {
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ApiResponse, JenkinsConfig } from '@/types'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 const emptyForm = { jks_id: '', jks_url: '', jks_user: '', jks_passwd: '', remarks: '' }
 
@@ -22,6 +23,7 @@ export default function JenkinsList() {
   const [editMode, setEditMode] = useState(false)
   const [editId, setEditId] = useState<number | null>(null)
   const [form, setForm] = useState(emptyForm)
+  const [deleteTarget, setDeleteTarget] = useState<JenkinsConfig | null>(null)
 
   const fetchList = async () => {
     setLoading(true)
@@ -83,10 +85,10 @@ export default function JenkinsList() {
     }
   }
 
-  const handleDelete = async (item: JenkinsConfig) => {
-    if (!confirm(`确定删除 ${item.jks_id}？`)) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
     try {
-      await api<ApiResponse<unknown>>(`/cicd/v1/JksDel?id=${item.id}`)
+      await api<ApiResponse<unknown>>(`/cicd/v1/JksDel?id=${deleteTarget.id}`)
       toast.success('删除成功')
       fetchList()
     } catch (err) {
@@ -135,7 +137,7 @@ export default function JenkinsList() {
                       <Button variant="outline" size="sm" onClick={() => openEdit(item)}>
                         <Pencil size={14} />
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(item)}>
+                      <Button variant="outline" size="sm" onClick={() => setDeleteTarget(item)}>
                         <Trash2 size={14} />
                       </Button>
                     </div>
@@ -181,6 +183,14 @@ export default function JenkinsList() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}
+        title="确认操作"
+        description={`确定删除 ${deleteTarget?.jks_id}？`}
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

@@ -6,8 +6,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import type { ApiResponse } from '@/types'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 interface ClusterOption {
   cluster_id: string
@@ -48,18 +50,19 @@ export default function CloneResource() {
   const [records, setRecords] = useState<CloneRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const [form, setForm] = useState({
-    resType: '',
-    clusterid: '',
-    namespace: '',
-    target_clusterid: '',
-    target_namespace: '',
+    resType: '__placeholder__',
+    clusterid: '__placeholder__',
+    namespace: '__placeholder__',
+    target_clusterid: '__placeholder__',
+    target_namespace: '__placeholder__',
     objname: '',
     target_objname: '',
   })
 
-  const update = (key: string, val: string) => setForm(prev => ({ ...prev, [key]: val }))
+  const update = (key: string, val: string | null) => { if (val) setForm(prev => ({ ...prev, [key]: val })) }
 
   useEffect(() => {
     api<ApiResponse<ClusterOption[]>>('/mrboard/cluster/v1/List')
@@ -95,30 +98,32 @@ export default function CloneResource() {
     }
   }
 
-  const handleClusterChange = (val: string) => {
+  const handleClusterChange = (val: string | null) => {
+    if (!val) return
     update('clusterid', val)
-    update('namespace', '')
+    update('namespace', '__placeholder__')
     fetchNamespaces(val, false)
   }
 
-  const handleTargetClusterChange = (val: string) => {
+  const handleTargetClusterChange = (val: string | null) => {
+    if (!val) return
     update('target_clusterid', val)
-    update('target_namespace', '')
+    update('target_namespace', '__placeholder__')
     fetchNamespaces(val, true)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.resType) { toast.error('请选择资源类型'); return }
-    if (!form.clusterid) { toast.error('请选择当前集群'); return }
-    if (!form.namespace) { toast.error('请选择命名空间'); return }
+    if (!form.resType || form.resType === '__placeholder__') { toast.error('请选择资源类型'); return }
+    if (!form.clusterid || form.clusterid === '__placeholder__') { toast.error('请选择当前集群'); return }
+    if (!form.namespace || form.namespace === '__placeholder__') { toast.error('请选择命名空间'); return }
     if (!form.objname.trim()) { toast.error('请输入对象名称'); return }
+    setConfirmOpen(true)
+  }
 
+  const doSubmit = async () => {
     const cleanObj = form.objname.replace(/，|\r|\n/g, ',').replace(/\s/g, '')
     const cleanTarget = form.target_objname.replace(/，|\r|\n/g, ',').replace(/\s/g, '')
-
-    if (!confirm('确定提交？')) return
-
     setSubmitting(true)
     try {
       const urlMap: Record<string, string> = {
@@ -132,10 +137,15 @@ export default function CloneResource() {
       const url = urlMap[form.resType]
       if (!url) { toast.error('不支持的类型'); return }
 
+      const clean = (v: string) => v === '__placeholder__' ? '' : v
       await api(url, {
         method: 'POST',
         body: JSON.stringify({
           ...form,
+          clusterid: clean(form.clusterid),
+          namespace: clean(form.namespace),
+          target_clusterid: clean(form.target_clusterid),
+          target_namespace: clean(form.target_namespace),
           objname: cleanObj,
           target_objname: cleanTarget,
         }),
@@ -170,70 +180,75 @@ export default function CloneResource() {
             <div className="flex flex-wrap gap-4 items-end">
               <div className="space-y-1">
                 <label className="text-sm font-medium text-red-500">资源类型</label>
-                <select
-                  value={form.resType}
-                  onChange={e => update('resType', e.target.value)}
-                  className="h-8 rounded-md border border-input bg-transparent px-2 text-sm w-40"
-                >
-                  <option value="">选择克隆类型</option>
-                  {RES_TYPES.map(r => (
-                    <option key={r.value} value={r.value}>{r.label}</option>
-                  ))}
-                </select>
+                <Select value={form.resType} onValueChange={val => update('resType', val)}>
+                  <SelectTrigger className="h-8 w-40">
+                    <SelectValue placeholder="选择克隆类型" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__placeholder__" disabled>选择克隆类型</SelectItem>
+                    {RES_TYPES.map(r => (
+                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-4 items-end">
               <div className="space-y-1">
                 <label className="text-sm font-medium text-green-600">当前集群</label>
-                <select
-                  value={form.clusterid}
-                  onChange={e => handleClusterChange(e.target.value)}
-                  className="h-8 rounded-md border border-input bg-transparent px-2 text-sm w-40"
-                >
-                  <option value="">请选择集群</option>
-                  {clusters.map(c => (
-                    <option key={c.cluster_id} value={c.cluster_id}>{c.cluster_name}</option>
-                  ))}
-                </select>
+                <Select value={form.clusterid} onValueChange={handleClusterChange}>
+                  <SelectTrigger className="h-8 w-40">
+                    <SelectValue placeholder="请选择集群" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__placeholder__" disabled>请选择集群</SelectItem>
+                    {clusters.map(c => (
+                      <SelectItem key={c.cluster_id} value={c.cluster_id}>{c.cluster_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium text-green-600">命名空间</label>
-                <select
-                  value={form.namespace}
-                  onChange={e => update('namespace', e.target.value)}
-                  className="h-8 rounded-md border border-input bg-transparent px-2 text-sm w-40"
-                >
-                  <option value="">选择命名空间</option>
-                  {namespaces.map(n => <option key={n} value={n}>{n}</option>)}
-                </select>
+                <Select value={form.namespace} onValueChange={val => update('namespace', val)}>
+                  <SelectTrigger className="h-8 w-40">
+                    <SelectValue placeholder="选择命名空间" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__placeholder__" disabled>选择命名空间</SelectItem>
+                    {namespaces.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="px-2 text-xl text-muted-foreground">{'->'}</div>
 
               <div className="space-y-1">
                 <label className="text-sm font-medium text-blue-500">目标集群</label>
-                <select
-                  value={form.target_clusterid}
-                  onChange={e => handleTargetClusterChange(e.target.value)}
-                  className="h-8 rounded-md border border-input bg-transparent px-2 text-sm w-40"
-                >
-                  <option value="">选择目标集群</option>
-                  {clusters.map(c => (
-                    <option key={c.cluster_id} value={c.cluster_id}>{c.cluster_name}</option>
-                  ))}
-                </select>
+                <Select value={form.target_clusterid} onValueChange={handleTargetClusterChange}>
+                  <SelectTrigger className="h-8 w-40">
+                    <SelectValue placeholder="选择目标集群" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__placeholder__" disabled>选择目标集群</SelectItem>
+                    {clusters.map(c => (
+                      <SelectItem key={c.cluster_id} value={c.cluster_id}>{c.cluster_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium text-blue-500">目标空间</label>
-                <select
-                  value={form.target_namespace}
-                  onChange={e => update('target_namespace', e.target.value)}
-                  className="h-8 rounded-md border border-input bg-transparent px-2 text-sm w-40"
-                >
-                  <option value="">选择命名空间</option>
-                  {targetNamespaces.map(n => <option key={n} value={n}>{n}</option>)}
-                </select>
+                <Select value={form.target_namespace} onValueChange={val => update('target_namespace', val)}>
+                  <SelectTrigger className="h-8 w-40">
+                    <SelectValue placeholder="选择命名空间" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__placeholder__" disabled>选择命名空间</SelectItem>
+                    {targetNamespaces.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -311,6 +326,13 @@ export default function CloneResource() {
           </Table>
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={(v) => { if (!v) setConfirmOpen(false) }}
+        title="确认操作"
+        description="确定提交？"
+        onConfirm={doSubmit}
+      />
     </div>
   )
 }

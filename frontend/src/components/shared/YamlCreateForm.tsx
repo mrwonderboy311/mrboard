@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { ArrowLeft } from 'lucide-react'
 
@@ -78,23 +79,23 @@ export default function YamlCreateForm({ title, apiUrl, successRedirect, placeho
         <CardContent className="pt-6 space-y-4">
           <div className="flex items-center gap-4">
             <label className="text-sm font-medium whitespace-nowrap">当前集群</label>
-            <select
-              value={clusterId}
-              onChange={e => setClusterId(e.target.value)}
-              className="h-8 rounded-md border border-input bg-transparent px-2 text-sm w-64"
-            >
-              <option value="">请选择集群</option>
-              {clusters.map(c => (
-                <option key={c.cluster_id} value={c.cluster_id}>{c.cluster_name}</option>
-              ))}
-            </select>
+            <Select value={clusterId} onValueChange={(v) => v && setClusterId(v)}>
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="请选择集群" />
+              </SelectTrigger>
+              <SelectContent>
+                {clusters.map(c => (
+                  <SelectItem key={c.cluster_id} value={c.cluster_id}>{c.cluster_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <textarea
             value={yaml}
             onChange={e => setYaml(e.target.value)}
             placeholder={placeholder || '在此粘贴或编写YAML内容...'}
-            className="w-full h-96 rounded-md border border-input bg-slate-950 text-green-400 font-mono text-sm p-4 resize-y"
+            className="w-full h-96 rounded-md border border-zinc-800 bg-zinc-950 text-emerald-400 font-mono text-sm p-4 resize-y"
             spellCheck={false}
           />
 

@@ -1,15 +1,16 @@
 import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Search, FileCode, Trash2, Eye } from 'lucide-react'
+import { Search, FileCode, Trash2, Eye, Briefcase, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 interface JobItem {
   jobName: string
@@ -32,13 +33,15 @@ export default function JobK8sList() {
   const [page, setPage] = useState(1)
   const clusterId = localStorage.getItem('clusterId') || ''
   const [deleteTarget, setDeleteTarget] = useState<JobItem | null>(null)
+  const [operatingDeploy, setOperatingDeploy] = useState<string | null>(null)
+  const [operationProgress, setOperationProgress] = useState('')
 
-  const fetchData = async () => {
-    setLoading(true)
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const res = await api<{ code: number; data: JobItem[] }>('/mrboard/job/v1/List?clusterId=' + clusterId)
       setItems(res.data || [])
-    } catch (err) { toast.error((err as Error).message) } finally { setLoading(false) }
+    } catch (err) { toast.error((err as Error).message) } finally { if (!silent) setLoading(false) }
   }
 
   useEffect(() => { fetchData() }, [clusterId])
@@ -52,29 +55,60 @@ export default function JobK8sList() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return
+    setOperatingDeploy(deleteTarget.jobName)
+    setOperationProgress('删除中...')
     try {
       await api('/mrboard/job/v1/Del?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace + '&jobName=' + deleteTarget.jobName)
       toast.success('删除成功')
       setDeleteTarget(null)
-      fetchData()
+      fetchData(true)
     } catch (err) { toast.error((err as Error).message) }
+    finally { setOperationProgress('完成 ✓'); setTimeout(() => { setOperatingDeploy(null); setOperationProgress(''); fetchData(true) }, 600) }
   }
 
   const columns: Column<JobItem>[] = [
-    { key: 'jobName', header: '名称', className: 'font-medium', render: (d) => d.jobName },
-    { key: 'nameSpace', header: '命名空间', render: (d) => d.nameSpace },
-    { key: 'completions', header: '完成数', render: (d) => d.completions },
-    { key: 'succeeded', header: '成功', render: (d) => <StatusBadge status={d.succeeded > 0 ? 'Succeeded' : 'Inactive'} /> },
-    { key: 'failed', header: '失败', render: (d) => <StatusBadge status={d.failed > 0 ? 'Failed' : 'Inactive'} /> },
-    { key: 'active', header: '活跃', render: (d) => d.active },
-    { key: 'imageUrl', header: '镜像', className: 'font-mono text-xs max-w-xs truncate', render: (d) => <span title={d.imageUrl}>{d.imageUrl}</span> },
-    { key: 'createTime', header: '创建时间', className: 'text-sm text-muted-foreground whitespace-nowrap', render: (d) => d.createTime },
     {
-      key: 'actions', header: '操作', render: (d) => (
-        <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/job/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&jobName=' + d.jobName) }}><Eye size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/job/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&jobName=' + d.jobName) }}><FileCode size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteTarget(d) }}><Trash2 size={14} className="text-destructive" /></Button>
+      key: 'jobName', header: '名称', className: 'font-medium', render: (d) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            {operatingDeploy === d.jobName ? <Loader2 size={14} className="text-primary animate-spin" /> : <Briefcase size={14} className="text-primary" />}
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-sm truncate">{d.jobName}</div>
+            {operatingDeploy === d.jobName && <span className="text-[11px] text-primary font-medium animate-pulse">{operationProgress}</span>}
+            <div className="flex items-center gap-2 mt-0.5">
+              <Badge variant="secondary" className="text-[10px] font-mono">{d.nameSpace}</Badge>
+              <span className="text-[10px] text-muted-foreground font-mono truncate" title={d.imageUrl}>{d.imageUrl}</span>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'completions', header: '完成', className: 'w-24', render: (d) => (
+        <Badge variant={d.succeeded > 0 ? 'default' : 'secondary'} className="tabular-nums text-xs">
+          {d.succeeded}/{d.completions}
+        </Badge>
+      ),
+    },
+    { key: 'status', header: '状态', render: (d) => <StatusBadge status={d.succeeded > 0 ? 'Succeeded' : d.failed > 0 ? 'Failed' : 'Active'} /> },
+    { key: 'createTime', header: '创建时间', className: 'text-xs text-muted-foreground whitespace-nowrap', render: (d) => d.createTime },
+    {
+      key: 'actions', header: '', render: (d) => (
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="详情"
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/job/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&jobName=' + d.jobName) }}>
+            <Eye size={15} />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="YAML"
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/job/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&jobName=' + d.jobName) }}>
+            <FileCode size={15} />
+          </Button>
+          <div className="w-px h-4 bg-border mx-0.5" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" title="删除"
+            onClick={(e) => { e.stopPropagation(); setDeleteTarget(d) }}>
+            <Trash2 size={15} />
+          </Button>
         </div>
       ),
     },
@@ -87,30 +121,27 @@ export default function JobK8sList() {
       <Card><CardContent className="py-3">
         <div className="flex gap-3 items-center">
           <Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" />
-          <Button variant="outline" size="sm" onClick={fetchData}><Search size={14} className="mr-1" />刷新</Button>
+          <Button variant="outline" size="sm" onClick={() => fetchData()}><Search size={14} className="mr-1" />刷新</Button>
         </div>
       </CardContent></Card>
-      <Card><CardContent className="p-0">
-        <DataTable
-          columns={columns as unknown as Column<Record<string, unknown>>[]}
-          data={paged as unknown as Record<string, unknown>[]}
-          loading={loading}
-          pagination={{ page, limit: 20, total: filtered.length }}
-          onPageChange={setPage}
-          emptyMessage="暂无数据"
-        />
-      </CardContent></Card>
+      <DataTable
+        columns={columns as unknown as Column<Record<string, unknown>>[]}
+        data={paged as unknown as Record<string, unknown>[]}
+        loading={loading}
+        pagination={{ page, limit: 20, total: filtered.length }}
+        onPageChange={setPage}
+        emptyMessage="暂无数据"
+        variant="cards"
+      />
 
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>确认删除</DialogTitle></DialogHeader>
-          <p>确定删除 {deleteTarget?.jobName}？</p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>取消</Button>
-            <Button variant="destructive" onClick={handleDelete}>删除</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}
+        title="确认删除"
+        description={`确定删除 ${deleteTarget?.jobName}？`}
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

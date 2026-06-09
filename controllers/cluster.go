@@ -100,6 +100,7 @@ func (this *ClusterController) Add() {
 		u.PrometheusUrl = gp.Get("prometheus_url").String()
 		u.LokiConfig = gp.Get("loki_config").String()
 		u.AlertmanagerUrl = gp.Get("alertmanager_url").String()
+		u.GrafanaUrl = gp.Get("grafana_url").String()
 
 		id, err := m.Add_Cluster(&u)
 		if err == nil && id > 0 {
@@ -198,6 +199,7 @@ func (this *ClusterController) Update() {
 		u.PrometheusUrl = gp.Get("prometheus_url").String()
 		u.LokiConfig = gp.Get("loki_config").String()
 		u.AlertmanagerUrl = gp.Get("alertmanager_url").String()
+		u.GrafanaUrl = gp.Get("grafana_url").String()
 
 		id, err := m.Update_Cluster(&u)
 		if err == nil && id > 0 {

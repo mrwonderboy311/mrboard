@@ -10,6 +10,7 @@ import { DataTable, type Column } from '@/components/shared/DataTable'
 import YamlViewer from '@/components/shared/YamlViewer'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { Trash2, Terminal, FileText } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import type { KubeEvent, ApiResponse } from '@/types'
 
@@ -89,7 +90,13 @@ export default function PodDetail() {
     } catch (err) { toast.error((err as Error).message) }
   }
 
-  if (loading) return <div className="flex items-center justify-center py-16 text-muted-foreground">加载中...</div>
+  if (loading) return (
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
+      <div className="flex items-center gap-3"><Skeleton className="h-8 w-8 rounded-lg" /><Skeleton className="h-7 w-40" /></div>
+      <div className="flex gap-2"><Skeleton className="h-9 w-20" /><Skeleton className="h-9 w-20" /><Skeleton className="h-9 w-20" /></div>
+      <Skeleton className="h-48 w-full rounded-lg" />
+    </div>
+  )
   if (!detail) return <div className="flex items-center justify-center py-16 text-muted-foreground">未找到Pod详情</div>
 
   const containerColumns: Column<ContainerInfo>[] = [
@@ -119,8 +126,8 @@ export default function PodDetail() {
   ]
 
   return (
-    <div className="space-y-4">
-      <PageHeader title={podName}>
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
+      <PageHeader title={podName} eyebrow="Pod">
         <StatusBadge status={detail.podPhase} />
         <Button variant="outline" size="sm" onClick={() => navigate(`/pod/log?clusterId=${clusterId}&nameSpace=${nameSpace}&podName=${podName}`)}>
           <FileText size={14} className="mr-1" />日志

@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import type { ApiResponse } from '@/types'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 interface ClusterOption {
   cluster_id: string
@@ -12,21 +14,23 @@ interface ClusterOption {
 
 export default function ApplyYAML() {
   const [clusters, setClusters] = useState<ClusterOption[]>([])
-  const [clusterId, setClusterId] = useState('')
+  const [clusterId, setClusterId] = useState('__placeholder__')
   const [yaml, setYaml] = useState('')
   const [loading, setLoading] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   useEffect(() => {
     api<ApiResponse<ClusterOption[]>>('/mrboard/cluster/v1/List')
       .then(resp => {
         setClusters(resp.data || [])
         if (resp.data && resp.data.length > 0) setClusterId(resp.data[0].cluster_id)
+        else setClusterId('__placeholder__')
       })
       .catch(err => toast.error((err as Error).message))
   }, [])
 
   const handleApply = async () => {
-    if (!clusterId) {
+    if (!clusterId || clusterId === '__placeholder__') {
       toast.error('请选择集群')
       return
     }
@@ -34,8 +38,10 @@ export default function ApplyYAML() {
       toast.error('请输入YAML内容')
       return
     }
-    if (!confirm(`确定应用到集群: ${clusterId}？`)) return
+    setConfirmOpen(true)
+  }
 
+  const doApply = async () => {
     setLoading(true)
     try {
       const resp = await api<{ msg: string }>('/mrboard/apply/v1/ApplyYaml', {
@@ -60,16 +66,16 @@ export default function ApplyYAML() {
         <CardContent className="pt-6 space-y-4">
           <div className="flex items-center gap-4">
             <label className="text-sm font-medium whitespace-nowrap">当前集群</label>
-            <select
-              value={clusterId}
-              onChange={e => setClusterId(e.target.value)}
-              className="h-8 rounded-md border border-input bg-transparent px-2 text-sm w-64"
-            >
-              <option value="">请选择集群</option>
-              {clusters.map(c => (
-                <option key={c.cluster_id} value={c.cluster_id}>{c.cluster_name}</option>
-              ))}
-            </select>
+            <Select value={clusterId} onValueChange={v => { if (v) setClusterId(v) }}>
+              <SelectTrigger className="h-8 w-64">
+                <SelectValue placeholder="请选择集群" />
+              </SelectTrigger>
+              <SelectContent>
+                {clusters.map(c => (
+                  <SelectItem key={c.cluster_id} value={c.cluster_id}>{c.cluster_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <textarea
@@ -94,6 +100,13 @@ export default function ApplyYAML() {
           </div>
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={(v) => { if (!v) setConfirmOpen(false) }}
+        title="确认操作"
+        description={`确定应用到集群: ${clusterId}？`}
+        onConfirm={doApply}
+      />
     </div>
   )
 }

@@ -1,15 +1,18 @@
 import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Search, FileCode, Trash2, RotateCcw, Eye, Plus, X } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Search, FileCode, Trash2, RotateCcw, Eye, Plus, X, Database, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { StatusBadge } from '@/components/shared/StatusBadge'
+
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 interface StsItem {
   statefulsetName: string
@@ -70,6 +73,10 @@ export default function StatefulSetList() {
   const [formMemoryLimit, setFormMemoryLimit] = useState('')
   const [formEnvVars, setFormEnvVars] = useState<{ key: string; value: string }[]>([{ key: '', value: '' }])
   const [formVolumeMounts, setFormVolumeMounts] = useState<{ type: string; name: string; mountPath: string }[]>([{ type: 'ConfigMap', name: '', mountPath: '' }])
+  const [restartTarget, setRestartTarget] = useState<StsItem | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<StsItem | null>(null)
+  const [operatingDeploy, setOperatingDeploy] = useState<string | null>(null)
+  const [operationProgress, setOperationProgress] = useState('')
 
   const addEnvVar = () => setFormEnvVars([...formEnvVars, { key: '', value: '' }])
   const removeEnvVar = (idx: number) => setFormEnvVars(formEnvVars.filter((_, i) => i !== idx))
@@ -81,18 +88,19 @@ export default function StatefulSetList() {
 
   const addVolumeMount = () => setFormVolumeMounts([...formVolumeMounts, { type: 'ConfigMap', name: '', mountPath: '' }])
   const removeVolumeMount = (idx: number) => setFormVolumeMounts(formVolumeMounts.filter((_, i) => i !== idx))
-  const updateVolumeMount = (idx: number, field: 'type' | 'name' | 'mountPath', val: string) => {
+  const updateVolumeMount = (idx: number, field: 'type' | 'name' | 'mountPath', val: string | null) => {
+    if (!val && field === 'type') return
     const next = [...formVolumeMounts]
     next[idx] = { ...next[idx], [field]: val }
     setFormVolumeMounts(next)
   }
 
-  const fetchData = async () => {
-    setLoading(true)
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const res = await api<{ code: number; data: StsItem[] }>('/mrboard/sts/v1/List?clusterId=' + clusterId)
       setItems(res.data || [])
-    } catch (err) { toast.error((err as Error).message) } finally { setLoading(false) }
+    } catch (err) { toast.error((err as Error).message) } finally { if (!silent) setLoading(false) }
   }
 
   useEffect(() => { fetchData() }, [clusterId])
@@ -104,21 +112,55 @@ export default function StatefulSetList() {
     return filtered.slice(start, start + 20)
   }, [filtered, page])
 
-  const handleRestart = async (item: StsItem) => {
-    if (!confirm('确定重启 ' + item.statefulsetName + '？')) return
+  const handleRestart = async () => {
+    if (!restartTarget) return
+    const name = restartTarget.statefulsetName
+    setOperatingDeploy(name)
+    setOperationProgress('重启中...')
     try {
-      await api('/mrboard/sts/v1/Restart?clusterId=' + clusterId + '&nameSpace=' + item.nameSpace + '&stsName=' + item.statefulsetName)
-      toast.success('重启成功')
-    } catch (err) { toast.error((err as Error).message) }
+      await api('/mrboard/sts/v1/Restart?clusterId=' + clusterId + '&nameSpace=' + restartTarget.nameSpace + '&stsName=' + name)
+      setOperationProgress('等待 Pod 就绪...')
+      let retries = 0
+      const poll = setInterval(async () => {
+        retries++
+        try {
+          const res = await api<{ code: number; data: StsItem[] }>(`/mrboard/sts/v1/List?clusterId=${clusterId}&nameSpace=${restartTarget.nameSpace}`)
+          const sts = (res.data || []).find(d => d.statefulsetName === name)
+          if (sts && sts.replicas === sts.availableReplicas) {
+            clearInterval(poll)
+            setOperationProgress('完成 ✓')
+            toast.success('重启完成')
+            setRestartTarget(null)
+            setTimeout(() => { setOperatingDeploy(null); setOperationProgress(''); fetchData(true) }, 600)
+          } else if (retries > 30) {
+            clearInterval(poll)
+            setOperationProgress('完成 ✓')
+            toast.success('重启已触发，正在滚动更新...')
+            setRestartTarget(null)
+            setTimeout(() => { setOperatingDeploy(null); setOperationProgress(''); fetchData(true) }, 600)
+          }
+        } catch {
+          if (retries > 30) { clearInterval(poll); setOperatingDeploy(null); setOperationProgress('') }
+        }
+      }, 2000)
+    } catch (err) {
+      toast.error((err as Error).message)
+      setOperatingDeploy(null)
+      setOperationProgress('')
+    }
   }
 
-  const handleDelete = async (item: StsItem) => {
-    if (!confirm('确定删除 ' + item.statefulsetName + '？')) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setOperatingDeploy(deleteTarget.statefulsetName)
+    setOperationProgress('删除中...')
     try {
-      await api('/mrboard/sts/v1/Del?clusterId=' + clusterId + '&nameSpace=' + item.nameSpace + '&stsName=' + item.statefulsetName)
+      await api('/mrboard/sts/v1/Del?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace + '&stsName=' + deleteTarget.statefulsetName)
       toast.success('删除成功')
-      fetchData()
+      setDeleteTarget(null)
+      fetchData(true)
     } catch (err) { toast.error((err as Error).message) }
+    finally { setOperationProgress('完成 ✓'); setTimeout(() => { setOperatingDeploy(null); setOperationProgress(''); fetchData(true) }, 600) }
   }
 
   const handleCreate = async () => {
@@ -138,30 +180,58 @@ export default function StatefulSetList() {
       setFormEnvVars([{ key: '', value: '' }])
       setFormVolumeMounts([{ type: 'ConfigMap', name: '', mountPath: '' }])
       setYamlContent(defaultYaml)
-      fetchData()
+      fetchData(true)
     } catch (err) { toast.error((err as Error).message) } finally { setSubmitting(false) }
   }
 
   const columns: Column<StsItem>[] = [
-    { key: 'statefulsetName', header: '名称', className: 'font-medium', render: (d) => d.statefulsetName },
-    { key: 'nameSpace', header: '命名空间', render: (d) => d.nameSpace },
     {
-      key: 'replicas', header: '副本', render: (d) => (
-        <span className="text-xs">
-          <StatusBadge status={d.replicas === d.availableReplicas ? 'Ready' : 'Warning'} />
-          <span className="ml-1">{d.availableReplicas}/{d.replicas}</span>
-        </span>
+      key: 'statefulsetName', header: '名称', className: 'font-medium', render: (d) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            {operatingDeploy === d.statefulsetName ? <Loader2 size={14} className="text-primary animate-spin" /> : <Database size={14} className="text-primary" />}
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-sm truncate">{d.statefulsetName}</div>
+            {operatingDeploy === d.statefulsetName && <span className="text-[11px] text-primary font-medium animate-pulse">{operationProgress}</span>}
+            <div className="flex items-center gap-2 mt-0.5">
+              <Badge variant="secondary" className="text-[10px] font-mono">{d.nameSpace}</Badge>
+              <span className="text-[10px] text-muted-foreground font-mono truncate" title={d.imgUrl}>{d.imgUrl}</span>
+            </div>
+          </div>
+        </div>
       ),
     },
-    { key: 'imgUrl', header: '镜像', className: 'font-mono text-xs max-w-xs truncate', render: (d) => <span title={d.imgUrl}>{d.imgUrl}</span> },
-    { key: 'createTime', header: '创建时间', className: 'text-sm text-muted-foreground whitespace-nowrap', render: (d) => d.createTime },
     {
-      key: 'actions', header: '操作', render: (d) => (
-        <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/statefulset/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&stsName=' + d.statefulsetName) }}><Eye size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleRestart(d) }}><RotateCcw size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/statefulset/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&stsName=' + d.statefulsetName) }}><FileCode size={14} /></Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(d) }}><Trash2 size={14} className="text-destructive" /></Button>
+      key: 'replicas', header: '副本', className: 'w-24', render: (d) => (
+        <div className="flex items-center gap-2">
+          <Badge variant={d.replicas === d.availableReplicas ? 'default' : 'destructive'} className="tabular-nums text-xs">
+            {d.availableReplicas}/{d.replicas}
+          </Badge>
+        </div>
+      ),
+    },
+    { key: 'createTime', header: '创建时间', className: 'text-xs text-muted-foreground whitespace-nowrap', render: (d) => d.createTime },
+    {
+      key: 'actions', header: '', render: (d) => (
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="详情"
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/statefulset/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&stsName=' + d.statefulsetName) }}>
+            <Eye size={15} />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="重启"
+            onClick={(e) => { e.stopPropagation(); setRestartTarget(d) }}>
+            <RotateCcw size={15} />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="YAML"
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/statefulset/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&stsName=' + d.statefulsetName) }}>
+            <FileCode size={15} />
+          </Button>
+          <div className="w-px h-4 bg-border mx-0.5" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" title="删除"
+            onClick={(e) => { e.stopPropagation(); setDeleteTarget(d) }}>
+            <Trash2 size={15} />
+          </Button>
         </div>
       ),
     },
@@ -175,19 +245,18 @@ export default function StatefulSetList() {
       <Card><CardContent className="py-3">
         <div className="flex gap-3 items-center">
           <Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" />
-          <Button variant="outline" size="sm" onClick={fetchData}><Search size={14} className="mr-1" />刷新</Button>
+          <Button variant="outline" size="sm" onClick={() => fetchData()}><Search size={14} className="mr-1" />刷新</Button>
         </div>
       </CardContent></Card>
-      <Card><CardContent className="p-0">
-        <DataTable
-          columns={columns as unknown as Column<Record<string, unknown>>[]}
-          data={paged as unknown as Record<string, unknown>[]}
-          loading={loading}
-          pagination={{ page, limit: 20, total: filtered.length }}
-          onPageChange={setPage}
-          emptyMessage="暂无数据"
-        />
-      </CardContent></Card>
+      <DataTable
+        columns={columns as unknown as Column<Record<string, unknown>>[]}
+        data={paged as unknown as Record<string, unknown>[]}
+        loading={loading}
+        pagination={{ page, limit: 20, total: filtered.length }}
+        onPageChange={setPage}
+        emptyMessage="暂无数据"
+        variant="cards"
+      />
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
@@ -209,11 +278,16 @@ export default function StatefulSetList() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-medium">镜像拉取策略</label>
-                  <select value={formImagePullPolicy} onChange={e => setFormImagePullPolicy(e.target.value)} className="w-full h-9 rounded-md border border-input bg-transparent px-3 text-sm">
-                    <option value="Always">Always</option>
-                    <option value="IfNotPresent">IfNotPresent</option>
-                    <option value="Never">Never</option>
-                  </select>
+                  <Select value={formImagePullPolicy} onValueChange={v => { if (v) setFormImagePullPolicy(v) }}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Always">Always</SelectItem>
+                      <SelectItem value="IfNotPresent">IfNotPresent</SelectItem>
+                      <SelectItem value="Never">Never</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div><label className="text-sm font-medium">容器端口</label><Input type="number" value={formContainerPort} onChange={e => setFormContainerPort(e.target.value)} placeholder="80" /></div>
               </div>
@@ -251,11 +325,16 @@ export default function StatefulSetList() {
                 </div>
                 {formVolumeMounts.map((vm, idx) => (
                   <div key={idx} className="flex gap-2 items-center">
-                    <select value={vm.type} onChange={e => updateVolumeMount(idx, 'type', e.target.value)} className="h-9 rounded-md border border-input bg-transparent px-3 text-sm w-32">
-                      <option value="ConfigMap">ConfigMap</option>
-                      <option value="Secret">Secret</option>
-                      <option value="PVC">PVC</option>
-                    </select>
+                    <Select value={vm.type} onValueChange={val => updateVolumeMount(idx, 'type', val)}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ConfigMap">ConfigMap</SelectItem>
+                        <SelectItem value="Secret">Secret</SelectItem>
+                        <SelectItem value="PVC">PVC</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Input value={vm.name} onChange={e => updateVolumeMount(idx, 'name', e.target.value)} placeholder="名称" className="flex-1" />
                     <Input value={vm.mountPath} onChange={e => updateVolumeMount(idx, 'mountPath', e.target.value)} placeholder="/data" className="flex-1" />
                     {formVolumeMounts.length > 1 && (
@@ -271,6 +350,21 @@ export default function StatefulSetList() {
           <DialogFooter><Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button><Button onClick={handleCreate} disabled={submitting}>{submitting ? '创建中...' : '创建'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog
+        open={!!restartTarget}
+        onOpenChange={(v) => { if (!v) setRestartTarget(null) }}
+        title="确认操作"
+        description={`确定重启 ${restartTarget?.statefulsetName}？`}
+        onConfirm={handleRestart}
+      />
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}
+        title="确认操作"
+        description={`确定删除 ${deleteTarget?.statefulsetName}？`}
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

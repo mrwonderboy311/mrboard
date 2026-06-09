@@ -3,7 +3,8 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ArrowLeft, RefreshCw, Download } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ArrowLeft, RefreshCw, Download, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function PodLog() {
@@ -60,19 +61,27 @@ export default function PodLog() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
       <div className="flex items-center gap-4">
         <Button variant="outline" onClick={() => navigate(-1)}><ArrowLeft size={14} className="mr-1" />返回</Button>
-        <h1 className="text-2xl font-bold">日志 - {podName}</h1>
+        <div>
+          <span className="inline-block rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-medium bg-primary/5 text-primary border border-primary/10 mb-1">K8s</span>
+          <h1 className="text-2xl font-bold">日志 - {podName}</h1>
+        </div>
       </div>
       <div className="flex flex-wrap gap-3 items-center">
         {containers.length > 1 && (
-          <select value={container} onChange={e => setContainer(e.target.value)} className="h-9 rounded-md border border-input bg-transparent px-3 text-sm">
-            {containers.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <Select value={container} onValueChange={v => { if (v) setContainer(v) }}>
+            <SelectTrigger className="h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {containers.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
         )}
         <Input value={tailLines} onChange={e => setTailLines(e.target.value)} className="w-24" placeholder="行数" />
-        <Button onClick={fetchLogs} disabled={loading}><RefreshCw size={14} className="mr-1" />{loading ? '加载中...' : '刷新'}</Button>
+        <Button onClick={fetchLogs} disabled={loading}>{loading ? <><Loader2 size={14} className="animate-spin mr-1" />处理中...</> : <><RefreshCw size={14} className="mr-1" />刷新</>}</Button>
         <Button variant="outline" onClick={handleDownload} disabled={!logs}><Download size={14} className="mr-1" />下载</Button>
       </div>
       <div className="bg-slate-950 rounded-lg p-4 max-h-[700px] overflow-auto">

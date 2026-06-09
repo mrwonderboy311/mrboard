@@ -2,7 +2,9 @@ import { useState, useRef, useEffect } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Send, Trash, Plus } from 'lucide-react'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Send, Trash, Plus, Brain, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface Message {
@@ -84,19 +86,25 @@ export default function AIChat() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)]">
+    <div className="flex flex-col h-[calc(100vh-120px)] animate-[fadeInUp_0.3s_ease-out]">
       <div className="flex items-center justify-between mb-3">
-        <h1 className="text-2xl font-bold">AI助手</h1>
+        <div>
+          <span className="inline-block rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-medium bg-primary/5 text-primary border border-primary/10 mb-3">
+            AI Assistant
+          </span>
+          <h1 className="text-2xl font-bold">AI助手</h1>
+        </div>
         <div className="flex items-center gap-2">
-          <select
-            value={model}
-            onChange={e => setModel(e.target.value)}
-            className="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
-          >
-            {MODELS.map(m => (
-              <option key={m.value} value={m.value}>{m.label}</option>
-            ))}
-          </select>
+          <Select value={model} onValueChange={(v) => v && setModel(v)}>
+            <SelectTrigger className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MODELS.map(m => (
+                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button variant="outline" onClick={handleNewSession}>
             <Plus size={14} className="mr-1" />新建会话
           </Button>
@@ -106,7 +114,14 @@ export default function AIChat() {
       <Card className="flex-1 flex flex-col overflow-hidden">
         <CardContent className="flex-1 overflow-y-auto p-4 space-y-4" ref={chatRef}>
           {messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              {msg.role === 'bot' && (
+                <Avatar className="h-8 w-8 shrink-0 mt-0.5">
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    <Brain size={16} />
+                  </AvatarFallback>
+                </Avatar>
+              )}
               <div
                 className={`max-w-[80%] px-4 py-2 rounded-2xl whitespace-pre-wrap break-words ${
                   msg.role === 'user'
@@ -119,9 +134,21 @@ export default function AIChat() {
             </div>
           ))}
           {sending && (
-            <div className="flex justify-start">
+            <div className="flex justify-start gap-2">
+              <Avatar className="h-8 w-8 shrink-0 mt-0.5">
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  <Brain size={16} />
+                </AvatarFallback>
+              </Avatar>
               <div className="px-4 py-2 rounded-2xl bg-muted text-muted-foreground rounded-bl-sm">
-                AI正在思考中...
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="flex gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-[bounce_1.4s_ease-in-out_infinite] [animation-delay:0ms]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-[bounce_1.4s_ease-in-out_infinite] [animation-delay:160ms]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-[bounce_1.4s_ease-in-out_infinite] [animation-delay:320ms]" />
+                  </span>
+                  AI正在思考中...
+                </span>
               </div>
             </div>
           )}
@@ -136,8 +163,9 @@ export default function AIChat() {
             className="flex-1 rounded-md border border-input bg-transparent px-3 py-2 text-sm resize-none h-20"
           />
           <div className="flex flex-col gap-1">
-            <Button onClick={sendMessage} disabled={sending}>
-              <Send size={14} className="mr-1" />发送
+            <Button onClick={sendMessage} disabled={sending} className="gap-1.5">
+              {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+              {sending ? '发送中' : '发送'}
             </Button>
             <Button variant="outline" onClick={handleClear}>
               <Trash size={14} className="mr-1" />清空

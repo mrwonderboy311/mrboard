@@ -57,7 +57,7 @@ export default function YamlViewer({ yaml, readOnly = false, onUpdateUrl, onUpda
         )}
       </div>
       <textarea
-        className="w-full font-mono text-xs leading-relaxed bg-slate-950 text-green-400 p-4 rounded-lg border min-h-[400px] resize-y focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full font-mono text-xs leading-relaxed bg-zinc-950 text-emerald-400 border-zinc-800 p-4 rounded-lg border min-h-[400px] resize-y focus:outline-none focus:ring-2 focus:ring-primary/40"
         value={editMode ? content : yaml}
         onChange={e => setContent(e.target.value)}
         readOnly={!editMode}

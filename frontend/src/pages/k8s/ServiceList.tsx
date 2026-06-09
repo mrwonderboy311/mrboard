@@ -5,11 +5,13 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Search, FileCode, Trash2, Eye, Plus } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Search, FileCode, Trash2, Eye, Plus, Network, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable, type Column } from '@/components/shared/DataTable'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 interface SvcItem {
   serviceName: string
@@ -60,6 +62,8 @@ export default function ServiceList() {
   const [selectorRows, setSelectorRows] = useState<SelectorRow[]>([{ key: '', value: '' }])
   const [formSessionAffinity, setFormSessionAffinity] = useState('None')
   const [deleteTarget, setDeleteTarget] = useState<SvcItem | null>(null)
+  const [operatingDeploy, setOperatingDeploy] = useState<string | null>(null)
+  const [operationProgress, setOperationProgress] = useState('')
 
   const addPortRow = () => setPortRows(prev => [...prev, { name: '', port: '', targetPort: '', protocol: 'TCP' }])
   const removePortRow = (idx: number) => setPortRows(prev => prev.filter((_, i) => i !== idx))
@@ -73,12 +77,12 @@ export default function ServiceList() {
     setSelectorRows(prev => prev.map((r, i) => i === idx ? { ...r, [field]: val } : r))
   }
 
-  const fetchData = async () => {
-    setLoading(true)
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const res = await api<{ code: number; data: SvcItem[] }>('/mrboard/svc/v1/List?clusterId=' + clusterId)
       setItems(res.data || [])
-    } catch (err) { toast.error((err as Error).message) } finally { setLoading(false) }
+    } catch (err) { toast.error((err as Error).message) } finally { if (!silent) setLoading(false) }
   }
 
   useEffect(() => { fetchData() }, [clusterId])
@@ -92,12 +96,15 @@ export default function ServiceList() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return
+    setOperatingDeploy(deleteTarget.serviceName)
+    setOperationProgress('删除中...')
     try {
       await api('/mrboard/svc/v1/Del?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace + '&svcName=' + deleteTarget.serviceName)
       toast.success('删除成功')
       setDeleteTarget(null)
-      fetchData()
+      fetchData(true)
     } catch (err) { toast.error((err as Error).message) }
+    finally { setOperationProgress('完成 ✓'); setTimeout(() => { setOperatingDeploy(null); setOperationProgress(''); fetchData(true) }, 600) }
   }
 
   const handleCreate = async () => {
@@ -129,7 +136,7 @@ export default function ServiceList() {
       setPortRows([{ name: '', port: '80', targetPort: '80', protocol: 'TCP' }])
       setSelectorRows([{ key: '', value: '' }])
       setFormSessionAffinity('None')
-      fetchData()
+      fetchData(true)
     } catch (err) { toast.error((err as Error).message) } finally { setSubmitting(false) }
   }
 
@@ -137,24 +144,23 @@ export default function ServiceList() {
     {
       key: 'serviceName',
       header: '名称',
-      className: 'font-medium',
-      render: (d) => d.serviceName,
-    },
-    {
-      key: 'nameSpace',
-      header: '命名空间',
-      render: (d) => d.nameSpace,
-    },
-    {
-      key: 'svcType',
-      header: '类型',
-      render: (d) => <Badge variant="outline">{d.svcType}</Badge>,
-    },
-    {
-      key: 'svcIp',
-      header: 'ClusterIP',
-      className: 'font-mono text-sm',
-      render: (d) => d.svcIp,
+      className: 'font-semibold',
+      render: (d) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            {operatingDeploy === d.serviceName ? <Loader2 size={14} className="text-primary animate-spin" /> : <Network size={14} className="text-primary" />}
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-sm truncate">{d.serviceName}</div>
+            {operatingDeploy === d.serviceName && <span className="text-[11px] text-primary font-medium animate-pulse">{operationProgress}</span>}
+            <div className="flex items-center gap-2 mt-0.5">
+              <Badge variant="secondary" className="text-[10px] font-mono">{d.nameSpace}</Badge>
+              <Badge variant="outline" className="text-[10px]">{d.svcType}</Badge>
+              <span className="text-[10px] text-muted-foreground font-mono">{d.svcIp || '-'}</span>
+            </div>
+          </div>
+        </div>
+      ),
     },
     {
       key: 'wanEndpoint',
@@ -171,22 +177,26 @@ export default function ServiceList() {
     {
       key: 'createTime',
       header: '创建时间',
-      className: 'text-sm text-muted-foreground whitespace-nowrap',
+      className: 'text-xs text-muted-foreground whitespace-nowrap',
       render: (d) => d.createTime,
     },
     {
       key: 'actions',
-      header: '操作',
+      header: '',
       render: (d) => (
-        <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/service/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&svcName=' + d.serviceName) }}>
-            <Eye size={14} />
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="详情"
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/service/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&svcName=' + d.serviceName) }}>
+            <Eye size={15} />
           </Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/k8s/service/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&svcName=' + d.serviceName) }}>
-            <FileCode size={14} />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="YAML"
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/service/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&svcName=' + d.serviceName) }}>
+            <FileCode size={15} />
           </Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteTarget(d) }}>
-            <Trash2 size={14} className="text-destructive" />
+          <div className="w-px h-4 bg-border mx-0.5" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" title="删除"
+            onClick={(e) => { e.stopPropagation(); setDeleteTarget(d) }}>
+            <Trash2 size={15} />
           </Button>
         </div>
       ),
@@ -202,20 +212,19 @@ export default function ServiceList() {
       <Card><CardContent className="py-3">
         <div className="flex gap-3 items-center">
           <Input placeholder="搜索服务名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" />
-          <Button variant="outline" size="sm" onClick={fetchData}><Search size={14} className="mr-1" />刷新</Button>
+          <Button variant="outline" size="sm" onClick={() => fetchData()}><Search size={14} className="mr-1" />刷新</Button>
         </div>
       </CardContent></Card>
 
-      <Card><CardContent className="p-0">
-        <DataTable
-          columns={columns as unknown as Column<Record<string, unknown>>[]}
-          data={paged as unknown as Record<string, unknown>[]}
-          loading={loading}
-          pagination={{ page, limit: 20, total: filtered.length }}
-          onPageChange={setPage}
-          emptyMessage="暂无服务"
-        />
-      </CardContent></Card>
+      <DataTable
+        columns={columns as unknown as Column<Record<string, unknown>>[]}
+        data={paged as unknown as Record<string, unknown>[]}
+        loading={loading}
+        pagination={{ page, limit: 20, total: filtered.length }}
+        onPageChange={setPage}
+        emptyMessage="暂无服务"
+        variant="cards"
+      />
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
@@ -230,11 +239,16 @@ export default function ServiceList() {
               <div><label className="text-sm font-medium">名称 *</label><Input value={formServiceName} onChange={e => setFormServiceName(e.target.value)} placeholder="my-svc" /></div>
               <div>
                 <label className="text-sm font-medium">类型</label>
-                <select value={formType} onChange={e => setFormType(e.target.value)} className="w-full h-9 rounded-md border border-input bg-transparent px-3 text-sm">
-                  <option value="ClusterIP">ClusterIP</option>
-                  <option value="NodePort">NodePort</option>
-                  <option value="LoadBalancer">LoadBalancer</option>
-                </select>
+                <Select value={formType} onValueChange={v => { if (v) setFormType(v) }}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ClusterIP">ClusterIP</SelectItem>
+                    <SelectItem value="NodePort">NodePort</SelectItem>
+                    <SelectItem value="LoadBalancer">LoadBalancer</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">端口</label>
@@ -246,10 +260,15 @@ export default function ServiceList() {
                     <Input placeholder="http" value={row.name} onChange={e => updatePortRow(idx, 'name', e.target.value)} />
                     <Input placeholder="80" type="number" min="1" value={row.port} onChange={e => updatePortRow(idx, 'port', e.target.value)} />
                     <Input placeholder="80" type="number" min="1" value={row.targetPort} onChange={e => updatePortRow(idx, 'targetPort', e.target.value)} />
-                    <select value={row.protocol} onChange={e => updatePortRow(idx, 'protocol', e.target.value)} className="h-9 rounded-md border border-input bg-transparent px-2 text-sm">
-                      <option value="TCP">TCP</option>
-                      <option value="UDP">UDP</option>
-                    </select>
+                    <Select value={row.protocol} onValueChange={val => { if (val) updatePortRow(idx, 'protocol', val) }}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="TCP">TCP</SelectItem>
+                        <SelectItem value="UDP">UDP</SelectItem>
+                      </SelectContent>
+                    </Select>
                     {portRows.length > 1 && (
                       <Button type="button" variant="ghost" size="sm" onClick={() => removePortRow(idx)}>删除</Button>
                     )}
@@ -273,10 +292,15 @@ export default function ServiceList() {
               </div>
               <div>
                 <label className="text-sm font-medium">Session Affinity</label>
-                <select value={formSessionAffinity} onChange={e => setFormSessionAffinity(e.target.value)} className="w-full h-9 rounded-md border border-input bg-transparent px-3 text-sm">
-                  <option value="None">None</option>
-                  <option value="ClientIP">ClientIP</option>
-                </select>
+                <Select value={formSessionAffinity} onValueChange={v => { if (v) setFormSessionAffinity(v) }}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="None">None</SelectItem>
+                    <SelectItem value="ClientIP">ClientIP</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           ) : (
@@ -286,16 +310,14 @@ export default function ServiceList() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>确认删除</DialogTitle></DialogHeader>
-          <p>确定删除服务 <span className="font-semibold">{deleteTarget?.serviceName}</span>？此操作不可撤销。</p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>取消</Button>
-            <Button variant="destructive" onClick={handleDelete}>删除</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}
+        title="确认删除"
+        description={`确定删除 ${deleteTarget?.serviceName}？`}
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

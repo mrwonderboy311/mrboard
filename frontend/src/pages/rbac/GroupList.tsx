@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+
 import { Input } from '@/components/ui/input'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -10,7 +10,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { Plus, Trash2, List } from 'lucide-react'
+import { Plus, Trash2, List, FolderTree, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -30,21 +30,37 @@ export default function GroupList() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState({ Name: '', Title: '', Sort: '', Status: '2' })
   const [deleteTarget, setDeleteTarget] = useState<Group | null>(null)
+  const [addLoading, setAddLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   const columns: Column<Group>[] = useMemo(() => [
-    { key: 'Id', header: 'ID', className: 'w-16', render: (g) => g.Id },
-    { key: 'Name', header: '组名', render: (g) => <span className="font-medium">{g.Name}</span> },
-    { key: 'Title', header: '标题', render: (g) => g.Title },
-    { key: 'Sort', header: '排序', render: (g) => g.Sort },
-    { key: 'Status', header: '状态', className: 'w-20', render: (g) => <StatusBadge status={g.Status === '2' ? 'Active' : 'Inactive'} /> },
     {
-      key: 'actions', header: '操作', render: (g) => (
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" render={<Link to={`/rbac/node/listByGroup/${g.Id}`} />}>
-            <List size={14} className="mr-1" />URL列表
+      key: 'Name', header: '组名', className: 'font-medium', render: (g) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <FolderTree size={14} className="text-primary" />
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-sm truncate">{g.Name}</div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[10px] text-muted-foreground truncate">{g.Title}</span>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    { key: 'Sort', header: '排序', className: 'text-xs', render: (g) => g.Sort },
+    { key: 'Status', header: '状态', render: (g) => <StatusBadge status={g.Status === '2' ? 'Active' : 'Inactive'} /> },
+    {
+      key: 'actions', header: '', render: (g) => (
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="URL列表" render={<Link to={`/rbac/node/listByGroup/${g.Id}`} />}>
+            <List size={15} />
           </Button>
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteTarget(g) }}>
-            <Trash2 size={14} />
+          <div className="w-px h-4 bg-border mx-0.5" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" title="删除"
+            onClick={(e) => { e.stopPropagation(); setDeleteTarget(g) }}>
+            <Trash2 size={15} />
           </Button>
         </div>
       ),
@@ -80,6 +96,7 @@ export default function GroupList() {
       toast.error('排序必须为数字')
       return
     }
+    setAddLoading(true)
     try {
       await api('/rbac/group/Add', {
         method: 'POST',
@@ -91,11 +108,14 @@ export default function GroupList() {
       fetchGroups()
     } catch (err) {
       toast.error((err as Error).message)
+    } finally {
+      setAddLoading(false)
     }
   }
 
   const handleDelete = async () => {
     if (!deleteTarget) return
+    setDeleteLoading(true)
     try {
       await api('/rbac/group/Delete', {
         method: 'POST',
@@ -106,22 +126,20 @@ export default function GroupList() {
       fetchGroups()
     } catch (err) {
       toast.error((err as Error).message)
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
   return (
-    <div className="space-y-4">
-      <PageHeader title="目录分组">
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
+      <PageHeader title="目录分组" eyebrow="RBAC">
         <Button onClick={() => { setForm({ Name: '', Title: '', Sort: '', Status: '2' }); setDialogOpen(true) }}>
           <Plus size={16} className="mr-2" />添加
         </Button>
       </PageHeader>
 
-      <Card>
-        <CardContent className="p-0">
-          <DataTable columns={columns} data={groups} loading={loading} emptyMessage="暂无数据" />
-        </CardContent>
-      </Card>
+      <DataTable columns={columns} data={groups} loading={loading} emptyMessage="暂无数据" variant="cards" />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
@@ -153,8 +171,8 @@ export default function GroupList() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>取消</Button>
-            <Button onClick={handleAdd}>确认添加</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={addLoading}>取消</Button>
+            <Button onClick={handleAdd} disabled={addLoading}>{addLoading ? <><Loader2 size={14} className="animate-spin mr-1.5" />处理中...</> : '确认添加'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -166,8 +184,8 @@ export default function GroupList() {
           </DialogHeader>
           <p>确定删除分组 {deleteTarget?.Name}？</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>取消</Button>
-            <Button variant="destructive" onClick={handleDelete}>确认删除</Button>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleteLoading}>取消</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteLoading}>{deleteLoading ? <><Loader2 size={14} className="animate-spin mr-1.5" />处理中...</> : '确认删除'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
