@@ -26,15 +26,11 @@ export default function SecretCreate() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const data: Record<string, string> = {}
-    for (const entry of entries) {
-      if (entry.key.trim()) data[entry.key.trim()] = entry.value
-    }
     setLoading(true)
     try {
       await api('/mrboard/secret/v1/Create', {
         method: 'POST',
-        body: JSON.stringify({ clusterId, nameSpace, secretName, type: secretType, data }),
+        body: JSON.stringify({ clusterId, nameSpace, secretName, secretType, secrets: entries.filter(e => e.key.trim()).map(e => ({ key: e.key.trim(), value: e.value })) }),
       })
       toast.success('创建成功')
       navigate('/k8s/secret')

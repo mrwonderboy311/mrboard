@@ -12,7 +12,7 @@ import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
-interface RouteItem { name: string; nameSpace: string; hostnames: string; parentRefs: string; rules: number; createTime: string }
+interface RouteItem { grpcrouteName: string; nameSpace: string; hostnames: string; parentRefs: string; rules: number; createTime: string }
 interface BackendRow { service: string; port: string }
 
 const defaultYaml = `apiVersion: gateway.networking.k8s.io/v1
@@ -104,7 +104,7 @@ ${backendSection}`
     catch (err) { toast.error((err as Error).message) } finally { setLoading(false) }
   }
   useEffect(() => { fetchData() }, [clusterId])
-  useEffect(() => { setFiltered(searchName ? items.filter(i => i.name.toLowerCase().includes(searchName.toLowerCase())) : items) }, [items, searchName])
+  useEffect(() => { setFiltered(searchName ? items.filter(i => i.grpcrouteName.toLowerCase().includes(searchName.toLowerCase())) : items) }, [items, searchName])
   useEffect(() => { setPage(1) }, [searchName])
 
   const paged = useMemo(() => {
@@ -115,8 +115,8 @@ ${backendSection}`
   const handleDelete = async () => {
     if (!deleteTarget) return
     setDeleting(true)
-    setOperatingName(deleteTarget.name)
-    try { await api('/mrboard/grpcroute/v1/Delete?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace + '&routeName=' + deleteTarget.name); toast.success('删除成功'); setDeleteTarget(null); fetchData() }
+    setOperatingName(deleteTarget.grpcrouteName)
+    try { await api('/mrboard/grpcroute/v1/Delete?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace + '&grpcrouteName=' + deleteTarget.grpcrouteName); toast.success('删除成功'); setDeleteTarget(null); fetchData() }
     catch (err) { toast.error((err as Error).message) }
     finally { setDeleting(false); setOperatingName(null) }
   }
@@ -145,7 +145,7 @@ ${backendSection}`
             <Zap size={14} className="text-primary" />
           </div>
           <div className="min-w-0">
-            <div className="font-semibold text-sm truncate">{d.name}</div>
+            <div className="font-semibold text-sm truncate">{d.grpcrouteName}</div>
             <div className="flex items-center gap-2 mt-0.5">
               <Badge variant="secondary" className="text-[10px] font-mono">{d.nameSpace}</Badge>
               <span className="text-[10px] text-muted-foreground truncate">{d.hostnames || '-'}</span>
@@ -161,11 +161,11 @@ ${backendSection}`
       key: 'actions', header: '', render: (d) => (
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="详情"
-            onClick={(e) => { e.stopPropagation(); navigate('/k8s/grpcroute/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&routeName=' + d.name) }}>
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/grpcroute/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&grpcrouteName=' + d.grpcrouteName) }}>
             <Eye size={15} />
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="YAML"
-            onClick={(e) => { e.stopPropagation(); navigate('/k8s/grpcroute/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&routeName=' + d.name) }}>
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/grpcroute/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&grpcrouteName=' + d.grpcrouteName) }}>
             <FileCode size={15} />
           </Button>
           <div className="w-px h-4 bg-border mx-0.5" />
@@ -267,7 +267,7 @@ ${backendSection}`
         open={!!deleteTarget}
         onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}
         title="确认操作"
-        description={`确定删除 ${deleteTarget?.name}？`}
+        description={`确定删除 ${deleteTarget?.grpcrouteName}？`}
         variant="destructive"
         onConfirm={handleDelete}
       />

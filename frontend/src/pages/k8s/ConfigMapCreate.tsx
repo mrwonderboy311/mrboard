@@ -24,15 +24,11 @@ export default function ConfigMapCreate() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const data: Record<string, string> = {}
-    for (const entry of entries) {
-      if (entry.key.trim()) data[entry.key.trim()] = entry.value
-    }
     setLoading(true)
     try {
       await api('/mrboard/cm/v1/Create', {
         method: 'POST',
-        body: JSON.stringify({ clusterId, nameSpace, cmName, data }),
+        body: JSON.stringify({ clusterId, nameSpace, configmapName: cmName, configmaps: entries.filter(e => e.key.trim()).map(e => ({ key: e.key.trim(), value: e.value })) }),
       })
       toast.success('创建成功')
       navigate('/k8s/configmap')

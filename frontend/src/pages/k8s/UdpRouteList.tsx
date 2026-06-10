@@ -12,7 +12,7 @@ import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
-interface RouteItem { name: string; nameSpace: string; parentRefs: string; rules: number; createTime: string }
+interface RouteItem { udprouteName: string; nameSpace: string; parentRefs: string; rules: number; createTime: string }
 interface BackendRow { service: string; port: string; weight: string }
 
 const defaultYaml = `apiVersion: gateway.networking.k8s.io/v1alpha2
@@ -97,7 +97,7 @@ ${backendsYaml}`
     catch (err) { toast.error((err as Error).message) } finally { setLoading(false) }
   }
   useEffect(() => { fetchData() }, [clusterId])
-  useEffect(() => { setFiltered(searchName ? items.filter(i => i.name.toLowerCase().includes(searchName.toLowerCase())) : items) }, [items, searchName])
+  useEffect(() => { setFiltered(searchName ? items.filter(i => i.udprouteName.toLowerCase().includes(searchName.toLowerCase())) : items) }, [items, searchName])
   useEffect(() => { setPage(1) }, [searchName])
 
   const paged = useMemo(() => {
@@ -108,8 +108,8 @@ ${backendsYaml}`
   const handleDelete = async () => {
     if (!deleteTarget) return
     setDeleting(true)
-    setOperatingName(deleteTarget.name)
-    try { await api('/mrboard/udproute/v1/Delete?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace + '&routeName=' + deleteTarget.name); toast.success('删除成功'); setDeleteTarget(null); fetchData() }
+    setOperatingName(deleteTarget.udprouteName)
+    try { await api('/mrboard/udproute/v1/Delete?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace + '&udprouteName=' + deleteTarget.udprouteName); toast.success('删除成功'); setDeleteTarget(null); fetchData() }
     catch (err) { toast.error((err as Error).message) }
     finally { setDeleting(false); setOperatingName(null) }
   }
@@ -138,7 +138,7 @@ ${backendsYaml}`
             <Radio size={14} className="text-primary" />
           </div>
           <div className="min-w-0">
-            <div className="font-semibold text-sm truncate">{d.name}</div>
+            <div className="font-semibold text-sm truncate">{d.udprouteName}</div>
             <div className="flex items-center gap-2 mt-0.5">
               <Badge variant="secondary" className="text-[10px] font-mono">{d.nameSpace}</Badge>
               <span className="text-[10px] text-muted-foreground truncate">{d.parentRefs || '-'}</span>
@@ -153,11 +153,11 @@ ${backendsYaml}`
       key: 'actions', header: '', render: (d) => (
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="详情"
-            onClick={(e) => { e.stopPropagation(); navigate('/k8s/udproute/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&routeName=' + d.name) }}>
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/udproute/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&udprouteName=' + d.udprouteName) }}>
             <Eye size={15} />
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="YAML"
-            onClick={(e) => { e.stopPropagation(); navigate('/k8s/udproute/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&routeName=' + d.name) }}>
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/udproute/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&udprouteName=' + d.udprouteName) }}>
             <FileCode size={15} />
           </Button>
           <div className="w-px h-4 bg-border mx-0.5" />
@@ -252,7 +252,7 @@ ${backendsYaml}`
         open={!!deleteTarget}
         onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}
         title="确认操作"
-        description={`确定删除 ${deleteTarget?.name}？`}
+        description={`确定删除 ${deleteTarget?.udprouteName}？`}
         variant="destructive"
         onConfirm={handleDelete}
       />

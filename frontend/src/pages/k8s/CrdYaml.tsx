@@ -10,8 +10,8 @@ export default function CrdYaml() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const clusterId = params.get('clusterId') || localStorage.getItem('clusterId') || ''
-  const crdName = params.get('crdName') || ''
-  const baseQuery = `clusterId=${clusterId}&crdName=${crdName}`
+  const crdName = params.get('cdrName') || ''
+  const baseQuery = `clusterId=${clusterId}&cdrName=${crdName}`
   const [yaml, setYaml] = useState('')
   const [loading, setLoading] = useState(true)
 

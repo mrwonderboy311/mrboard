@@ -103,13 +103,9 @@ export default function SecretList() {
     try {
       if (createTab === 'form') {
         if (!formSecretName) { toast.error('请输入名称'); setSubmitting(false); return }
-        const data: Record<string, string> = {}
-        for (const entry of entries) {
-          if (entry.key.trim()) data[entry.key.trim()] = entry.value
-        }
         await api('/mrboard/secret/v1/Create', {
           method: 'POST',
-          body: JSON.stringify({ clusterId, nameSpace: formNameSpace, secretName: formSecretName, type: formSecretType, data }),
+          body: JSON.stringify({ clusterId, nameSpace: formNameSpace, secretName: formSecretName, secretType: formSecretType, secrets: entries.filter(e => e.key.trim()).map(e => ({ key: e.key.trim(), value: e.value })) }),
         })
       } else {
         await api('/mrboard/apply/v1/CreateByYaml?clusterId=' + clusterId, { method: 'POST', body: yamlContent, headers: { 'Content-Type': 'text/plain' } })
@@ -152,7 +148,7 @@ export default function SecretList() {
             <Eye size={15} />
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="YAML"
-            onClick={(e) => { e.stopPropagation(); navigate('/k8s/secret/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&secretName=' + d.secretName) }}>
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/secret/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&secretName=' + d.secretName) }}>
             <FileCode size={15} />
           </Button>
           <div className="w-px h-4 bg-border mx-0.5" />

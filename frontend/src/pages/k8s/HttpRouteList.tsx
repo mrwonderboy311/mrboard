@@ -14,7 +14,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 interface RouteItem {
-  name: string
+  httprouteName: string
   nameSpace: string
   hostnames: string
   parentRefs: string
@@ -154,7 +154,7 @@ ${(yamlRules.length > 0 ? yamlRules : [{ matches: [{ path: { type: 'PathPrefix',
 
   useEffect(() => { fetchData() }, [clusterId])
   const namespaces = useMemo(() => [...new Set(items.map(i => i.nameSpace).filter(Boolean))].sort(), [items])
-  useEffect(() => { setFiltered(items.filter(i => (!nsFilter || i.nameSpace === nsFilter) && (!searchName || i.name.toLowerCase().includes(searchName.toLowerCase())))) }, [items, searchName, nsFilter])
+  useEffect(() => { setFiltered(items.filter(i => (!nsFilter || i.nameSpace === nsFilter) && (!searchName || i.httprouteName.toLowerCase().includes(searchName.toLowerCase())))) }, [items, searchName, nsFilter])
   useEffect(() => { setPage(1) }, [searchName, nsFilter])
 
   const paged = useMemo(() => {
@@ -164,10 +164,10 @@ ${(yamlRules.length > 0 ? yamlRules : [{ matches: [{ path: { type: 'PathPrefix',
 
   const handleDelete = async () => {
     if (!deleteTarget) return
-    setOperatingDeploy(deleteTarget.name)
+    setOperatingDeploy(deleteTarget.httprouteName)
     setOperationProgress('删除中...')
     try {
-      await api('/mrboard/httproute/v1/Delete?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace + '&routeName=' + deleteTarget.name)
+      await api('/mrboard/httproute/v1/Delete?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace + '&httprouteName=' + deleteTarget.httprouteName)
       toast.success('删除成功')
       setDeleteTarget(null)
       fetchData(true)
@@ -196,11 +196,11 @@ ${(yamlRules.length > 0 ? yamlRules : [{ matches: [{ path: { type: 'PathPrefix',
       key: 'name', header: '名称', className: 'font-medium', render: (d) => (
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            {operatingDeploy === d.name ? <Loader2 size={14} className="text-primary animate-spin" /> : <Globe size={14} className="text-primary" />}
+            {operatingDeploy === d.httprouteName ? <Loader2 size={14} className="text-primary animate-spin" /> : <Globe size={14} className="text-primary" />}
           </div>
           <div className="min-w-0">
-            <div className="font-semibold text-sm truncate">{d.name}</div>
-            {operatingDeploy === d.name && <span className="text-[11px] text-primary font-medium animate-pulse">{operationProgress}</span>}
+            <div className="font-semibold text-sm truncate">{d.httprouteName}</div>
+            {operatingDeploy === d.httprouteName && <span className="text-[11px] text-primary font-medium animate-pulse">{operationProgress}</span>}
             <div className="flex items-center gap-2 mt-0.5">
               <Badge variant="secondary" className="text-[10px] font-mono">{d.nameSpace}</Badge>
               <span className="text-[10px] text-muted-foreground truncate">{d.hostnames || '-'}</span>
@@ -216,11 +216,11 @@ ${(yamlRules.length > 0 ? yamlRules : [{ matches: [{ path: { type: 'PathPrefix',
       key: 'actions', header: '', render: (d) => (
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="详情"
-            onClick={(e) => { e.stopPropagation(); navigate('/k8s/httproute/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&routeName=' + d.name) }}>
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/httproute/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&httprouteName=' + d.httprouteName) }}>
             <Eye size={15} />
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="YAML"
-            onClick={(e) => { e.stopPropagation(); navigate('/k8s/httproute/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&routeName=' + d.name) }}>
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/httproute/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&httprouteName=' + d.httprouteName) }}>
             <FileCode size={15} />
           </Button>
           <div className="w-px h-4 bg-border mx-0.5" />
@@ -363,7 +363,7 @@ ${(yamlRules.length > 0 ? yamlRules : [{ matches: [{ path: { type: 'PathPrefix',
         open={!!deleteTarget}
         onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}
         title="确认操作"
-        description={`确定删除 ${deleteTarget?.name}？`}
+        description={`确定删除 ${deleteTarget?.httprouteName}？`}
         variant="destructive"
         onConfirm={handleDelete}
       />

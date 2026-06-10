@@ -84,7 +84,7 @@ export default function CrdList() {
       key: 'actions', header: '', render: (d) => (
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="YAML"
-            onClick={(e) => { e.stopPropagation(); navigate('/k8s/crd/yaml?clusterId=' + clusterId + '&crdName=' + d.cdrName) }}>
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/crd/yaml?clusterId=' + clusterId + '&cdrName=' + d.cdrName) }}>
             <FileCode size={15} />
           </Button>
           <div className="w-px h-4 bg-border mx-0.5" />

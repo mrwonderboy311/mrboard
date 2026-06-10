@@ -40,8 +40,20 @@ export default function PodK8sList() {
     if (!silent) setLoading(true)
     try {
       const nsParam = namespace ? '&nameSpace=' + namespace : ''
-      const res = await api<{ code: number; data: Pod[] }>('/mrboard/pod/v1/List?clusterId=' + clusterId + nsParam)
-      setItems(res.data || [])
+      const [podRes, metricsRes] = await Promise.all([
+        api<{ code: number; data: Pod[] }>('/mrboard/pod/v1/List?clusterId=' + clusterId + nsParam),
+        api<{ code: number; data: Array<{ podName: string; nameSpace: string; cpu: number; mem: number }> }>('/mrboard/metrics/v1/PodList?clusterId=' + clusterId + nsParam).catch(() => ({ data: [] })),
+      ])
+      // Merge metrics into pod data
+      const metricsMap = new Map<string, { cpu: number; mem: number }>()
+      for (const m of metricsRes.data || []) {
+        metricsMap.set(`${m.nameSpace}/${m.podName}`, { cpu: m.cpu, mem: m.mem })
+      }
+      const pods = (podRes.data || []).map(p => {
+        const metrics = metricsMap.get(`${p.nameSpace}/${p.podName}`)
+        return metrics ? { ...p, cpuUsage: metrics.cpu, memUsage: metrics.mem } : p
+      })
+      setItems(pods)
     } catch (err) {
       toast.error((err as Error).message)
     } finally {

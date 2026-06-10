@@ -29,7 +29,8 @@ export default function YamlViewer({ yaml, readOnly = false, onUpdateUrl, onUpda
     try {
       await api(onUpdateUrl, {
         method: 'POST',
-        body: JSON.stringify({ yaml: content }),
+        body: content,
+        headers: { 'Content-Type': 'text/plain' },
       })
       toast.success('更新成功')
       setEditMode(false)

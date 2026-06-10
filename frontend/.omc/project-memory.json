@@ -42,7 +42,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd /root/mrboard/frontend && npm run build 2>&1 | tail -3 && nerdctl build -t xkube-frontend:latest -f Dockerfile . 2>&1 | tail -3 && kubectl rollout restart deployment/xkube-frontend -n mrboard 2>&1",
+    "buildCommand": "npm run build 2>&1 | tail -3 && nerdctl build -t xkube-frontend:latest -f Dockerfile . 2>&1 | tail -3 && kubectl rollout restart deployment/xkube-frontend -n mrboard 2>&1",
     "testCommand": null,
     "lintCommand": "npm run lint",
     "devCommand": "npm run dev",
@@ -176,6 +176,18 @@
       "type": "file"
     },
     {
+      "path": "src/pages/k8s/ServiceList.tsx",
+      "accessCount": 22,
+      "lastAccessed": 1781082919474,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/k8s/HttpRouteList.tsx",
+      "accessCount": 22,
+      "lastAccessed": 1781083178096,
+      "type": "file"
+    },
+    {
       "path": "src/pages/k8s/PvList.tsx",
       "accessCount": 21,
       "lastAccessed": 1780976490654,
@@ -194,9 +206,21 @@
       "type": "file"
     },
     {
-      "path": "src/pages/k8s/ServiceList.tsx",
-      "accessCount": 18,
-      "lastAccessed": 1780976489625,
+      "path": "src/pages/k8s/GrpcRouteList.tsx",
+      "accessCount": 20,
+      "lastAccessed": 1781083178421,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/k8s/TcpRouteList.tsx",
+      "accessCount": 20,
+      "lastAccessed": 1781083178808,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/k8s/UdpRouteList.tsx",
+      "accessCount": 20,
+      "lastAccessed": 1781083179188,
       "type": "file"
     },
     {
@@ -207,8 +231,14 @@
     },
     {
       "path": "src/pages/k8s/HpaList.tsx",
+      "accessCount": 15,
+      "lastAccessed": 1781082704327,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/k8s/CrdList.tsx",
       "accessCount": 14,
-      "lastAccessed": 1780976490789,
+      "lastAccessed": 1781082887043,
       "type": "file"
     },
     {
@@ -230,12 +260,6 @@
       "type": "file"
     },
     {
-      "path": "src/pages/k8s/HttpRouteList.tsx",
-      "accessCount": 13,
-      "lastAccessed": 1780976490515,
-      "type": "file"
-    },
-    {
       "path": "src/pages/k8s/RoleBindingList.tsx",
       "accessCount": 12,
       "lastAccessed": 1780971655547,
@@ -248,27 +272,9 @@
       "type": "file"
     },
     {
-      "path": "src/pages/k8s/CrdList.tsx",
+      "path": "src/pages/ops/BackupList.tsx",
       "accessCount": 12,
-      "lastAccessed": 1780976490803,
-      "type": "file"
-    },
-    {
-      "path": "src/pages/k8s/GrpcRouteList.tsx",
-      "accessCount": 11,
-      "lastAccessed": 1780971530142,
-      "type": "file"
-    },
-    {
-      "path": "src/pages/k8s/TcpRouteList.tsx",
-      "accessCount": 11,
-      "lastAccessed": 1780971557685,
-      "type": "file"
-    },
-    {
-      "path": "src/pages/k8s/UdpRouteList.tsx",
-      "accessCount": 11,
-      "lastAccessed": 1780971558646,
+      "lastAccessed": 1781083919135,
       "type": "file"
     },
     {
@@ -281,6 +287,12 @@
       "path": "src/pages/k8s/ClusterRolesList.tsx",
       "accessCount": 11,
       "lastAccessed": 1780971701502,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/k8s/SecretCreate.tsx",
+      "accessCount": 9,
+      "lastAccessed": 1781083861617,
       "type": "file"
     },
     {
@@ -299,12 +311,6 @@
       "path": "src/pages/favorite/FavoriteList.tsx",
       "accessCount": 7,
       "lastAccessed": 1780906130926,
-      "type": "file"
-    },
-    {
-      "path": "src/pages/ops/BackupList.tsx",
-      "accessCount": 7,
-      "lastAccessed": 1780906196127,
       "type": "file"
     },
     {
@@ -344,12 +350,6 @@
       "type": "file"
     },
     {
-      "path": "src/pages/k8s/SecretCreate.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1780891227700,
-      "type": "file"
-    },
-    {
       "path": "src/pages/k8s/ServiceCreate.tsx",
       "accessCount": 5,
       "lastAccessed": 1780891227958,
@@ -386,6 +386,12 @@
       "type": "file"
     },
     {
+      "path": "src/components/shared/YamlViewer.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1781083454868,
+      "type": "file"
+    },
+    {
       "path": "src/pages/ai/AIChat.tsx",
       "accessCount": 2,
       "lastAccessed": 1780890020068,
@@ -398,21 +404,15 @@
       "type": "file"
     },
     {
+      "path": "src/components/shared/ResourceDetailPage.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1781083347504,
+      "type": "file"
+    },
+    {
       "path": "src/index.css",
       "accessCount": 1,
       "lastAccessed": 1780889989098,
-      "type": "file"
-    },
-    {
-      "path": "src/components/shared/YamlViewer.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1780889989288,
-      "type": "file"
-    },
-    {
-      "path": "src/components/shared/ResourceDetailPage.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1780889989437,
       "type": "file"
     },
     {
