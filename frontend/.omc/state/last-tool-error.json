@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"kubectl rollout status deployment/xkube-frontend -n mrboard --timeout=60s 2>&1 && cat > /root/mrboard/tests/quick-verify.spec.ts << 'EOF'\\nimport { test } from '@playwright/test';\\nimport ...",
-  "error": "Exit code 1\ndeployment \"xkube-frontend\" successfully rolled out\nError: No tests found.\nMake sure that arguments are regular expressions matching test files.\nYou may need to escape symbols like \"$\" or \"*\" and quote the arguments.\n\n\u001b[1A\u001b[2K",
-  "timestamp": "2026-06-10T09:34:17.335Z",
-  "retry_count": 1
+  "tool_input_preview": "{\"command\":\"cp yaml-tab-test.spec.ts /root/mrboard/tests/ && cd /root/mrboard/tests && npx playwright test yaml-tab-test.spec.ts --reporter=line 2>&1\",\"timeout\":120000,\"description\":\"Run YAML tab test...",
+  "error": "Exit code 1\ncp: cannot stat 'yaml-tab-test.spec.ts': No such file or directory",
+  "timestamp": "2026-06-10T09:48:04.162Z",
+  "retry_count": 2
 }

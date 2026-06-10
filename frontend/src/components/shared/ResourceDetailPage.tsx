@@ -104,7 +104,7 @@ export default function ResourceDetailPage({ config }: { config: ResourceDetailC
           ))}
         </TableBody></Table>
       </CardContent></Card>
-      <Tabs defaultValue="yaml" onValueChange={handleTabChange}>
+      <Tabs defaultValue="events" onValueChange={handleTabChange}>
         <TabsList variant="line">
           {config.extraTabs?.map(tab => <TabsTrigger key={tab.key} value={tab.key}>{tab.label}</TabsTrigger>)}
           <TabsTrigger value="events">事件</TabsTrigger>
