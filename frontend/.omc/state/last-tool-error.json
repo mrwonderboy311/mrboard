@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cd /root/mrboard/tests && cat > yaml-verify.spec.ts << 'EOF'\\nimport { test } from '@playwright/test';\\nimport { BASE, login } from './helpers';\\n\\ntest('Verify YAML view for all resources...",
-  "error": "Exit code 1\n\nRunning 1 test using 1 worker\n\n\u001b[1A\u001b[2K[1/1] [chromium] › yaml-verify.spec.ts:4:5 › Verify YAML view for all resources\n\u001b[1A\u001b[2K[chromium] › yaml-verify.spec.ts:4:5 › Verify YAML view for all resources\n✓ Deploy: YAML正确显示\n\n\u001b[1A\u001b[2K✓ StatefulSet: 有内容但可能不是YAML\n\n\u001b[1A\u001b[2K✓ DaemonSet: 有内容但可能不是YAML\n\n\u001b[1A\u001b[2K✓ Pod: YAML正确显示\n\n\u001b[1A\u001b[2K✓ Service: YAML正确显示\n\n\u001b[1A\u001b[2K✓ ConfigMap: 有内容但可能不是YAML\n\n\u001b[1A\u001b[2K✓ Secret: 有内容但可能不是YAML\n\n\u001b[1A\u001b[2K✓ Namespace: YAML正确显示\n\n\u001b[1A\u001b[2K✓ PVC: YAML正确显示\n\n\u001b[1A\u001b[2K✓ Node: 有...",
-  "timestamp": "2026-06-10T03:32:45.065Z",
+  "tool_input_preview": "{\"command\":\"kubectl rollout status deployment/xkube-frontend -n mrboard --timeout=60s 2>&1 && cat > /root/mrboard/tests/node-check.spec.ts << 'EOF'\\nimport { test } from '@playwright/test';\\nimport { ...",
+  "error": "Exit code 1\ndeployment \"xkube-frontend\" successfully rolled out\nError: No tests found.\nMake sure that arguments are regular expressions matching test files.\nYou may need to escape symbols like \"$\" or \"*\" and quote the arguments.\n\n\u001b[1A\u001b[2K",
+  "timestamp": "2026-06-10T03:51:13.471Z",
   "retry_count": 1
 }

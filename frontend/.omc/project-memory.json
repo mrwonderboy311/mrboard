@@ -42,7 +42,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd /root/mrboard/frontend && npm run build 2>&1 | tail -3 && nerdctl build -t xkube-frontend:latest -f Dockerfile . 2>&1 | tail -3 && kubectl rollout restart deployment/xkube-frontend -n mrboard 2>&1",
+    "buildCommand": "npm run build 2>&1 | tail -3 && nerdctl build -t xkube-frontend:latest -f Dockerfile . 2>&1 | tail -3 && kubectl rollout restart deployment/xkube-frontend -n mrboard 2>&1",
     "testCommand": null,
     "lintCommand": "npm run lint",
     "devCommand": "npm run dev",
@@ -200,6 +200,12 @@
       "type": "file"
     },
     {
+      "path": "src/pages/k8s/NodeList.tsx",
+      "accessCount": 17,
+      "lastAccessed": 1781063389813,
+      "type": "file"
+    },
+    {
       "path": "src/pages/k8s/HpaList.tsx",
       "accessCount": 14,
       "lastAccessed": 1780976490789,
@@ -275,12 +281,6 @@
       "path": "src/pages/k8s/ClusterRolesList.tsx",
       "accessCount": 11,
       "lastAccessed": 1780971701502,
-      "type": "file"
-    },
-    {
-      "path": "src/pages/k8s/NodeList.tsx",
-      "accessCount": 11,
-      "lastAccessed": 1780976489786,
       "type": "file"
     },
     {

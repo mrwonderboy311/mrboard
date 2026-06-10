@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
-import { Search, FileCode, Trash2, Eye, Server, Loader2 } from 'lucide-react'
+import { Search, FileCode, Trash2, Eye, Server, Loader2, Cpu, MemoryStick } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -87,18 +88,34 @@ export default function NodeK8sList() {
           <div className="min-w-0">
             <div className="font-semibold text-sm truncate">{n.nodeName}</div>
             {operatingDeploy === n.nodeName && <span className="text-[11px] text-primary font-medium animate-pulse">{operationProgress}</span>}
-            <div className="flex items-center gap-2 mt-0.5">
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
               <StatusBadge status={n.nodeState} />
-              <span className="text-[10px] text-muted-foreground">{n.nodeRole}</span>
+              <Badge variant="secondary" className="text-[10px]">{n.nodeRole}</Badge>
               <span className="text-[10px] text-muted-foreground font-mono">{n.nodeIp}</span>
             </div>
+            {n.nodeInfo && (
+              <div className="text-[10px] text-muted-foreground mt-1 truncate max-w-md">{n.nodeInfo}</div>
+            )}
           </div>
         </div>
       ),
     },
-    { key: 'info', header: '节点信息', className: 'text-xs', render: n => n.nodeInfo || '-' },
-    { key: 'cpu', header: 'CPU', render: n => n.cpuUsage },
-    { key: 'mem', header: '内存', render: n => n.memUsage },
+    {
+      key: 'cpu', header: 'CPU', className: 'w-24', render: n => (
+        <div className="flex items-center gap-1.5">
+          <Cpu size={12} className="text-blue-500 shrink-0" />
+          <span className="font-mono text-sm tabular-nums">{n.cpuUsage || '-'}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'mem', header: '内存', className: 'w-24', render: n => (
+        <div className="flex items-center gap-1.5">
+          <MemoryStick size={12} className="text-purple-500 shrink-0" />
+          <span className="font-mono text-sm tabular-nums">{n.memUsage || '-'}</span>
+        </div>
+      ),
+    },
     {
       key: 'actions',
       header: '',
