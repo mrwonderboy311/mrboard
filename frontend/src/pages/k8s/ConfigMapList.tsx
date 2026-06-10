@@ -100,13 +100,12 @@ export default function ConfigMapList() {
     try {
       if (createTab === 'form') {
         if (!formCmName) { toast.error('请输入名称'); setSubmitting(false); return }
-        const data: Record<string, string> = {}
-        for (const entry of entries) {
-          if (entry.key.trim()) data[entry.key.trim()] = entry.value
-        }
+        const configmaps = entries
+          .filter(e => e.key.trim())
+          .map(e => ({ key: e.key.trim(), value: e.value }))
         await api('/mrboard/cm/v1/Create', {
           method: 'POST',
-          body: JSON.stringify({ clusterId, nameSpace: formNameSpace, cmName: formCmName, data }),
+          body: JSON.stringify({ clusterId, nameSpace: formNameSpace, configmapName: formCmName, configmaps }),
         })
       } else {
         await api('/mrboard/apply/v1/CreateByYaml?clusterId=' + clusterId, { method: 'POST', body: yamlContent, headers: { 'Content-Type': 'text/plain' } })

@@ -114,11 +114,10 @@ export default function IngressList() {
           body: JSON.stringify({
             clusterId, nameSpace: formNameSpace, ingressName: formIngressName,
             ingressClassName: formIngressClassName || undefined,
-            tlsSecretName: formTlsSecretName || undefined,
-            host: firstRule.host, path: firstRule.path,
-            backendService: firstRule.backendService, backendPort: Number(firstRule.backendPort),
-            rules: ruleRows.filter(r => r.host || r.backendService).map(r => ({
-              host: r.host, path: r.path || '/', backendService: r.backendService, backendPort: Number(r.backendPort) || 80,
+            tlsCert: formTlsSecretName || undefined,
+            ingressHost: firstRule.host,
+            paths: ruleRows.filter(r => r.host || r.backendService).map(r => ({
+              path: r.path || '/', pathType: 'Prefix', serviceName: r.backendService, servicePort: Number(r.backendPort) || 80,
             })),
           }),
         })

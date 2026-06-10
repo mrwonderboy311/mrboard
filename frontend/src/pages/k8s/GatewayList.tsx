@@ -99,7 +99,7 @@ export default function GatewayList() {
     try {
       if (createTab === 'form') {
         if (!formName) { toast.error('请输入名称'); setSubmitting(false); return }
-        await api('/mrboard/gateway/v1/Create', { method: 'POST', body: JSON.stringify({ clusterId, nameSpace: formNamespace, gatewayName: formName, gatewayClassName: formGatewayClassName, listenerName: formListenerName, protocol: formProtocol, port: Number(formPort) }), headers: { 'Content-Type': 'application/json' } })
+        await api('/mrboard/gateway/v1/Create', { method: 'POST', body: JSON.stringify({ clusterId, nameSpace: formNamespace, gatewayName: formName, gatewayClassName: formGatewayClassName, listeners: [{ name: formListenerName, protocol: formProtocol, port: Number(formPort) }] }), headers: { 'Content-Type': 'application/json' } })
       } else {
         await api('/mrboard/apply/v1/CreateByYaml?clusterId=' + clusterId, { method: 'POST', body: yamlContent, headers: { 'Content-Type': 'text/plain' } })
       }

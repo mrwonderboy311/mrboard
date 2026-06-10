@@ -114,18 +114,13 @@ export default function ServiceList() {
         if (!formServiceName) { toast.error('请输入名称'); setSubmitting(false); return }
         const ports = portRows
           .filter(r => r.port)
-          .map(r => {
-            const name = r.name ? r.name + ':' : ''
-            return name + r.port + ':' + (r.targetPort || r.port) + '/' + r.protocol
-          })
-          .join(',')
-        const selector = selectorRows
+          .map(r => ({ portName: r.name, svcPort: Number(r.port), targetPort: Number(r.targetPort || r.port), protocol: r.protocol }))
+        const lables = selectorRows
           .filter(r => r.key.trim())
-          .map(r => r.key.trim() + '=' + r.value.trim())
-          .join(',')
+          .map(r => ({ key: r.key.trim(), value: r.value.trim() }))
         await api('/mrboard/svc/v1/Create', {
           method: 'POST',
-          body: JSON.stringify({ clusterId, nameSpace: formNameSpace, serviceName: formServiceName, type: formType, ports, selector, sessionAffinity: formSessionAffinity }),
+          body: JSON.stringify({ clusterId, nameSpace: formNameSpace, serviceName: formServiceName, svcType: formType, ports, lables }),
         })
       } else {
         await api('/mrboard/apply/v1/CreateByYaml?clusterId=' + clusterId, { method: 'POST', body: yamlContent, headers: { 'Content-Type': 'text/plain' } })

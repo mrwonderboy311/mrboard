@@ -124,7 +124,7 @@ export default function CronJobList() {
     try {
       if (createTab === 'form') {
         if (!formName) { toast.error('请输入名称'); setSubmitting(false); return }
-        await api('/mrboard/cronjob/v1/Create', { method: 'POST', body: JSON.stringify({ clusterId, nameSpace: formNamespace, cronJobName: formName, imageUrl: formImage, schedule: formSchedule, command: formCommand }), headers: { 'Content-Type': 'application/json' } })
+        await api('/mrboard/cronjob/v1/Create', { method: 'POST', body: JSON.stringify({ clusterId, nameSpace: formNamespace, cronjobName: formName, imageUrl: formImage, schedule: formSchedule, command: formCommand }), headers: { 'Content-Type': 'application/json' } })
       } else {
         await api('/mrboard/apply/v1/CreateByYaml?clusterId=' + clusterId, { method: 'POST', body: yamlContent, headers: { 'Content-Type': 'text/plain' } })
       }
