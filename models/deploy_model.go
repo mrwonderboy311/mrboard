@@ -553,18 +553,16 @@ func DeployCreate(kubeconfig string, bodys []byte) (string, error) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						corev1.Container{
+						{
 							Name:            deployName,
 							Image:           imageUrl,
 							ImagePullPolicy: pullPolicy,
-							Ports: []corev1.ContainerPort{
-								corev1.ContainerPort{
-									//Name:     ""     ,
-									ContainerPort: int32(containerPort),
-									//HostPort:      deployment.HostPort,
-									Protocol: corev1.ProtocolTCP,
-								},
-							},
+							Ports: func() []corev1.ContainerPort {
+								if containerPort > 0 {
+									return []corev1.ContainerPort{{ContainerPort: int32(containerPort), Protocol: corev1.ProtocolTCP}}
+								}
+								return nil
+							}(),
 						},
 					},
 				},
