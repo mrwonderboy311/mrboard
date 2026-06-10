@@ -263,10 +263,9 @@ ${envYaml ? '        env:\n' + envYaml : ''}`
         if (!formName) { toast.error('请输入名称'); setSubmitting(false); return }
         if (!formImage) { toast.error('请输入镜像地址'); setSubmitting(false); return }
         const labels = formLabels.filter(l => l.key).map(l => `${l.key}=${l.value}`).join(',')
-        await api('/mrboard/deploy/v1/Create', {
+        await api('/mrboard/deploy/v1/Create?clusterId=' + clusterId, {
           method: 'POST',
           body: JSON.stringify({
-            clusterId,
             nameSpace: formNamespace,
             deployName: formName,
             imageUrl: formImage,

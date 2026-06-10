@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -21,19 +22,32 @@ export default function TopPodMetric() {
   const [loading, setLoading] = useState(true)
   const [searchName, setSearchName] = useState('')
   const [sortBy, setSortBy] = useState<'cpu' | 'mem'>('cpu')
+  const [namespace, setNamespace] = useState('')
+  const [namespaces, setNamespaces] = useState<string[]>([])
   const [installTarget, setInstallTarget] = useState(false)
   const [installing, setInstalling] = useState(false)
   const clusterId = localStorage.getItem('clusterId') || ''
 
+  const fetchNamespaces = async () => {
+    if (!clusterId) return
+    try {
+      const data = await api<any>('/mrboard/ns/v1/List?clusterId=' + clusterId)
+      const list = Array.isArray(data) ? data : (data?.data || [])
+      setNamespaces(list.map((n: any) => typeof n === 'string' ? n : n.name))
+    } catch { /* optional */ }
+  }
+
   const fetchData = async () => {
     setLoading(true)
     try {
-      const res = await api<{ code: number; data: PodMetricItem[] }>('/mrboard/metrics/v1/PodList?clusterId=' + clusterId)
+      const nsParam = namespace ? '&nameSpace=' + namespace : ''
+      const res = await api<{ code: number; data: PodMetricItem[] }>('/mrboard/metrics/v1/PodList?clusterId=' + clusterId + nsParam)
       setItems(res.data || [])
     } catch (err) { toast.error((err as Error).message) } finally { setLoading(false) }
   }
 
-  useEffect(() => { fetchData() }, [clusterId])
+  useEffect(() => { if (clusterId) fetchNamespaces() }, [clusterId])
+  useEffect(() => { fetchData() }, [clusterId, namespace])
 
   const filtered = items
     .filter(i => !searchName || i.podName.toLowerCase().includes(searchName.toLowerCase()))
@@ -103,10 +117,20 @@ export default function TopPodMetric() {
 
       <Card>
         <CardContent className="py-3">
-          <div className="flex gap-3 items-center">
+          <div className="flex gap-3 items-center flex-wrap">
             <div className="relative flex-1 max-w-xs">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="搜索 Pod 名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="pl-9 h-9" />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-muted-foreground whitespace-nowrap">命名空间</label>
+              <Select value={namespace || '__all__'} onValueChange={(v: string | null) => setNamespace(v === '__all__' ? '' : (v ?? ''))}>
+                <SelectTrigger className="w-[160px]"><SelectValue placeholder="所有空间" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">所有空间</SelectItem>
+                  {namespaces.map(ns => <SelectItem key={ns} value={ns}>{ns}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <Button variant="outline" size="sm" onClick={() => setSortBy(sortBy === 'cpu' ? 'mem' : 'cpu')} className="gap-1.5">
               <ArrowUpDown size={14} />
