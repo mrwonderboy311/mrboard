@@ -146,7 +146,7 @@ ${subjectsArr.map(s => `- kind: ${s.kind}\n  name: ${s.name}${s.namespace ? '\n 
   return (
     <div className="space-y-4">
       <PageHeader title="角色绑定" description="RoleBinding 管理">
-        <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />新增</Button>
+        <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />创建</Button>
       </PageHeader>
       <Card><CardContent className="py-3"><div className="flex gap-3 items-center"><Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" /><Button variant="outline" size="sm" onClick={fetchData}><Search size={14} className="mr-1" />刷新</Button></div></CardContent></Card>
       <DataTable
@@ -161,7 +161,7 @@ ${subjectsArr.map(s => `- kind: ${s.kind}\n  name: ${s.name}${s.namespace ? '\n 
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-2xl">
-          <DialogHeader><DialogTitle>新增 RoleBinding</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>创建 RoleBinding</DialogTitle></DialogHeader>
           <div className="flex gap-2 mb-3">
             <Button variant={createTab === 'form' ? 'default' : 'outline'} size="sm" onClick={() => setCreateTab('form')}>表单创建</Button>
             <Button variant={createTab === 'yaml' ? 'default' : 'outline'} size="sm" onClick={() => setCreateTab('yaml')}>YAML创建</Button>

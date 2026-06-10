@@ -263,7 +263,7 @@ export default function AdminList() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>取消</Button>
             <Button onClick={handleAdd} disabled={saving}>
               {saving ? <Loader2 size={14} className="animate-spin mr-1.5" /> : null}
-              {saving ? '添加中...' : '确认添加'}
+              {saving ? '添加中...' : '确认创建'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -24,7 +24,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd /root/mrboard/frontend && npx tsc -b 2>&1",
+    "buildCommand": "cd /root/mrboard/frontend && npx tsc -b 2>&1 | tail -30",
     "testCommand": "npm test",
     "lintCommand": null,
     "devCommand": null,

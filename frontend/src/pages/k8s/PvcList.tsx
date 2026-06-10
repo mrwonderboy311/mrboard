@@ -161,7 +161,7 @@ ${formStorageClass ? '  storageClassName: ' + formStorageClass + '\n' : ''}  res
   return (
     <div className="space-y-4">
       <PageHeader title="存储声明" description="PersistentVolumeClaim 管理">
-        <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />新增</Button>
+        <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />创建</Button>
       </PageHeader>
       <Card><CardContent className="py-3"><div className="flex gap-3 items-center"><Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" /><div className="flex items-center gap-2"><label className="text-sm text-muted-foreground whitespace-nowrap">命名空间</label><Select value={nsFilter || '__all__'} onValueChange={v => setNsFilter(v === '__all__' ? '' : (v ?? ''))}><SelectTrigger className="h-9 w-[180px]"><SelectValue placeholder="全部命名空间" /></SelectTrigger><SelectContent><SelectItem value="__all__">全部命名空间</SelectItem>{namespaces.map(ns => <SelectItem key={ns} value={ns}>{ns}</SelectItem>)}</SelectContent></Select></div><Button variant="outline" size="sm" onClick={() => fetchData()}><Search size={14} className="mr-1" />刷新</Button></div></CardContent></Card>
       <DataTable
@@ -176,7 +176,7 @@ ${formStorageClass ? '  storageClassName: ' + formStorageClass + '\n' : ''}  res
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>新增 PersistentVolumeClaim</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>创建 PersistentVolumeClaim</DialogTitle></DialogHeader>
           <div className="flex gap-2 mb-3">
             <Button variant={createTab === 'form' ? 'default' : 'outline'} size="sm" onClick={() => setCreateTab('form')}>表单创建</Button>
             <Button variant={createTab === 'yaml' ? 'default' : 'outline'} size="sm" onClick={() => setCreateTab('yaml')}>YAML创建</Button>

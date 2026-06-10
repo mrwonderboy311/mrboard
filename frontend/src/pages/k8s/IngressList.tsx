@@ -178,7 +178,7 @@ export default function IngressList() {
   return (
     <div className="space-y-4">
       <PageHeader title="路由" description="Ingress 管理">
-        <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />新增</Button>
+        <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />创建</Button>
       </PageHeader>
 
       <Card><CardContent className="py-3">
@@ -210,7 +210,7 @@ export default function IngressList() {
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>新增 Ingress</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>创建 Ingress</DialogTitle></DialogHeader>
           <div className="flex gap-2 mb-3">
             <Button variant={createTab === 'form' ? 'default' : 'outline'} size="sm" onClick={() => setCreateTab('form')}>表单创建</Button>
             <Button variant={createTab === 'yaml' ? 'default' : 'outline'} size="sm" onClick={() => setCreateTab('yaml')}>YAML创建</Button>

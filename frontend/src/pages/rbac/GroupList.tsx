@@ -172,7 +172,7 @@ export default function GroupList() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={addLoading}>取消</Button>
-            <Button onClick={handleAdd} disabled={addLoading}>{addLoading ? <><Loader2 size={14} className="animate-spin mr-1.5" />处理中...</> : '确认添加'}</Button>
+            <Button onClick={handleAdd} disabled={addLoading}>{addLoading ? <><Loader2 size={14} className="animate-spin mr-1.5" />处理中...</> : '确认创建'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

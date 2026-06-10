@@ -154,7 +154,7 @@ export default function NamespaceList() {
   return (
     <div className="space-y-4">
       <PageHeader title="命名空间" description="Namespace 管理">
-        <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />新增</Button>
+        <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />创建</Button>
       </PageHeader>
 
       <DataTable
@@ -169,7 +169,7 @@ export default function NamespaceList() {
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>新增命名空间</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>创建命名空间</DialogTitle></DialogHeader>
           <div className="flex gap-2 mb-3">
             <Button variant={createTab === 'form' ? 'default' : 'outline'} size="sm" onClick={() => setCreateTab('form')}>表单创建</Button>
             <Button variant={createTab === 'yaml' ? 'default' : 'outline'} size="sm" onClick={() => setCreateTab('yaml')}>YAML创建</Button>

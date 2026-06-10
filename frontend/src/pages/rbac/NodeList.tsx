@@ -414,7 +414,7 @@ export default function NodeList() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddDialogOpen(false)}>取消</Button>
-            <Button onClick={handleAdd}>确认添加</Button>
+            <Button onClick={handleAdd}>确认创建</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
