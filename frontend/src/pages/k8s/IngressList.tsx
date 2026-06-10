@@ -95,7 +95,7 @@ export default function IngressList() {
     setOperatingDeploy(deleteTarget.ingressName)
     setOperationProgress('删除中...')
     try {
-      await api('/mrboard/ing/v1/Del?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace + '&ingName=' + deleteTarget.ingressName)
+      await api('/mrboard/ing/v1/Del?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace + '&ingressName=' + deleteTarget.ingressName)
       toast.success('删除成功')
       setDeleteTarget(null)
       fetchData(true)
@@ -157,11 +157,11 @@ export default function IngressList() {
       key: 'actions', header: '', render: (d) => (
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="详情"
-            onClick={(e) => { e.stopPropagation(); navigate('/k8s/ingress/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&ingName=' + d.ingressName) }}>
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/ingress/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&ingressName=' + d.ingressName) }}>
             <Eye size={15} />
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="YAML"
-            onClick={(e) => { e.stopPropagation(); navigate('/k8s/ingress/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&ingName=' + d.ingressName) }}>
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/ingress/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&ingressName=' + d.ingressName) }}>
             <FileCode size={15} />
           </Button>
           <div className="w-px h-4 bg-border mx-0.5" />

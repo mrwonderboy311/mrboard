@@ -11,8 +11,8 @@ export default function GatewayYaml() {
   const navigate = useNavigate()
   const clusterId = params.get('clusterId') || localStorage.getItem('clusterId') || ''
   const nameSpace = params.get('nameSpace') || ''
-  const gtwName = params.get('gtwName') || ''
-  const baseQuery = `clusterId=${clusterId}&nameSpace=${nameSpace}&gtwName=${gtwName}`
+  const gatewayName = params.get('gatewayName') || ''
+  const baseQuery = `clusterId=${clusterId}&nameSpace=${nameSpace}&gatewayName=${gatewayName}`
   const [yaml, setYaml] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -32,7 +32,7 @@ export default function GatewayYaml() {
     <div className="space-y-4">
       <div className="flex items-center gap-4">
         <Button variant="outline" onClick={() => navigate(-1)}><ArrowLeft size={14} className="mr-1" />返回</Button>
-        <h1 className="text-2xl font-bold">YAML - {gtwName}</h1>
+        <h1 className="text-2xl font-bold">YAML - {gatewayName}</h1>
       </div>
       <YamlViewer yaml={yaml} onUpdateUrl={'/mrboard/gateway/v1/UpdateByYaml?' + baseQuery} onUpdated={() => toast.success('更新成功')} />
     </div>

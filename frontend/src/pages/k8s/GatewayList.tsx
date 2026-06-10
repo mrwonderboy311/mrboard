@@ -86,7 +86,7 @@ export default function GatewayList() {
     setOperatingDeploy(deleteTarget.name)
     setOperationProgress('删除中...')
     try {
-      await api('/mrboard/gateway/v1/Delete?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace + '&gtwName=' + deleteTarget.name)
+      await api('/mrboard/gateway/v1/Delete?clusterId=' + clusterId + '&nameSpace=' + deleteTarget.nameSpace + '&gatewayName=' + deleteTarget.name)
       toast.success('删除成功')
       setDeleteTarget(null)
       fetchData(true)
@@ -138,11 +138,11 @@ export default function GatewayList() {
       key: 'actions', header: '', render: (d) => (
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="详情"
-            onClick={(e) => { e.stopPropagation(); navigate('/k8s/gateway/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&gtwName=' + d.name) }}>
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/gateway/detail?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&gatewayName=' + d.name) }}>
             <Eye size={15} />
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="YAML"
-            onClick={(e) => { e.stopPropagation(); navigate('/k8s/gateway/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&gtwName=' + d.name) }}>
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/gateway/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&gatewayName=' + d.name) }}>
             <FileCode size={15} />
           </Button>
           <div className="w-px h-4 bg-border mx-0.5" />
