@@ -42,7 +42,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd /root/mrboard/frontend && npm run build 2>&1 | tail -3 && nerdctl build -t xkube-frontend:latest -f Dockerfile . 2>&1 | tail -3 && kubectl rollout restart deployment/xkube-frontend -n mrboard 2>&1",
+    "buildCommand": "npm run build 2>&1 | tail -3 && nerdctl build -t xkube-frontend:latest -f Dockerfile . 2>&1 | tail -3",
     "testCommand": null,
     "lintCommand": "npm run lint",
     "devCommand": "npm run dev",

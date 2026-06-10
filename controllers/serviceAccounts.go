@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	//"encoding/json"
 	"log"
+	"strings"
 	m "mrboard/models"
 
 	beego "github.com/beego/beego/v2/server/web"
@@ -35,4 +35,19 @@ func (this *ServiceAccountsController) Yaml() {
 	saName := this.GetString("saName")
 	yamlStr, _ := m.GetServiceAccountsYaml(clusterId, nameSpace, saName)
 	this.Ctx.WriteString(yamlStr)
+}
+
+func (this *ServiceAccountsController) CreateByYaml() {
+	clusterId := this.GetString("clusterId")
+	err := m.ApplyYaml(clusterId, strings.ReplaceAll(string(this.Ctx.Input.RequestBody), "%25", "%"))
+	code := 0
+	msg := "success"
+	if err != nil {
+		log.Println(err)
+		code = -1
+		msg = err.Error()
+	}
+	_ = m.ClearCache(clusterId)
+	this.Data["json"] = &map[string]interface{}{"code": code, "msg": msg}
+	this.ServeJSON()
 }

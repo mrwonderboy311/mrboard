@@ -4,13 +4,20 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Search, FileCode, User } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Search, FileCode, User, Plus, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
 
 interface SaItem { name: string; nameSpace: string; secrets: number; createTime: string }
+
+const defaultYaml = `apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-sa
+  namespace: default`
 
 export default function ServiceAccountsList() {
   const navigate = useNavigate()
@@ -20,11 +27,14 @@ export default function ServiceAccountsList() {
   const [searchName, setSearchName] = useState('')
   const [page, setPage] = useState(1)
   const clusterId = localStorage.getItem('clusterId') || ''
+  const [createOpen, setCreateOpen] = useState(false)
+  const [yamlContent, setYamlContent] = useState(defaultYaml)
+  const [submitting, setSubmitting] = useState(false)
 
-  const fetchData = async () => {
-    setLoading(true)
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true)
     try { const res = await api<{ code: number; data: SaItem[] }>('/mrboard/serviceaccounts/v1/List?clusterId=' + clusterId); setItems(res.data || []) }
-    catch (err) { toast.error((err as Error).message) } finally { setLoading(false) }
+    catch (err) { toast.error((err as Error).message) } finally { if (!silent) setLoading(false) }
   }
   useEffect(() => { fetchData() }, [clusterId])
   useEffect(() => { setFiltered(searchName ? items.filter(i => i.name.toLowerCase().includes(searchName.toLowerCase())) : items) }, [items, searchName])
@@ -34,6 +44,19 @@ export default function ServiceAccountsList() {
     const start = (page - 1) * 20
     return filtered.slice(start, start + 20)
   }, [filtered, page])
+
+  const handleCreate = async () => {
+    setSubmitting(true)
+    try {
+      await api('/mrboard/serviceaccounts/v1/CreateByYaml?clusterId=' + clusterId, {
+        method: 'POST', body: yamlContent, headers: { 'Content-Type': 'text/plain' },
+      })
+      toast.success('创建成功')
+      setCreateOpen(false)
+      setYamlContent(defaultYaml)
+      fetchData(true)
+    } catch (err) { toast.error((err as Error).message) } finally { setSubmitting(false) }
+  }
 
   const columns: Column<SaItem>[] = [
     {
@@ -67,8 +90,10 @@ export default function ServiceAccountsList() {
 
   return (
     <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
-      <PageHeader title="服务帐号" description="ServiceAccount 管理" eyebrow="K8s" />
-      <Card><CardContent className="py-3"><div className="flex gap-3 items-center"><Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" /><Button variant="outline" size="sm" onClick={fetchData}><Search size={14} className="mr-1" />刷新</Button></div></CardContent></Card>
+      <PageHeader title="服务帐号" description="ServiceAccount 管理" eyebrow="K8s">
+        <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />创建</Button>
+      </PageHeader>
+      <Card><CardContent className="py-3"><div className="flex gap-3 items-center"><Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" /><Button variant="outline" size="sm" onClick={() => fetchData()}><Search size={14} className="mr-1" />刷新</Button></div></CardContent></Card>
       <DataTable
         columns={columns as unknown as Column<Record<string, unknown>>[]}
         data={paged as unknown as Record<string, unknown>[]}
@@ -78,6 +103,24 @@ export default function ServiceAccountsList() {
         emptyMessage="暂无数据"
         variant="cards"
       />
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader><DialogTitle>创建服务帐号</DialogTitle></DialogHeader>
+          <textarea
+            value={yamlContent}
+            onChange={e => setYamlContent(e.target.value)}
+            className="w-full h-64 rounded-md border border-input bg-slate-950 text-green-400 font-mono text-sm p-4 resize-y"
+            spellCheck={false}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setCreateOpen(false); setYamlContent(defaultYaml) }}>取消</Button>
+            <Button onClick={handleCreate} disabled={submitting}>
+              {submitting ? <><Loader2 size={14} className="animate-spin mr-1.5" />创建中...</> : '创建'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

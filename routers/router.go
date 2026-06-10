@@ -360,7 +360,8 @@ func init() {
 
 	//服务账户管理相关路由 | Service accounts management related routes
 	beego.Router("/mrboard/serviceaccounts/v1/List", &controllers.ServiceAccountsController{}, "*:List") //服务账户列表 | Service accounts list
-	beego.Router("/mrboard/serviceaccounts/v1/Yaml", &controllers.ServiceAccountsController{}, "*:Yaml") //服务账户YAML | Service accounts YAML
+	beego.Router("/mrboard/serviceaccounts/v1/Yaml", &controllers.ServiceAccountsController{}, "*:Yaml")         //服务账户YAML | Service accounts YAML
+	beego.Router("/mrboard/serviceaccounts/v1/CreateByYaml", &controllers.ServiceAccountsController{}, "*:CreateByYaml") //通过YAML创建服务账户 | Create service account by YAML
 
 	//角色管理相关路由 | Roles management related routes
 	beego.Router("/mrboard/roles/v1/List", &controllers.RolesController{}, "*:List")         //角色列表 | Roles list
