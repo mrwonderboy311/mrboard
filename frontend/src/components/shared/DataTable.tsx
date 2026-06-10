@@ -61,6 +61,16 @@ export function DataTable<T extends object>({
     return (
       <div>
         <div className="space-y-2">
+          {/* Column headers */}
+          <div className="hidden md:flex items-center gap-4 px-4 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            <div className="flex-1 min-w-0 grid gap-x-4"
+              style={{ gridTemplateColumns: `repeat(${Math.min(contentCols.length, 5)}, minmax(0, 1fr))` }}>
+              {contentCols.map(col => (
+                <div key={col.key}>{col.header}</div>
+              ))}
+            </div>
+            {hasActions && <div className="shrink-0 w-8" />}
+          </div>
           {/* Card rows */}
           {data.map((item, idx) => (
             <div

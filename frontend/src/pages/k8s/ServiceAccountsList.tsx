@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import { DataTable, type Column } from '@/components/shared/DataTable'
 import { PageHeader } from '@/components/shared/PageHeader'
 
-interface SaItem { name: string; nameSpace: string; secrets: number; createTime: string }
+interface SaItem { saName: string; nameSpace: string; imagePullSecrets: string; createTime: string }
 
 const defaultYaml = `apiVersion: v1
 kind: ServiceAccount
@@ -37,7 +37,7 @@ export default function ServiceAccountsList() {
     catch (err) { toast.error((err as Error).message) } finally { if (!silent) setLoading(false) }
   }
   useEffect(() => { fetchData() }, [clusterId])
-  useEffect(() => { setFiltered(searchName ? items.filter(i => i.name.toLowerCase().includes(searchName.toLowerCase())) : items) }, [items, searchName])
+  useEffect(() => { setFiltered(searchName ? items.filter(i => i.saName.toLowerCase().includes(searchName.toLowerCase())) : items) }, [items, searchName])
   useEffect(() => { setPage(1) }, [searchName])
 
   const paged = useMemo(() => {
@@ -66,7 +66,7 @@ export default function ServiceAccountsList() {
             <User size={14} className="text-primary" />
           </div>
           <div className="min-w-0">
-            <div className="font-semibold text-sm truncate">{d.name}</div>
+            <div className="font-semibold text-sm truncate">{d.saName}</div>
             <div className="flex items-center gap-2 mt-0.5">
               <Badge variant="secondary" className="text-[10px] font-mono">{d.nameSpace}</Badge>
             </div>
@@ -74,13 +74,13 @@ export default function ServiceAccountsList() {
         </div>
       ),
     },
-    { key: 'secrets', header: 'Secrets', render: (d) => <Badge variant="secondary" className="tabular-nums text-xs">{d.secrets}</Badge> },
+    { key: 'imagePullSecrets', header: 'Image Pull Secrets', render: (d) => <span className="text-xs text-muted-foreground">{d.imagePullSecrets || '-'}</span> },
     { key: 'createTime', header: '创建时间', className: 'text-xs text-muted-foreground whitespace-nowrap', render: (d) => d.createTime },
     {
       key: 'actions', header: '', render: (d) => (
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="YAML"
-            onClick={(e) => { e.stopPropagation(); navigate('/k8s/serviceaccounts/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&saName=' + d.name) }}>
+            onClick={(e) => { e.stopPropagation(); navigate('/k8s/serviceaccounts/yaml?clusterId=' + clusterId + '&nameSpace=' + d.nameSpace + '&saName=' + d.saName) }}>
             <FileCode size={15} />
           </Button>
         </div>

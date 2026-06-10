@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Search, FileCode, Trash2, Plus, Shield, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -31,8 +32,11 @@ export default function RolesList() {
   const [filtered, setFiltered] = useState<RoleItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchName, setSearchName] = useState('')
+  const [nsFilter, setNsFilter] = useState('all')
   const [page, setPage] = useState(1)
   const clusterId = localStorage.getItem('clusterId') || ''
+
+  const namespaces = useMemo(() => Array.from(new Set(items.map(i => i.nameSpace).filter(Boolean))).sort(), [items])
 
   const [createOpen, setCreateOpen] = useState(false)
   const [createTab, setCreateTab] = useState<'form' | 'yaml'>('form')
@@ -53,8 +57,13 @@ export default function RolesList() {
     catch (err) { toast.error((err as Error).message) } finally { setLoading(false) }
   }
   useEffect(() => { fetchData() }, [clusterId])
-  useEffect(() => { setFiltered(searchName ? items.filter(i => i.rolesName.toLowerCase().includes(searchName.toLowerCase())) : items) }, [items, searchName])
-  useEffect(() => { setPage(1) }, [searchName])
+  useEffect(() => {
+    let result = items
+    if (searchName) result = result.filter(i => i.rolesName.toLowerCase().includes(searchName.toLowerCase()))
+    if (nsFilter !== 'all') result = result.filter(i => i.nameSpace === nsFilter)
+    setFiltered(result)
+  }, [items, searchName, nsFilter])
+  useEffect(() => { setPage(1) }, [searchName, nsFilter])
 
   const paged = useMemo(() => {
     const start = (page - 1) * 20
@@ -138,7 +147,17 @@ rules:
       <PageHeader title="角色" description="Role 管理">
         <Button onClick={() => setCreateOpen(true)}><Plus size={16} className="mr-2" />创建</Button>
       </PageHeader>
-      <Card><CardContent className="py-3"><div className="flex gap-3 items-center"><Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" /><Button variant="outline" size="sm" onClick={fetchData}><Search size={14} className="mr-1" />刷新</Button></div></CardContent></Card>
+      <Card><CardContent className="py-3"><div className="flex gap-3 items-center">
+        <Input placeholder="搜索名称" value={searchName} onChange={e => setSearchName(e.target.value)} className="w-48" />
+        <Select value={nsFilter} onValueChange={(v) => setNsFilter(v ?? 'all')}>
+          <SelectTrigger className="w-40"><SelectValue placeholder="命名空间" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部命名空间</SelectItem>
+            {namespaces.map(ns => <SelectItem key={ns} value={ns}>{ns}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Button variant="outline" size="sm" onClick={fetchData}><Search size={14} className="mr-1" />刷新</Button>
+      </div></CardContent></Card>
       <DataTable
         columns={columns as unknown as Column<Record<string, unknown>>[]}
         data={paged as unknown as Record<string, unknown>[]}
