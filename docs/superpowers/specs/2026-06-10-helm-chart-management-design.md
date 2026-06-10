@@ -173,7 +173,9 @@ type HelmChart struct {
 ## Data Flow
 
 ### Install Flow
-1. User selects chart from repository
+1. User selects chart source:
+   - From repository: select chart and version from search results
+   - Local upload: upload .tgz chart package
 2. User configures values (optional)
 3. Frontend calls `/mrboard/helm/v1/Install`
 4. Backend uses Helm SDK to install chart
@@ -183,10 +185,10 @@ type HelmChart struct {
 ### Values Edit Flow
 1. User clicks "Edit Values" on release detail page
 2. Frontend calls `GetValues` to get current values
-3. User edits values in code editor
+3. User edits values in code editor (full overlay - replaces entire values.yaml)
 4. User clicks "Save"
 5. Frontend calls `UpdateValues`
-6. Backend merges values and calls Helm SDK upgrade
+6. Backend replaces values and calls Helm SDK upgrade
 7. Returns success/failure
 
 ### Upgrade Flow
