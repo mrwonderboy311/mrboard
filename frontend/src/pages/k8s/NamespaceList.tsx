@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -112,17 +113,23 @@ export default function NamespaceList() {
             {operatingDeploy === n.nameSpace && <span className="text-[11px] text-primary font-medium animate-pulse">{operationProgress}</span>}
             <div className="flex items-center gap-2 mt-0.5">
               <StatusBadge status={n.status} />
-              <span className="text-[10px] text-muted-foreground font-mono truncate">{n.labels || '-'}</span>
             </div>
+            {n.labels && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {n.labels.split(',').slice(0, 4).map((label, i) => (
+                  <Badge key={i} variant="outline" className="text-[9px] font-mono">{label.trim()}</Badge>
+                ))}
+                {n.labels.split(',').length > 4 && (
+                  <Badge variant="outline" className="text-[9px]">+{n.labels.split(',').length - 4}</Badge>
+                )}
+              </div>
+            )}
           </div>
         </div>
       ),
     },
     {
       key: 'status', header: '状态', render: (n) => <StatusBadge status={n.status} />,
-    },
-    {
-      key: 'labels', header: '标签', className: 'font-mono text-xs', render: (n) => n.labels || '-',
     },
     {
       key: 'createTime', header: '创建时间', className: 'text-xs text-muted-foreground whitespace-nowrap', render: (n) => n.createTime,
