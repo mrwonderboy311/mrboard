@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"kubectl rollout status deployment/xkube-frontend -n mrboard --timeout=60s 2>&1 && cat > /root/mrboard/tests/node-check.spec.ts << 'EOF'\\nimport { test } from '@playwright/test';\\nimport { ...",
+  "tool_input_preview": "{\"command\":\"kubectl rollout status deployment/xkube-frontend -n mrboard --timeout=60s 2>&1 && cat > /root/mrboard/tests/ns-verify.spec.ts << 'EOF'\\nimport { test } from '@playwright/test';\\nimport { B...",
   "error": "Exit code 1\ndeployment \"xkube-frontend\" successfully rolled out\nError: No tests found.\nMake sure that arguments are regular expressions matching test files.\nYou may need to escape symbols like \"$\" or \"*\" and quote the arguments.\n\n\u001b[1A\u001b[2K",
-  "timestamp": "2026-06-10T03:51:13.471Z",
+  "timestamp": "2026-06-10T03:59:09.125Z",
   "retry_count": 1
 }

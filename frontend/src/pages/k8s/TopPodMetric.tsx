@@ -33,7 +33,7 @@ export default function TopPodMetric() {
     try {
       const data = await api<any>('/mrboard/ns/v1/List?clusterId=' + clusterId)
       const list = Array.isArray(data) ? data : (data?.data || [])
-      setNamespaces(list.map((n: any) => typeof n === 'string' ? n : n.name))
+      setNamespaces(list.map((n: any) => typeof n === 'string' ? n : (n.nameSpace || n.name || '')))
     } catch { /* optional */ }
   }
 

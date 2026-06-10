@@ -32,7 +32,7 @@ export default function PodK8sList() {
     try {
       const data = await api<Namespace[] | ApiResponse<Namespace[]>>('/mrboard/ns/v1/List?clusterId=' + clusterId)
       const list = Array.isArray(data) ? data : (data as ApiResponse<Namespace[]>).data || []
-      setNamespaces(list.map(n => typeof n === 'string' ? n : n.name))
+      setNamespaces(list.map((n: any) => typeof n === 'string' ? n : (n.nameSpace || n.name || '')))
     } catch { /* optional */ }
   }
 
